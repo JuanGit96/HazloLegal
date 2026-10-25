@@ -18,8 +18,7 @@
     </h1>
 
     <p style="margin:0 0 26px 0; text-align:center;">
-        Tu <strong>{{ $order->document->name }}</strong> entró a la fila y un abogado titulado
-        ya tiene tu caso.
+        Tu <strong>{{ $order->document->name }}</strong> ya entró a la fila de preparación.
     </p>
 
     @if ($order->promised_at)

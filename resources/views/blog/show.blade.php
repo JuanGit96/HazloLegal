@@ -41,15 +41,12 @@
                 <div class="author-box__avatar" aria-hidden="true">{{ $post->author->initials() }}</div>
                 <div>
                     <h2 style="font-size: var(--t-base); margin-bottom: var(--s1);">
-                        Escrito y revisado por {{ $post->author->name }}
+                        Escrito por {{ $post->author->name }}
                     </h2>
                     <p>{{ $post->author->headline }}</p>
-                    @if ($post->author->professional_card)
-                        <p class="author-box__cred">
-                            T.P. {{ $post->author->professional_card }} del Consejo Superior de la Judicatura
-                            @if ($post->author->university) · {{ $post->author->university }} @endif
-                        </p>
-                    @endif
+                    <p class="author-box__cred">
+                        {{ $post->author->years_experience }} años ejerciendo en Colombia{{ $post->author->university ? ' · '.$post->author->university : '' }}
+                    </p>
                 </div>
             </div>
         @endif

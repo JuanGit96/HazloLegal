@@ -35,7 +35,7 @@ class LegalCaseController
         $meta = $this->seo->withFaqSchema(
             $this->seo->page(
                 title: 'Abogado para un caso complejo en Colombia | Cotización sin costo',
-                description: 'Demandas, sucesiones, embargos y conflictos laborales. Cuéntanos tu caso y un abogado titulado lo toma en menos de 48 horas. La cotización no cuesta nada.',
+                description: 'Demandas, sucesiones, embargos y conflictos laborales. Cuéntanos tu caso y un abogado de la red lo toma en menos de 48 horas. La cotización no cuesta nada.',
                 canonical: route('cases.create'),
                 crumbs: [
                     ['name' => 'Inicio', 'url' => url('/')],

@@ -8,8 +8,11 @@ use Filament\Support\Contracts\HasColor;
 use Filament\Support\Contracts\HasLabel;
 
 /**
- * Fase 1 = plantilla maestra con inyección de variables (el abogado solo audita).
- * Fase 2 = redacción humana obligatoria (hechos, cálculos o cláusulas condicionales).
+ * Fase 1 = plantilla maestra con inyección de variables. La plantilla la
+ *          escriben y mantienen nuestros abogados; el documento NO se revisa
+ *          caso por caso.
+ * Fase 2 = redacción humana obligatoria (hechos, cálculos o cláusulas
+ *          condicionales): aquí sí lo escribe un abogado para ese caso.
  */
 enum AutomationPhase: string implements HasColor, HasLabel
 {
@@ -35,16 +38,16 @@ enum AutomationPhase: string implements HasColor, HasLabel
     public function publicLabel(): string
     {
         return match ($this) {
-            self::Automated => 'Entrega automatizada',
-            self::Manual => 'Redacción a la medida',
+            self::Automated => 'Documento automatizado',
+            self::Manual => 'Lo escribe un abogado',
         };
     }
 
     public function publicExplanation(): string
     {
         return match ($this) {
-            self::Automated => 'Este documento se ensambla sobre una plantilla maestra validada y un abogado audita el PDF final antes de enviarlo.',
-            self::Manual => 'Este documento exige análisis de tus hechos concretos, por lo que lo redacta un abogado desde cero. No usamos plantillas genéricas.',
+            self::Automated => 'Este documento se arma sobre una plantilla que redactaron nuestros abogados y que actualizamos cuando cambia la norma. No se revisa caso por caso: por eso cuesta y tarda menos.',
+            self::Manual => 'Este documento exige analizar tus hechos concretos, así que lo escribe un abogado para tu caso. No usamos plantillas genéricas.',
         };
     }
 

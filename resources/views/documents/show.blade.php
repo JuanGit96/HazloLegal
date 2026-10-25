@@ -43,7 +43,7 @@
             </div>
 
             {{-- Caja de compra: precio, plazo y CTA siempre visibles --}}
-            <aside>
+            <aside class="doc-hero__aside">
                 <div class="buybox">
                     <span class="eyebrow">Precio final</span>
                     <div class="buybox__price">
@@ -57,7 +57,7 @@
                         @if ($expressQuote)
                             <li><span aria-hidden="true">⚡</span> <span>Express en <b>menos de 4 horas</b> por {{ $pricing->formatCop($expressQuote->amount) }}</span></li>
                         @endif
-                        <li><span aria-hidden="true">⚖️</span> <span>Auditado por <b>abogado titulado</b></span></li>
+                        <li><span aria-hidden="true">⚖️</span> <span>Formato <b>escrito por abogados</b> y al día con la ley</span></li>
                         <li><span aria-hidden="true">🛡️</span> <span>Cubierto por el <b>Certificado de Garantía</b></span></li>
                         <li><span aria-hidden="true">📱</span> <span>Llega a tu <b>correo y WhatsApp</b></span></li>
                     </ul>
@@ -271,7 +271,7 @@
 
 <x-cta-band
     title="Deja de posponer el trámite"
-    text="Un abogado titulado lo redacta, lo audita y lo pone en tu correo. Precio fijo, plazo comprometido y garantía por escrito."
+    text="Lo preparamos y te lo ponemos en el correo. Precio fijo, plazo comprometido y garantía de corrección por escrito."
     :primary-label="'Pedir ' . \Illuminate\Support\Str::lower($document->short_name ?: $document->name)"
     :primary-href="route('checkout.configure', [$documentPlan->key->value, $document->slug])"
     secondary-label="Ver todos los trámites"

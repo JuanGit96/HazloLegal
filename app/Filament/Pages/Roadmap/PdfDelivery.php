@@ -41,7 +41,7 @@ class PdfDelivery extends RoadmapPage
     {
         return [
             'Maquetación del PDF con encabezado, pie, numeración y marca de agua de borrador.',
-            '**Sello de auditoría**: nombre del abogado que revisó, su tarjeta profesional y la fecha.',
+            '**Pie de trazabilidad**: versión del formato con que se generó, fecha y referencia del pedido. Sin firmas ni nombres de abogados: el documento automatizado no se revisa caso por caso y el PDF no debe sugerir lo contrario.',
             'Anexo con la **guía de radicación** específica del trámite.',
             'Entrega automática por correo al aprobar, con el PDF adjunto.',
             'Almacenamiento con URL firmada y temporal, para que el enlace no quede público.',

@@ -59,15 +59,58 @@ class PublicSeoTest extends TestCase
             ->assertSee($document->metaTitle());
     }
 
-    public function test_un_articulo_declara_autor_con_tarjeta_profesional(): void
+    public function test_un_articulo_declara_autor_acreditado(): void
     {
-        // La autoría verificable es la señal E-E-A-T clave en contenido legal.
+        // La autoría acreditada es la señal E-E-A-T clave en contenido legal.
         $this->get(route('blog.show', 'como-hacer-una-tutela-por-salud'))
             ->assertOk()
             ->assertSee('"@type":"BlogPosting"', escape: false)
             ->assertSee('"reviewedBy"', escape: false)
-            ->assertSee('EducationalOccupationalCredential', escape: false)
-            ->assertSee('Consejo Superior de la Judicatura');
+            ->assertSee('"@type":"Person"', escape: false)
+            ->assertSee('Daniela Restrepo Gómez');
+    }
+
+    public function test_la_tarjeta_profesional_nunca_se_publica(): void
+    {
+        // Es dato interno: publicarla comprometería al abogado con una
+        // revisión individual que el servicio automatizado no hace.
+        $lawyer = \App\Domain\Lawyers\Models\Lawyer::query()
+            ->whereNotNull('professional_card')
+            ->firstOrFail();
+
+        foreach ([
+            route('home'),
+            route('pages.about'),
+            route('cases.create'),
+            route('blog.show', 'como-hacer-una-tutela-por-salud'),
+        ] as $url) {
+            $this->get($url)
+                ->assertOk()
+                ->assertDontSee($lawyer->professional_card)
+                ->assertDontSee('Consejo Superior de la Judicatura')
+                ->assertDontSee('tarjeta profesional');
+        }
+    }
+
+    public function test_el_sitio_no_promete_revision_de_cada_documento(): void
+    {
+        foreach ([route('home'), route('documents.index'), route('pages.how-it-works')] as $url) {
+            $this->get($url)
+                ->assertOk()
+                ->assertDontSee('abogado titulado')
+                ->assertDontSee('audita el PDF');
+        }
+    }
+
+    public function test_la_home_no_nombra_alternativas_gratuitas(): void
+    {
+        // Mencionar la IA o las plantillas gratis dentro del embudo le planta
+        // la idea a quien no la traía. Ese contenido vive en el blog.
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertDontSee('inteligencia artificial')
+            ->assertDontSee('IA gratuita')
+            ->assertDontSee('Plantilla de internet');
     }
 
     public function test_el_sitemap_lista_el_catalogo_y_el_blog(): void

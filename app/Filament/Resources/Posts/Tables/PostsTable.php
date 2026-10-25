@@ -43,9 +43,7 @@ class PostsTable
                 TextColumn::make('author.name')
                     ->label('Firma')
                     ->placeholder('⚠️ Sin abogado')
-                    ->description(fn (Post $record) => $record->author?->professional_card
-                        ? "T.P. {$record->author->professional_card}"
-                        : null),
+                    ->description(fn (Post $record) => $record->author?->headline),
 
                 TextColumn::make('status')
                     ->label('Estado')

@@ -51,9 +51,9 @@
                 <li>
                     <span class="guarantee-list__check" aria-hidden="true">1</span>
                     <span>
-                        <strong>Revisión por abogado titulado en todos los trámites</strong>
-                        Ningún documento sale sin que un abogado con tarjeta profesional vigente lo haya auditado.
-                        Puedes verificar la tarjeta de cada uno en el registro del Consejo Superior de la Judicatura.
+                        <strong>Formatos escritos por abogados y mantenidos al día</strong>
+                        Cada trámite del catálogo parte de un formato que redactó un abogado de nuestro equipo
+                        y que actualizamos cuando cambia la norma. Si la ley se mueve, el documento se mueve con ella.
                     </span>
                 </li>
                 <li>

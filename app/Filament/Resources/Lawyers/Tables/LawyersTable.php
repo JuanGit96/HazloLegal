@@ -37,10 +37,11 @@ class LawyersTable
                     ->description(fn (Lawyer $record) => $record->headline),
 
                 TextColumn::make('professional_card')
-                    ->label('T.P.')
+                    ->label('T.P. (interno)')
                     ->searchable()
                     ->copyable()
-                    ->placeholder('⚠️ Sin tarjeta'),
+                    ->placeholder('⚠️ Sin verificar')
+                    ->tooltip('Dato interno: no se publica en el sitio.'),
 
                 TextColumn::make('practice_areas')
                     ->label('Áreas')

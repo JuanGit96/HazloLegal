@@ -20,7 +20,7 @@
             <h1>{{ $paid ? '¡Listo! Tu trámite está en marcha' : 'Tu pedido quedó registrado' }}</h1>
             <p class="text-muted" style="font-size: var(--t-lg);">
                 @if ($paid)
-                    Un abogado titulado ya tiene tu caso. Te avisamos por correo y WhatsApp en cuanto esté.
+                    Tu trámite ya está en preparación. Te avisamos por correo y WhatsApp en cuanto esté.
                 @else
                     Falta confirmar el pago para que entre a la fila de redacción.
                 @endif
@@ -70,13 +70,13 @@
                 <div class="steps" style="gap: var(--s6); margin-top: var(--s5);">
                     <div class="step">
                         <div class="step__num" aria-hidden="true">1</div>
-                        <h3>Revisión de tu caso</h3>
-                        <p>Un abogado del área lee lo que nos contaste. Si falta algo, te escribe por WhatsApp.</p>
+                        <h3>Revisamos tus datos</h3>
+                        <p>Comprobamos que esté todo lo que el trámite necesita. Si falta algo, te escribimos por WhatsApp.</p>
                     </div>
                     <div class="step">
                         <div class="step__num" aria-hidden="true">2</div>
-                        <h3>Redacción y auditoría</h3>
-                        <p>Se redacta el documento y se audita ortografía, datos y normas citadas.</p>
+                        <h3>Se prepara tu documento</h3>
+                        <p>Sobre el formato de ese trámite, con las normas vigentes que le aplican.</p>
                     </div>
                     <div class="step">
                         <div class="step__num" aria-hidden="true">3</div>

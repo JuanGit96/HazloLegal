@@ -54,13 +54,13 @@ class LawyerForm
                             ->visibility('public'),
                     ]),
 
-                Section::make('Credenciales')
-                    ->description('Son la base de la confianza del cliente y de la señal E-E-A-T que exige Google en contenido legal. Deben ser verificables.')
+                Section::make('Credenciales (uso interno)')
+                    ->description('La tarjeta profesional NO se publica en el sitio ni en los correos: se guarda solo para el control interno del equipo. Lo que sí es público es el nombre, la especialidad y la biografía.')
                     ->columns(2)
                     ->schema([
                         TextInput::make('professional_card')
                             ->label('Tarjeta profesional (T.P.)')
-                            ->helperText('Verificable en el registro del Consejo Superior de la Judicatura.')
+                            ->helperText('Solo para verificación interna. No aparece en ninguna página pública.')
                             ->required(),
 
                         TextInput::make('university')->label('Universidad'),

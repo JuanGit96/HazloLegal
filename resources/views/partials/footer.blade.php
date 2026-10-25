@@ -20,7 +20,7 @@
                     <span class="logo__mark" aria-hidden="true">⚖</span>
                     Hazlo<em>Legal</em>
                 </a>
-                <p>Documentos y trámites legales redactados y auditados por abogados colombianos con tarjeta profesional. Precio fijo publicado y garantía de corrección por escrito.</p>
+                <p>Documentos y trámites legales construidos por abogados colombianos, con precio fijo publicado y garantía de corrección por escrito.</p>
 
                 <div class="socials">
                     @foreach ($icons as $key => $path)

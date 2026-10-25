@@ -15,9 +15,13 @@ use Illuminate\Support\Str;
  * Construye los bloques JSON-LD del sitio.
  *
  * El contenido legal es YMYL ("Your Money or Your Life"): Google exige
- * autoría y credenciales verificables para posicionarlo. Por eso cada
- * artículo declara autor con tarjeta profesional y revisor, y la empresa
- * se declara como LegalService con dirección física real.
+ * autoría acreditada para posicionarlo. Cada artículo declara autor y revisor
+ * con su especialidad y formación, y la empresa se declara como LegalService
+ * con dirección física real.
+ *
+ * Lo que NO se publica es el número de tarjeta profesional: se guarda solo
+ * para control interno, porque el sitio no promete revisión individual de
+ * cada documento.
  */
 final class SchemaGenerator
 {
@@ -195,7 +199,8 @@ final class SchemaGenerator
             'image' => $post->cover_path ? url($post->cover_path) : url(config('hazlolegal.seo.og_image')),
             'publisher' => ['@id' => url('/#organization')],
             'author' => $author ? $this->person($author) : ['@id' => url('/#organization')],
-            // El revisor es la señal E-E-A-T más fuerte en contenido legal.
+            // Autoría acreditada: sigue siendo la señal E-E-A-T más fuerte en
+            // contenido legal, ahora sin publicar la tarjeta profesional.
             'reviewedBy' => $author ? $this->person($author) : null,
             'isAccessibleForFree' => true,
         ]);
@@ -211,15 +216,7 @@ final class SchemaGenerator
             'image' => $lawyer->photo_path ? url($lawyer->photo_path) : null,
             'worksFor' => ['@id' => url('/#organization')],
             'knowsAbout' => collect($lawyer->practiceAreaEnums())->map(fn ($a) => $a->getLabel())->all(),
-            'hasCredential' => $lawyer->professional_card ? [
-                '@type' => 'EducationalOccupationalCredential',
-                'credentialCategory' => 'Tarjeta profesional de abogado',
-                'identifier' => $lawyer->professional_card,
-                'recognizedBy' => [
-                    '@type' => 'Organization',
-                    'name' => 'Consejo Superior de la Judicatura de Colombia',
-                ],
-            ] : null,
+            // Sin `hasCredential`: la tarjeta profesional no se publica.
             'alumniOf' => $lawyer->university ? ['@type' => 'CollegeOrUniversity', 'name' => $lawyer->university] : null,
         ]);
     }

@@ -15,14 +15,14 @@ class ServicePlanSeeder extends Seeder
             [
                 'key' => 'document',
                 'name' => 'Documento listo para usar',
-                'tagline' => 'Tú cuentas el caso, un abogado lo redacta y lo audita.',
+                'tagline' => 'Tú cuentas el caso y recibes el documento listo para radicar.',
                 'description' => 'La opción de la mayoría. Recibes el documento terminado, en PDF, con la guía de radicación.',
                 'price' => 90_000,
                 'express_price' => 140_000,
                 'delivery_hours' => 24,
                 'express_delivery_hours' => 4,
                 'includes' => [
-                    'Redacción y **auditoría de un abogado titulado**',
+                    'Formato **escrito por abogados colombianos** y actualizado con la ley',
                     'Entrega en **24 horas hábiles**',
                     'PDF listo para firmar y radicar',
                     'Guía paso a paso de dónde presentarlo',

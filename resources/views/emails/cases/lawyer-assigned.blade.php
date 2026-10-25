@@ -43,12 +43,6 @@
                             <p style="margin:0 0 8px 0; font-size:14px; color:#2563EB; font-weight:600;">
                                 {{ $lawyer->headline ?: 'Abogado titulado' }}
                             </p>
-                            @if ($lawyer->professional_card)
-                                <p style="margin:0 0 8px 0; font-size:13px; color:#64748B;">
-                                    Tarjeta profesional <strong>{{ $lawyer->professional_card }}</strong><br>
-                                    Consejo Superior de la Judicatura
-                                </p>
-                            @endif
                             @if ($lawyer->university)
                                 <p style="margin:0 0 8px 0; font-size:13px; color:#64748B;">{{ $lawyer->university }}</p>
                             @endif

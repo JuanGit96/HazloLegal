@@ -16,7 +16,7 @@
     <div class="container hero__grid">
         <div>
             <div class="hero__kicker">
-                <span class="pill pill--success">✓ Abogados con tarjeta profesional</span>
+                <span class="pill pill--success">✓ Formatos escritos por abogados</span>
                 <span class="pill pill--brand">Ley colombiana vigente</span>
             </div>
 
@@ -75,7 +75,7 @@
 
                     <div class="doc-preview__seal">
                         <span>✓</span>
-                        <span>Auditado por abogado titulado · T.P. 284.912</span>
+                        <span>Formato vigente · Ley 1751 de 2015 y Decreto 2591 de 1991</span>
                     </div>
 
                     <div class="doc-preview__sign">
@@ -96,7 +96,7 @@
     <div class="container">
         <p class="trust-strip__label">Por qué puedes confiarnos tu trámite</p>
         <div class="trust-strip__items">
-            <span class="trust-item"><span class="trust-item__icon" aria-hidden="true">⚖️</span> <span><strong>Abogados verificables</strong> · T.P. del C.S. de la J.</span></span>
+            <span class="trust-item"><span class="trust-item__icon" aria-hidden="true">⚖️</span> <span><strong>Formatos de abogados</strong> · actualizados cuando cambia la ley</span></span>
             <span class="trust-item"><span class="trust-item__icon" aria-hidden="true">✍️</span> <span><strong>Firma electrónica</strong> · Ley 527 de 1999</span></span>
             <span class="trust-item"><span class="trust-item__icon" aria-hidden="true">🔒</span> <span><strong>Datos protegidos</strong> · Ley 1581 de 2012</span></span>
             <span class="trust-item"><span class="trust-item__icon" aria-hidden="true">🛡️</span> <span><strong>Garantía por escrito</strong> · corregimos o devolvemos</span></span>
@@ -129,84 +129,71 @@
     </div>
 </section>
 
-{{-- ============================================ ANCLAJE DE PRECIO / COMPARATIVA --}}
+{{-- ============================================ ANCLAJE DE PRECIO --}}
+{{-- Compara solo contra la vía tradicional. Nombrar alternativas gratuitas
+     aquí le daría al cliente una idea que quizá no traía. Ese contenido vive
+     en el blog, donde llega quien ya la está buscando. --}}
 <section class="section section--sunken">
     <div class="container">
         <div class="section-head reveal">
             <span class="eyebrow">Compara antes de decidir</span>
-            <h2>¿Por qué pagar si hay plantillas e IA gratis?</h2>
-            <p>Porque un documento rechazado no es gratis: cuesta tiempo, términos vencidos y a veces el derecho mismo.</p>
+            <h2>Lo mismo que resolverías en una oficina, sin la oficina</h2>
+            <p>Quitamos la parte cara del proceso, no la parte que te protege.</p>
         </div>
 
         <div class="compare-wrap reveal">
             <table class="compare">
-                <caption class="visually-hidden">Comparación entre Hazlo Legal, plantillas de internet, inteligencia artificial gratuita y un abogado tradicional</caption>
+                <caption class="visually-hidden">Comparación entre resolver tu trámite con Hazlo Legal o acudiendo a una oficina de abogados</caption>
                 <thead>
                     <tr>
                         <th scope="col">&nbsp;</th>
                         <th scope="col" class="is-us">Hazlo Legal</th>
-                        <th scope="col">Plantilla de internet</th>
-                        <th scope="col">IA gratuita</th>
-                        <th scope="col">Abogado tradicional</th>
+                        <th scope="col">Oficina de abogados</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <th scope="row">Precio</th>
-                        <td class="is-us">Desde {{ $entry }}</td>
-                        <td>Gratis</td>
-                        <td>Gratis</td>
-                        <td>$300.000 &ndash; $800.000</td>
+                        <th scope="row">Cuánto cuesta</th>
+                        <td class="is-us">Desde {{ $entry }}, publicado</td>
+                        <td>Entre $300.000 y $800.000</td>
                     </tr>
                     <tr>
-                        <th scope="row">Revisado por abogado titulado</th>
-                        <td class="is-us"><span class="yes">Sí</span>, con T.P. verificable</td>
-                        <td><span class="no">No</span></td>
-                        <td><span class="no">No</span></td>
-                        <td><span class="yes">Sí</span></td>
+                        <th scope="row">Cuándo sabes el precio</th>
+                        <td class="is-us">Antes de dar tus datos</td>
+                        <td>Después de la primera cita</td>
                     </tr>
                     <tr>
-                        <th scope="row">Normas colombianas vigentes</th>
-                        <td class="is-us"><span class="yes">Sí</span></td>
-                        <td>Normalmente desactualizadas</td>
-                        <td>Mezcla leyes de otros países</td>
-                        <td><span class="yes">Sí</span></td>
+                        <th scope="row">Cuándo lo tienes</th>
+                        <td class="is-us">De 4 a 24 horas</td>
+                        <td>De 3 a 15 días</td>
                     </tr>
                     <tr>
-                        <th scope="row">Adaptado a tus hechos</th>
-                        <td class="is-us"><span class="yes">Sí</span></td>
-                        <td><span class="no">No</span></td>
-                        <td>Parcial, sin criterio jurídico</td>
-                        <td><span class="yes">Sí</span></td>
+                        <th scope="row">Qué te toca hacer</th>
+                        <td class="is-us">Llenar un formulario desde el celular</td>
+                        <td>Pedir cita y desplazarte en horario de oficina</td>
                     </tr>
                     <tr>
-                        <th scope="row">Tiempo de entrega</th>
-                        <td class="is-us">4 a 24 horas</td>
-                        <td>Inmediato</td>
-                        <td>Inmediato</td>
-                        <td>3 a 15 días</td>
+                        <th scope="row">Quién escribió el documento</th>
+                        <td class="is-us">Abogados colombianos, en un formato que se actualiza con la ley</td>
+                        <td>El abogado que te atienda ese día</td>
                     </tr>
                     <tr>
-                        <th scope="row">Garantía si lo rechazan</th>
-                        <td class="is-us"><span class="yes">Sí</span>, por escrito</td>
-                        <td><span class="no">Ninguna</span></td>
-                        <td><span class="no">Ninguna</span></td>
-                        <td>Depende del acuerdo</td>
+                        <th scope="row">Si lo rechazan por un error nuestro</th>
+                        <td class="is-us"><span class="yes">Lo corregimos o te devolvemos el 100 %</span>, por escrito</td>
+                        <td>Según lo que hayan acordado</td>
                     </tr>
                     <tr>
-                        <th scope="row">Responsable si algo falla</th>
-                        <td class="is-us">Nosotros</td>
-                        <td>Tú</td>
-                        <td>Tú</td>
-                        <td>El abogado</td>
+                        <th scope="row">La consulta inicial</th>
+                        <td class="is-us">No se cobra</td>
+                        <td>Suele cobrarse aparte</td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
         <p class="center mt-6 text-sm text-muted">
-            Una tutela mal redactada se puede rechazar por defectos de forma. Rehacerla cuesta semanas &mdash;
-            y en salud, semanas son lo único que no sobra.
+            Lo caro de un trámite legal nunca fue el papel: era el tiempo, el desplazamiento y
+            no saber cuánto ibas a terminar pagando. Eso es lo que quitamos.
         </p>
     </div>
 </section>
@@ -293,8 +280,9 @@
         </div>
 
         <p class="center mt-8 text-sm text-muted">
-            Todos los planes incluyen revisión de un abogado titulado y están cubiertos por el
-            <a href="{{ route('pages.guarantee') }}"><strong>Certificado de Garantía Hazlo Legal</strong></a>.
+            Todos los planes están cubiertos por el
+            <a href="{{ route('pages.guarantee') }}"><strong>Certificado de Garantía Hazlo Legal</strong></a>:
+            si el documento sale con un error nuestro, lo corregimos o te devolvemos el dinero.
         </p>
     </div>
 </section>
@@ -386,8 +374,8 @@
             </div>
             <div class="step step--center">
                 <div class="step__num" aria-hidden="true">3</div>
-                <h3>Un abogado lo audita</h3>
-                <p>Revisa hechos, normas citadas, ortografía y el respeto formal ante la entidad.</p>
+                <h3>Se arma tu documento</h3>
+                <p>Sobre el formato de ese trámite, con las validaciones que frenan los errores de forma que más rechazos causan.</p>
             </div>
             <div class="step step--center">
                 <div class="step__num" aria-hidden="true">4</div>
@@ -430,8 +418,8 @@
             </div>
             <div class="feature">
                 <div class="feature__icon" aria-hidden="true">⚖️</div>
-                <h3>Auditoría jurídica</h3>
-                <p>Un abogado titulado revisa que las normas citadas estén vigentes y que el tono ante la entidad sea el correcto.</p>
+                <h3>Normas al día</h3>
+                <p>Nuestros abogados revisan y actualizan los formatos cuando cambia la ley o la jurisprudencia. Ningún documento sale citando una norma derogada.</p>
             </div>
             <div class="feature">
                 <div class="feature__icon" aria-hidden="true">✍️</div>
@@ -488,9 +476,9 @@
 <section class="section section--white">
     <div class="container">
         <div class="section-head reveal">
-            <span class="eyebrow">Quién redacta</span>
-            <h2>Abogados reales, con tarjeta profesional verificable</h2>
-            <p>Puedes consultar cada tarjeta en el registro del Consejo Superior de la Judicatura.</p>
+            <span class="eyebrow">Quién está detrás</span>
+            <h2>Los abogados que escriben nuestros formatos</h2>
+            <p>Ellos redactan y mantienen el catálogo, y son quienes toman los casos complejos.</p>
         </div>
 
         <div class="grid grid--4 reveal">
@@ -530,7 +518,7 @@
                             <span>{{ $post->reading_minutes }} min de lectura</span>
                             @if ($post->author)
                                 <span aria-hidden="true">·</span>
-                                <span>Revisado por {{ $post->author->name }}</span>
+                                <span>Por {{ $post->author->name }}</span>
                             @endif
                         </div>
                     </div>

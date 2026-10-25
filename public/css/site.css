@@ -660,23 +660,62 @@ hr { border: 0; border-top: 1px solid var(--border); margin: var(--s10) 0; }
 @media (max-width: 640px) { .wizard__label { display: none; } .wizard__sep { width: 14px; } }
 
 .checkout-layout { display: grid; grid-template-columns: 1fr 340px; gap: var(--s8); align-items: start; }
-@media (max-width: 980px) { .checkout-layout { grid-template-columns: 1fr; } .checkout-aside { order: -1; } }
+/* El sticky va en la columna entera, no en la tarjeta: el bloque contenedor
+   de un sticky es su padre, y un <aside> que mide lo mismo que su contenido
+   deja de acompañar el scroll en cuanto se llega a su borde inferior. */
+.checkout-aside { position: sticky; top: calc(var(--header-h) + var(--s5)); }
 
-.summary { position: sticky; top: calc(var(--header-h) + var(--s5)); }
+@media (max-width: 980px) {
+    .checkout-layout { grid-template-columns: 1fr; }
+    .checkout-aside { order: -1; position: static; }
+}
 .summary__rows { display: grid; gap: var(--s3); margin-bottom: var(--s5); }
 .summary__row { display: flex; justify-content: space-between; gap: var(--s4); font-size: var(--t-sm); }
 .summary__row dt { color: var(--text-muted); }
 .summary__row dd { margin: 0; font-weight: 700; text-align: right; }
 .summary__total { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s4); padding-top: var(--s4); border-top: 2px solid var(--border); font-size: var(--t-xl); font-weight: 800; color: var(--brand-dark); }
 
+/* Barra de acción fija en móvil.
+   En pantallas pequeñas el resumen pasa a ir ARRIBA del formulario, así que
+   quien termina de llenarlo se queda sin botón para continuar. Esta barra
+   mantiene el total y el CTA siempre a la vista. */
+.checkout-bar { display: none; }
+
+@media (max-width: 980px) {
+    .checkout-bar {
+        position: fixed; inset-inline: 0; bottom: 0; z-index: 950;
+        display: flex; align-items: center; gap: var(--s4);
+        padding: var(--s3) var(--s5);
+        padding-bottom: calc(var(--s3) + env(safe-area-inset-bottom, 0px));
+        background: rgba(255, 255, 255, .97);
+        backdrop-filter: saturate(180%) blur(10px);
+        border-top: 1px solid var(--border);
+        box-shadow: 0 -6px 24px rgba(15, 23, 42, .10);
+    }
+    .checkout-bar__total { display: grid; gap: 1px; flex-shrink: 0; }
+    .checkout-bar__total span { font-size: var(--t-xs); color: var(--text-subtle); line-height: 1.2; }
+    .checkout-bar__total strong { font-size: var(--t-lg); font-weight: 800; color: var(--brand-dark); letter-spacing: -.02em; }
+    .checkout-bar .btn { flex: 1; min-height: 50px; }
+
+    /* Hueco para que la barra no tape el final del formulario. */
+    .checkout-spacer { height: 92px; }
+
+    /* El botón del resumen sobra: lo reemplaza la barra. */
+    .summary__submit { display: none; }
+
+    /* El botón de WhatsApp se sube para no quedar debajo de la barra. */
+    body:has(.checkout-bar) .wa-float { bottom: calc(80px + var(--s4)); }
+}
+
 /* -------------------------------------------------- 22. Landing de documento */
 .doc-hero { background: var(--bg-raised); border-bottom: 1px solid var(--border); padding-block: var(--s12) var(--s10); }
 .doc-hero__grid { display: grid; grid-template-columns: 1fr 380px; gap: var(--s10); align-items: start; }
-@media (max-width: 980px) { .doc-hero__grid { grid-template-columns: 1fr; } }
+@media (max-width: 980px) { .doc-hero__grid { grid-template-columns: 1fr; } .doc-hero__aside { position: static; } }
 .doc-hero h1 { font-size: var(--t-4xl); }
 .doc-hero__lead { font-size: var(--t-lg); color: var(--text-muted); }
 
-.buybox { padding: var(--s6); background: #fff; border: 2px solid var(--brand); border-radius: var(--r-lg); box-shadow: var(--sh-md); position: sticky; top: calc(var(--header-h) + var(--s5)); }
+.doc-hero__aside { position: sticky; top: calc(var(--header-h) + var(--s5)); }
+.buybox { padding: var(--s6); background: #fff; border: 2px solid var(--brand); border-radius: var(--r-lg); box-shadow: var(--sh-md); }
 .buybox__price { display: flex; align-items: baseline; gap: var(--s2); font-size: var(--t-4xl); font-weight: 800; color: var(--brand-dark); letter-spacing: -.035em; }
 .buybox__price small { font-size: var(--t-sm); font-weight: 600; color: var(--text-subtle); }
 .buybox__rows { list-style: none; padding: 0; margin: var(--s5) 0; display: grid; gap: var(--s3); }

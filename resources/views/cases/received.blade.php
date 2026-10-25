@@ -13,7 +13,7 @@
         <p class="text-muted" style="font-size: var(--t-lg);">
             Lo enviamos a los especialistas en {{ \Illuminate\Support\Str::lower($case->practice_area->getLabel()) }}
             de nuestra red. El primero que lo acepte se queda con él y te escribimos de inmediato
-            con su nombre, su tarjeta profesional y su experiencia.
+            con su nombre, su especialidad y su experiencia.
         </p>
 
         <p class="pill pill--brand" style="font-size: var(--t-base); padding: var(--s3) var(--s5);">

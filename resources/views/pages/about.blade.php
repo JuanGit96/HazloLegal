@@ -18,14 +18,13 @@
         <div class="prose">
             <h2>El problema que vimos</h2>
             <p>
-                En Colombia hay dos extremos y nada en el medio. De un lado, plantillas gratuitas de internet
-                y respuestas de inteligencia artificial que mezclan leyes de otros países y citan artículos
-                derogados. Del otro, un abogado que cobra entre $300.000 y $800.000 por una tutela cuya
-                estructura es la misma del 80 % de los casos.
+                Un trámite estándar cuesta en una oficina de abogados entre $300.000 y $800.000, aunque su
+                estructura sea la misma del 80 % de los casos. Hay que pedir cita, desplazarse en horario
+                de oficina y esperar días para saber cuánto se va a pagar.
             </p>
             <p>
-                En medio quedan miles de personas con un problema legal real, un término corriendo
-                y la sensación de que pedir ayuda es un lujo.
+                El resultado es que miles de personas con un problema legal real y un término corriendo
+                terminan sintiendo que pedir ayuda es un lujo. Y un término que se vence no se recupera.
             </p>
 
             <h2>Qué hicimos</h2>
@@ -48,14 +47,18 @@
                 <li><strong>No prometemos resultados.</strong> Nadie puede garantizar la decisión de un juez.</li>
                 <li><strong>No escondemos el precio.</strong> Está publicado antes de que des tus datos.</li>
                 <li><strong>No cobramos por orientarte.</strong> Si tu caso no necesita nuestro servicio, te lo decimos.</li>
-                <li><strong>No publicamos abogados que no existen.</strong> Cada tarjeta profesional de este sitio es verificable.</li>
+                <li><strong>No inventamos credenciales.</strong> No publicamos números de tarjeta ni sellos que no signifiquen nada: preferimos explicarte cómo se hace cada documento.</li>
             </ul>
 
-            <h2>Cómo puedes verificarnos</h2>
+            <h2>Quién hace qué, sin letra menuda</h2>
             <p>
-                Toma el número de tarjeta profesional de cualquiera de nuestros abogados y búscalo en el
-                registro nacional de abogados del Consejo Superior de la Judicatura. Si alguno no aparece,
-                escríbenos y lo retiramos del sitio el mismo día.
+                En los trámites de <strong>Fase 1</strong> el documento se arma solo, sobre un formato que
+                escribió un abogado de nuestro equipo y que mantenemos actualizado. Nadie lo revisa caso por
+                caso, y por eso cuesta $90.000 y no $400.000. Lo decimos en la ficha de cada trámite.
+            </p>
+            <p>
+                En los de <strong>Fase 2</strong> y en los casos complejos sí hay un abogado leyendo tu caso
+                y escribiendo para ti. Ahí el precio es otro, y también lo decimos antes de cobrar.
             </p>
         </div>
     </div>
@@ -66,8 +69,8 @@
     <div class="container">
         <div class="section-head">
             <span class="eyebrow">El equipo</span>
-            <h2>Quién redacta y quién audita</h2>
-            <p>Todos con tarjeta profesional vigente del Consejo Superior de la Judicatura.</p>
+            <h2>Quién escribe los formatos</h2>
+            <p>Abogados colombianos en ejercicio. Ellos escriben los formatos del catálogo y toman los casos complejos.</p>
         </div>
 
         <div class="grid grid--3">

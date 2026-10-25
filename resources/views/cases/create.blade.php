@@ -19,7 +19,7 @@
                 <p class="hero__lead">
                     Cuéntanos qué está pasando. Enviamos tu caso a los abogados especializados en esa
                     área al mismo tiempo y <strong>el primero que lo acepta se queda con él</strong>.
-                    Te escribimos con su nombre, su tarjeta profesional y su experiencia.
+                    Te escribimos con su nombre, su especialidad y su experiencia.
                 </p>
 
                 <div class="hero__proof">
@@ -55,7 +55,7 @@
                         <div class="step">
                             <div class="step__num" aria-hidden="true">3</div>
                             <h3>El primero que acepta lo toma</h3>
-                            <p>Y te llega su perfil completo por correo, con su T.P. verificable.</p>
+                            <p>Y te llega su perfil completo por correo: especialidad, años de ejercicio y ciudad.</p>
                         </div>
                     </div>
                 </div>
@@ -243,7 +243,7 @@
         <div class="section-head">
             <span class="eyebrow">La red</span>
             <h2>Algunos de los abogados que podrían tomar tu caso</h2>
-            <p>Todos con tarjeta profesional verificable en el Consejo Superior de la Judicatura.</p>
+            <p>Abogados colombianos en ejercicio, especializados por área.</p>
         </div>
 
         <div class="grid grid--4">

@@ -12,7 +12,7 @@
         <div class="section-head">
             <span class="eyebrow">Catálogo completo</span>
             <h1>Trámites y documentos legales en Colombia</h1>
-            <p>Precio fijo publicado, plazo comprometido y revisión de un abogado titulado en todos.</p>
+            <p>Precio fijo publicado, plazo comprometido y formatos escritos por abogados colombianos.</p>
         </div>
 
         <form action="{{ route('documents.index') }}" method="get" role="search"
@@ -90,9 +90,9 @@
             <div class="card card--pad-lg">
                 <h3>⚡ Entrega automatizada</h3>
                 <p class="text-sm text-muted mb-0">
-                    Trámites con estructura estable: se ensamblan sobre una plantilla maestra validada
-                    por nuestros abogados y uno de ellos audita el PDF final antes de enviarlo.
-                    Son los más rápidos y los más económicos.
+                    Trámites con estructura estable: se arman sobre un formato que escribieron nuestros
+                    abogados y que actualizamos cuando cambia la norma. El documento no se revisa caso
+                    por caso, y por eso son los más rápidos y los más económicos.
                 </p>
             </div>
             <div class="card card--pad-lg">

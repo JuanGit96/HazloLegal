@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 /*
 | Fase 1 — Servicios automatizados.
-| Plantilla maestra rígida + inyección de variables. El abogado audita el PDF
-| final antes de enviarlo, pero no redacta desde cero.
+| Plantilla maestra rígida + inyección de variables. El formato lo escriben y
+| mantienen los abogados del equipo; el documento NO se revisa caso por caso.
 */
 
 return [
@@ -49,7 +49,7 @@ return [
             'Litigio por un incumplimiento que ya ocurrió',
         ],
         'seo_title' => 'Acuerdo de Confidencialidad (NDA) en Colombia | Redactado por abogados',
-        'seo_description' => 'NDA bajo ley colombiana con cláusula penal y firma electrónica válida. Redactado y auditado por abogados titulados. Entrega en 24 horas desde $90.000.',
+        'seo_description' => 'NDA bajo ley colombiana con cláusula penal y firma electrónica válida, sobre un formato escrito por abogados colombianos. Entrega en 24 horas desde $90.000.',
         'focus_keyword' => 'acuerdo de confidencialidad colombia',
         'seo_keywords' => [
             'acuerdo de confidencialidad', 'nda colombia', 'modelo acuerdo de confidencialidad',
@@ -93,7 +93,7 @@ return [
 <p>Partimos de una plantilla maestra revisada por nuestro equipo societario y la ajustamos a tu caso. Incluye identificación precisa de las partes, objeto y propósito del intercambio, definición cerrada de la información protegida con sus excepciones legales, obligaciones concretas de custodia, plazo de reserva, cláusula penal, ley aplicable y mecanismo de solución de conflictos.</p>
 
 <h2>Cuánto tarda y cuánto cuesta</h2>
-<p>Es un documento de la Fase 1: la estructura es estable y las variables son pocas, así que lo entregamos en <strong>24 horas hábiles</strong> por el precio estándar, o en <strong>menos de 4 horas</strong> si eliges Express. Un abogado titulado audita el PDF final antes de que salga.</p>
+<p>Es un documento de la Fase 1: la estructura es estable y las variables son pocas, así que lo entregamos en <strong>24 horas hábiles</strong> por el precio estándar, o en <strong>menos de 4 horas</strong> si eliges Express. El formato lo escribieron nuestros abogados y lo actualizamos cuando cambia la norma; el documento en sí se arma de forma automatizada, y eso es justo lo que permite este precio.</p>
 HTML,
     ],
 

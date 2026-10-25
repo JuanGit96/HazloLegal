@@ -53,7 +53,7 @@
                                     <span class="choice__price">{{ $pricing->formatCop($standardQuote->amount) }}</span>
                                     <span class="choice__meta">Entrega en {{ \Illuminate\Support\Str::lcfirst($standardQuote->deliveryLabel()) }}</span>
                                     <ul class="choice__list">
-                                        <li>Revisión por abogado titulado</li>
+                                        <li>Formato escrito por abogados colombianos</li>
                                         <li>Guía de radicación incluida</li>
                                         <li>Envío por correo y WhatsApp</li>
                                     </ul>
@@ -253,7 +253,7 @@
                             </span>
                         </div>
 
-                        <button type="submit" class="btn btn--primary btn--block btn--lg" style="margin-top: var(--s6);">
+                        <button type="submit" class="btn btn--primary btn--block btn--lg summary__submit" style="margin-top: var(--s6);">
                             Continuar al pago
                         </button>
 
@@ -273,6 +273,19 @@
                     </div>
                 </aside>
             </div>
+
+            {{-- Hueco y barra fija: sólo se ven en móvil. --}}
+            <div class="checkout-spacer" aria-hidden="true"></div>
+
+            <div class="checkout-bar">
+                <span class="checkout-bar__total">
+                    <span>Total</span>
+                    <strong data-bar-total>
+                        {{ $chosen === 'express' && $expressQuote ? $pricing->formatCop($expressQuote->amount) : $pricing->formatCop($standardQuote->amount) }}
+                    </strong>
+                </span>
+                <button type="submit" class="btn btn--primary">Continuar al pago</button>
+            </div>
         </form>
     </div>
 </section>
@@ -282,6 +295,7 @@
 /* El resumen se actualiza al cambiar la velocidad, sin recargar la página. */
 (function () {
     var total = document.querySelector('[data-summary-total]');
+    var barTotal = document.querySelector('[data-bar-total]');
     var delivery = document.querySelector('[data-summary-delivery]');
     var radios = document.querySelectorAll('input[name="speed"]');
 
@@ -293,7 +307,10 @@
             var price = express ? total.dataset.express : total.dataset.standard;
             var when = express ? total.dataset.expressDelivery : total.dataset.standardDelivery;
 
-            if (price) total.textContent = price;
+            if (price) {
+                total.textContent = price;
+                if (barTotal) barTotal.textContent = price;
+            }
             if (when && delivery) delivery.textContent = when;
         });
     });

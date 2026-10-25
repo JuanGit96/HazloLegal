@@ -24,7 +24,7 @@
                 ['2', 'Defines la velocidad', 'Estándar en 24 horas hábiles, o Express en menos de 4 si tienes un término encima. Es el mismo documento y el mismo abogado: lo único que cambia es la posición en la fila.'],
                 ['3', 'Nos cuentas tu caso', 'Un formulario guiado que te pide exactamente lo que el abogado necesita. Antes de enviarlo te hacemos confirmar tus datos y los de la contraparte: un dígito mal en una cédula tumba un trámite.'],
                 ['4', 'Pagas', 'Nequi, Daviplata, PSE, transferencia o tarjeta. El pago se hace dentro del sitio y recibes la confirmación con tu referencia. Nunca pedimos datos de tarjeta por WhatsApp.'],
-                ['5', 'Un abogado trabaja tu caso', 'Si es un trámite de Fase 1, se ensambla sobre una plantilla maestra que nuestros abogados validaron y uno de ellos audita el PDF final. Si es de Fase 2, un abogado lo redacta desde cero sobre tus hechos.'],
+                ['5', 'Preparamos tu documento', 'Si es un trámite automatizado, se arma sobre el formato que escribieron nuestros abogados; no pasa por revisión caso por caso, y por eso cuesta y tarda menos. Si es de redacción a la medida, un abogado lo escribe desde cero sobre tus hechos.'],
                 ['6', 'Recibes y radicas', 'El PDF llega a tu correo y a tu WhatsApp, con la guía de dónde presentarlo y qué anexar. Si lleva firma electrónica, te enviamos el enlace para firmar desde el celular.'],
             ] as [$num, $title, $text])
                 <div class="card card--pad-lg" style="flex-direction: row; gap: var(--s6); align-items: flex-start;">
@@ -56,9 +56,10 @@
                     no la arquitectura del documento.
                 </p>
                 <p class="text-sm text-muted mb-0">
-                    Aquí el sistema ensambla el documento sobre una plantilla maestra que nuestros abogados
-                    escribieron y validaron, y <strong>un abogado audita el PDF final antes de enviarlo</strong>.
-                    Eso nos permite entregarlo en horas y cobrar una fracción.
+                    Aquí el sistema arma el documento sobre un formato que nuestros abogados escribieron
+                    y que mantienen actualizado. <strong>El documento no se revisa caso por caso</strong>,
+                    y eso es exactamente lo que nos permite entregarlo en horas y cobrar una fracción.
+                    Lo decimos en la ficha de cada trámite antes de que pagues.
                 </p>
             </div>
 

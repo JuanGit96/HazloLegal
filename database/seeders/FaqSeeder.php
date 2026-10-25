@@ -15,14 +15,14 @@ class FaqSeeder extends Seeder
             // ----------------------------------------- Home
             [
                 'group' => 'home',
-                'question' => '¿Por qué pagar si puedo hacerlo con inteligencia artificial gratis?',
-                'answer' => "Porque la IA no responde por el resultado y tú sí. Los modelos generales mezclan normas de España, México y Argentina, citan artículos derogados y no saben si la jurisprudencia que usan sigue vigente. Si una EPS o un juez te rechaza el documento, pierdes tiempo y a veces el término. Nosotros ponemos un abogado titulado a responder por lo que firma, y lo respaldamos con el Certificado de Garantía.\n\nDicho eso: si tu caso es simple y quieres intentarlo solo, nuestras [guías gratuitas](/blog) explican cada trámite paso a paso. Preferimos que resuelvas tu problema aunque no nos pagues.",
+                'question' => '¿Qué estoy pagando exactamente?',
+                'answer' => "Estás pagando el trabajo jurídico que ya está hecho antes de que llegues: el formato de cada trámite lo escribieron abogados colombianos, con las normas que aplican a ese caso concreto, y lo actualizamos cuando la ley o la jurisprudencia cambian.\n\nA eso se suma el flujo que evita que te lo rechacen &mdash;validación de tus datos y los de la contraparte antes de armar el documento&mdash; y el [Certificado de Garantía](/garantia): si sale con un error nuestro, lo corregimos o te devolvemos el dinero.\n\nY si tu caso es simple y quieres intentarlo por tu cuenta, nuestras [guías gratuitas](/blog) explican cada trámite paso a paso. Preferimos que lo resuelvas aunque no nos pagues.",
                 'sort_order' => 1,
             ],
             [
                 'group' => 'home',
-                'question' => '¿Quién redacta realmente mi documento?',
-                'answer' => 'Un abogado colombiano con tarjeta profesional vigente, especializado en el área de tu caso. Publicamos el nombre y el número de tarjeta de cada uno en la página de [nuestro equipo](/nosotros), y puedes verificarlos en el registro del Consejo Superior de la Judicatura. En los trámites de Fase 1 el abogado audita un documento ensamblado sobre una plantilla maestra que él mismo validó; en los de Fase 2 lo redacta desde cero.',
+                'question' => '¿Quién hace mi documento?',
+                'answer' => "Depende del trámite, y lo decimos en la ficha de cada uno antes de que pagues.\n\n**Trámites automatizados.** Son los de estructura estable, como un acuerdo de confidencialidad o un derecho de petición de Datacrédito. El documento se arma sobre un formato que redactó un abogado de nuestro equipo y que mantenemos actualizado. **No se revisa caso por caso**, y por eso cuesta lo que cuesta.\n\n**Trámites de redacción a la medida.** Son los que dependen de tus hechos concretos: una tutela, una liquidación laboral, unos estatutos. Aquí sí hay un abogado leyendo tu caso y escribiendo para ti.\n\n**Casos complejos.** Un abogado de la red toma el caso y te representa directamente.",
                 'sort_order' => 2,
             ],
             [
@@ -130,7 +130,7 @@ class FaqSeeder extends Seeder
             [
                 'group' => 'cases',
                 'question' => '¿Cuánto tardan en responderme?',
-                'answer' => 'Tu caso se envía simultáneamente a los abogados de nuestra red especializados en esa área. El primero que lo acepta se queda con él, y en ese momento recibes un correo con su nombre, su tarjeta profesional y su experiencia. La mayoría de los casos se asignan en pocas horas; el plazo máximo es de 48 horas.',
+                'answer' => 'Tu caso se envía simultáneamente a los abogados de nuestra red especializados en esa área. El primero que lo acepta se queda con él, y en ese momento recibes un correo con su nombre, su especialidad y su experiencia. La mayoría de los casos se asignan en pocas horas; el plazo máximo es de 48 horas.',
                 'sort_order' => 2,
             ],
             [

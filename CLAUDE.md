@@ -103,11 +103,23 @@ Si tocas el reparto de casos, los precios o el SEO, añade el test antes.
 
 ## Honestidad del producto
 
-Esto no es un detalle de estilo, es parte del producto:
+Esto no es un detalle de estilo, es parte del producto y de la exposición legal
+de la empresa:
 
+- **Nunca prometer que un abogado revisa cada documento.** En los trámites
+  automatizados no ocurre. Lo que se afirma es que el *formato* lo escribieron
+  abogados y que se mantiene actualizado.
+- **Nunca publicar números de tarjeta profesional.** El campo existe para
+  control interno; sacarlo al sitio comprometería al abogado nombrado con una
+  revisión individual que no hace.
 - Nunca prometer un resultado judicial. Se garantiza la calidad del documento,
   no la decisión de un juez.
 - Decir qué **no** incluye cada trámite antes de cobrar.
 - No inventar testimonios, cifras ni abogados. Es publicidad engañosa y la SIC
   la sanciona.
+- **No nombrar alternativas gratuitas dentro del embudo.** Mencionar la IA o
+  las plantillas gratis en la home le planta la idea a quien no la traía. Ese
+  contenido va en el blog, donde llega quien ya la está buscando.
 - Los datos de demostración van marcados como tales en el seeder.
+
+`PublicSeoTest` tiene tests que fallan si alguna de estas reglas se rompe.

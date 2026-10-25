@@ -28,7 +28,7 @@ class BlogSeeder extends Seeder
             PostCategory::query()->updateOrCreate(['slug' => $category['slug']], [
                 ...$category,
                 'seo_title' => "{$category['name']}: guías legales gratis | Hazlo Legal",
-                'seo_description' => $category['description'].' Explicado por abogados colombianos titulados.',
+                'seo_description' => $category['description'].' Explicado por abogados colombianos.',
             ]);
         }
 

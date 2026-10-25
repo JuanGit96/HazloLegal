@@ -17,8 +17,8 @@ return new class extends Migration
             $table->string('whatsapp')->nullable();
             $table->string('photo_path')->nullable();
 
-            // Credenciales: indispensables para E-E-A-T y para la confianza del cliente.
-            $table->string('professional_card')->nullable()->comment('Tarjeta profesional (T.P.)');
+            // La tarjeta es control interno del equipo: no se publica en el sitio.
+            $table->string('professional_card')->nullable()->comment('Tarjeta profesional (uso interno, no se publica)');
             $table->string('university')->nullable();
             $table->string('headline')->nullable();
             $table->text('bio')->nullable();

@@ -13,7 +13,7 @@
         Ya lo enviamos a los abogados de nuestra red especializados en
         <strong>{{ \Illuminate\Support\Str::lower($case->practice_area->getLabel()) }}</strong>.
         El primero que lo acepte se queda con él, y en ese momento te escribimos con su nombre,
-        su tarjeta profesional y su experiencia.
+        su especialidad y su experiencia.
     </p>
 
     <x-email.note tone="info" icon="🔖">

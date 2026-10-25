@@ -68,7 +68,7 @@ class PageController
         return view('pages.how-it-works', [
             'meta' => $this->seo->page(
                 title: 'Cómo funciona Hazlo Legal: de tu problema al documento en 4 pasos',
-                description: 'Eliges el trámite, cuentas tu caso, un abogado titulado lo audita y recibes el PDF listo para radicar. Sin oficinas, sin honorarios sorpresa.',
+                description: 'Eliges el trámite, cuentas tu caso y recibes el PDF listo para radicar, sobre formatos escritos por abogados colombianos. Sin oficinas, sin honorarios sorpresa.',
                 canonical: route('pages.how-it-works'),
                 crumbs: [
                     ['name' => 'Inicio', 'url' => url('/')],
@@ -85,7 +85,7 @@ class PageController
         return view('pages.about', [
             'meta' => $this->seo->page(
                 title: 'Quiénes somos | Abogados titulados detrás de Hazlo Legal',
-                description: 'Somos un equipo de abogados colombianos con tarjeta profesional que automatizó lo repetitivo para cobrar menos y responder más rápido.',
+                description: 'Somos un equipo de abogados colombianos que automatizó lo repetitivo para cobrar menos y responder más rápido. Te explicamos exactamente cómo se hace cada documento.',
                 canonical: route('pages.about'),
                 crumbs: [
                     ['name' => 'Inicio', 'url' => url('/')],

@@ -37,8 +37,13 @@
             <ul>
                 <li>
                     <strong>Documento listo para usar.</strong> Entrega de un documento jurídico en formato PDF
-                    (y Word cuando aplique), redactado o ensamblado con base en la información que suministre el
-                    usuario y auditado por un abogado titulado. Incluye una ronda de ajustes.
+                    (y Word cuando aplique), elaborado con base en la información que suministre el usuario.
+                    En los trámites identificados como <em>automatizados</em>, el documento se ensambla sobre un
+                    formato elaborado previamente por abogados de Hazlo Legal y <strong>no es objeto de revisión
+                    individual caso por caso</strong>. En los trámites identificados como <em>de redacción a la
+                    medida</em>, lo elabora un abogado a partir de los hechos del usuario. La ficha de cada
+                    trámite indica cuál de las dos modalidades aplica, antes del pago.
+                    Incluye una ronda de ajustes.
                 </li>
                 <li>
                     <strong>Documento + asesoría.</strong> Lo anterior, más una videollamada de treinta (30)

@@ -8,9 +8,12 @@ use App\Domain\Lawyers\Models\Lawyer;
 use Illuminate\Database\Seeder;
 
 /**
- * Equipo de demostración. Los datos son de prueba: antes de publicar hay que
- * reemplazarlos por abogados reales con tarjeta profesional verificable,
- * porque son la base de la señal E-E-A-T que exige Google en contenido legal.
+ * Equipo de demostración. Los datos son de prueba y hay que reemplazarlos por
+ * abogados reales antes de publicar.
+ *
+ * La tarjeta profesional se guarda para el control interno del equipo, pero
+ * NO se publica en ninguna página ni correo: el sitio no promete que un
+ * abogado revise cada documento, solo que los formatos son suyos.
  */
 class LawyerSeeder extends Seeder
 {

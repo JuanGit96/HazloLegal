@@ -5,8 +5,8 @@
     <h3>{{ $lawyer->name }}</h3>
     <p class="lawyer-card__role">{{ $lawyer->headline ?: 'Abogado titulado' }}</p>
 
-    @if ($lawyer->professional_card)
-        <p class="lawyer-card__cred">T.P. {{ $lawyer->professional_card }} · C.S. de la J.</p>
+    @if ($lawyer->years_experience)
+        <p class="lawyer-card__cred">{{ $lawyer->years_experience }} años de ejercicio · {{ $lawyer->city }}</p>
     @endif
 
     @if ($lawyer->bio)

@@ -90,9 +90,10 @@ tests que simulan la carrera.
 
 El catálogo distingue dos fases, y esa distinción se muestra al cliente:
 
-- **Fase 1 · Automatizado.** Estructura estable. Se ensambla sobre una plantilla
-  maestra y un abogado audita el PDF final. NDA, Datacrédito, promesa de
-  compraventa, arrendamiento, fotomultas.
+- **Fase 1 · Automatizado.** Estructura estable. Se arma sobre un formato que
+  escribieron y mantienen los abogados del equipo. **El documento no se revisa
+  caso por caso**, y el sitio lo dice en cada ficha. NDA, Datacrédito, promesa
+  de compraventa, arrendamiento, fotomultas.
 - **Fase 2 · Redacción manual.** Exige narrar hechos, calcular o escribir
   cláusulas condicionales. Lo redacta un abogado desde cero. Tutela, liquidación
   laboral, prestación de servicios, SAS, derecho de petición general.
@@ -127,8 +128,20 @@ El catálogo distingue dos fases, y esa distinción se muestra al cliente:
 | **Datos de contacto de relleno** (WhatsApp, NIT, dirección) | `.env` / `config/hazlolegal.php` |
 
 > ⚠️ **Antes de publicar**: los testimonios inventados son publicidad engañosa y
-> la SIC puede sancionarlos (Ley 1480 de 2011, art. 30). Las tarjetas
-> profesionales deben ser verificables en el Consejo Superior de la Judicatura.
+> la SIC puede sancionarlos (Ley 1480 de 2011, art. 30).
+
+### Qué NO promete el sitio, a propósito
+
+El sitio **no publica números de tarjeta profesional** y **no afirma que un
+abogado revise cada documento**. Es una decisión deliberada: en los trámites
+automatizados nadie revisa caso por caso, y prometerlo expondría tanto a la
+empresa como al abogado concreto que se nombrara.
+
+Lo que sí se afirma, y es verificable: los formatos los escriben abogados
+colombianos del equipo, se actualizan cuando cambia la norma, y el resultado
+está cubierto por el Certificado de Garantía. La tarjeta profesional se guarda
+en la ficha de cada abogado como **control interno** y no sale en ninguna
+página ni correo. Hay tests que lo verifican (`PublicSeoTest`).
 
 ---
 
@@ -168,9 +181,11 @@ La estrategia está montada sobre tres capas:
    contenido largo, FAQ con marcado `FAQPage`, precio y `Offer` en JSON-LD.
 2. **Clusters informativos** (`/blog`): guías que atacan la búsqueda informativa
    («cómo hacer una tutela») y enlazan al servicio de pago correspondiente.
-3. **E-E-A-T**: el contenido legal es YMYL y Google exige autoría verificable.
-   Cada artículo declara autor y revisor con tarjeta profesional en el JSON-LD
-   (`BlogPosting` → `reviewedBy` → `EducationalOccupationalCredential`).
+3. **E-E-A-T**: el contenido legal es YMYL y Google exige autoría acreditada.
+   Cada artículo declara autor y revisor en el JSON-LD (`BlogPosting` →
+   `author` / `reviewedBy` → `Person` con especialidad y formación). Se dejó
+   fuera `hasCredential` para no publicar la tarjeta profesional; la autoría
+   nominal con experiencia declarada conserva la mayor parte de la señal.
 
 Datos estructurados implementados: `LegalService`, `WebSite` con `SearchAction`,
 `Service` + `Offer`, `FAQPage`, `BreadcrumbList`, `BlogPosting`, `ItemList`,

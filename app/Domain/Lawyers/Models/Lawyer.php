@@ -119,14 +119,15 @@ class Lawyer extends Model
             ->implode('');
     }
 
-    /** Credencial completa para pie de artículos y correos. */
+    /**
+     * Línea de presentación para artículos y correos.
+     *
+     * Deliberadamente NO incluye la tarjeta profesional: el número se guarda
+     * para control interno del equipo, pero no se publica ni se usa como
+     * argumento comercial.
+     */
     public function credentialLine(): string
     {
-        $parts = array_filter([
-            $this->headline,
-            $this->professional_card ? "T.P. {$this->professional_card} del C.S. de la J." : null,
-        ]);
-
-        return implode(' · ', $parts);
+        return collect([$this->headline, $this->city])->filter()->implode(' · ');
     }
 }
