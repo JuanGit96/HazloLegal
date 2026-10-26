@@ -134,7 +134,7 @@ class LegalDocument extends Model
 
     public function metaTitle(): string
     {
-        return $this->seo_title ?: "{$this->name} en Colombia | Hazlo Legal";
+        return $this->seo_title ?: "{$this->name} en Colombia | HazloLegal";
     }
 
     public function metaDescription(): string

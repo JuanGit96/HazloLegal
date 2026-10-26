@@ -4,7 +4,7 @@
    class="wa-float"
    target="_blank"
    rel="noopener"
-   aria-label="Escribir por WhatsApp a Hazlo Legal">
+   aria-label="Escribir por WhatsApp a HazloLegal">
     <span class="wa-float__pulse" aria-hidden="true"></span>
     <span class="wa-float__icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="#25D366" aria-hidden="true">

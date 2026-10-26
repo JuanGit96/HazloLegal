@@ -31,7 +31,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->brandName('Hazlo Legal')
+            ->brandName('HazloLegal')
             ->favicon(asset('img/favicon.svg'))
             ->colors([
                 'primary' => Color::Blue,

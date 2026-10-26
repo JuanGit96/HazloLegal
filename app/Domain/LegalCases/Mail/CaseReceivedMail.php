@@ -16,7 +16,7 @@ class CaseReceivedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "Recibimos tu caso {$this->case->reference} · Hazlo Legal",
+            subject: "Recibimos tu caso {$this->case->reference} · HazloLegal",
             replyTo: [config('hazlolegal.contact.cases_email')],
         );
     }

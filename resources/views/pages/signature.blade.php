@@ -89,7 +89,7 @@
                 Cuando tu caso sea uno de estos, te lo advertimos <strong>antes</strong> de que pagues.
             </p>
 
-            <h2>Cómo funciona en Hazlo Legal</h2>
+            <h2>Cómo funciona en HazloLegal</h2>
             <p>
                 En los documentos que admiten firma electrónica, cada parte recibe un enlace por correo.
                 Al abrirlo, verifica su identidad con un código OTP que llega a su celular, revisa el

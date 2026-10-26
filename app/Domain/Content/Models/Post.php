@@ -86,7 +86,7 @@ class Post extends Model
 
     public function metaTitle(): string
     {
-        return $this->seo_title ?: "{$this->title} | Hazlo Legal";
+        return $this->seo_title ?: "{$this->title} | HazloLegal";
     }
 
     public function metaDescription(): string

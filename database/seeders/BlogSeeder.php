@@ -27,7 +27,7 @@ class BlogSeeder extends Seeder
         foreach ($categories as $category) {
             PostCategory::query()->updateOrCreate(['slug' => $category['slug']], [
                 ...$category,
-                'seo_title' => "{$category['name']}: guías legales gratis | Hazlo Legal",
+                'seo_title' => "{$category['name']}: guías legales gratis | HazloLegal",
                 'seo_description' => $category['description'].' Explicado por abogados colombianos.',
             ]);
         }

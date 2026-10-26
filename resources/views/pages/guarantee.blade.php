@@ -12,7 +12,7 @@
             <span class="eyebrow" style="color: var(--green-700); margin-top: var(--s6); display: block;">
                 Versión {{ $guarantee['version'] }} · vigente
             </span>
-            <h1>Certificado de Garantía Hazlo Legal</h1>
+            <h1>Certificado de Garantía HazloLegal</h1>
             <p class="text-muted" style="font-size: var(--t-lg);">
                 No te pedimos que confíes a ciegas en un servicio legal que compras por internet.
                 Te damos por escrito qué pasa si algo sale mal por nuestra culpa.

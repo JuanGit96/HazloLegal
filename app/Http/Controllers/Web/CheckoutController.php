@@ -37,7 +37,7 @@ class CheckoutController
     {
         return view('checkout.plans', [
             'meta' => $this->seo->page(
-                title: 'Elige tu plan | Hazlo Legal',
+                title: 'Elige tu plan | HazloLegal',
                 description: 'Documento listo para usar, documento con asesoría o representación para un caso complejo.',
                 canonical: route('checkout.plans'),
                 noindex: true,
@@ -56,7 +56,7 @@ class CheckoutController
 
         return view('checkout.documents', [
             'meta' => $this->seo->page(
-                title: "Elige tu trámite · {$plan->name} | Hazlo Legal",
+                title: "Elige tu trámite · {$plan->name} | HazloLegal",
                 description: 'Selecciona el documento que necesitas y continúa con tus datos.',
                 canonical: route('checkout.documents', $plan->key->value),
                 noindex: true,
@@ -81,7 +81,7 @@ class CheckoutController
 
         return view('checkout.configure', [
             'meta' => $this->seo->page(
-                title: "Pedir {$document->name} · {$plan->name} | Hazlo Legal",
+                title: "Pedir {$document->name} · {$plan->name} | HazloLegal",
                 description: 'Confirma la velocidad de entrega y cuéntanos tu caso.',
                 canonical: route('checkout.configure', [$plan->key->value, $document->slug]),
                 noindex: true,
@@ -128,7 +128,7 @@ class CheckoutController
 
         return view('checkout.payment', [
             'meta' => $this->seo->page(
-                title: "Pago de tu pedido {$order->reference} | Hazlo Legal",
+                title: "Pago de tu pedido {$order->reference} | HazloLegal",
                 description: 'Último paso para que tu documento entre a la fila de redacción.',
                 canonical: route('checkout.payment', $order->reference),
                 noindex: true,
@@ -158,7 +158,7 @@ class CheckoutController
     {
         return view('checkout.confirmation', [
             'meta' => $this->seo->page(
-                title: "Pedido {$order->reference} confirmado | Hazlo Legal",
+                title: "Pedido {$order->reference} confirmado | HazloLegal",
                 description: 'Resumen y seguimiento de tu pedido.',
                 canonical: route('checkout.confirmation', $order->reference),
                 noindex: true,

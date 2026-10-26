@@ -1,6 +1,6 @@
 <header class="site-header" data-nav>
     <div class="container site-header__inner">
-        <a href="{{ route('home') }}" class="logo" aria-label="Hazlo Legal, inicio">
+        <a href="{{ route('home') }}" class="logo" aria-label="HazloLegal, inicio">
             <span class="logo__mark" aria-hidden="true">⚖</span>
             Hazlo<em>Legal</em>
         </a>

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Hazlo Legal — sistema de diseño
+   HazloLegal — sistema de diseño
    Light-only a propósito: la paleta azul/naranja es parte de la señal de
    confianza y un tema oscuro automático la rompería. Sin build step: se
    sirve tal cual, cacheado, en una sola petición.
@@ -210,7 +210,7 @@ hr { border: 0; border-top: 1px solid var(--border); margin: var(--s10) 0; }
 .site-header__inner { display: flex; align-items: center; justify-content: space-between; gap: var(--s5); height: 100%; }
 
 .logo {
-    display: inline-flex; align-items: center; gap: var(--s2);
+    display: inline-flex; align-items: center; 
     font-size: 1.3rem; font-weight: 800; letter-spacing: -.03em;
     color: var(--brand-dark); text-decoration: none; flex-shrink: 0;
 }

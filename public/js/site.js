@@ -1,4 +1,4 @@
-/* Hazlo Legal — JS mínimo: menú móvil y animación al scroll. Nada más. */
+/* HazloLegal — JS mínimo: menú móvil y animación al scroll. Nada más. */
 (function () {
     'use strict';
 

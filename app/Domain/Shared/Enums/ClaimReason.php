@@ -6,7 +6,7 @@ namespace App\Domain\Shared\Enums;
 
 use Filament\Support\Contracts\HasLabel;
 
-/** Motivos cubiertos por el Certificado de Garantía Hazlo Legal. */
+/** Motivos cubiertos por el Certificado de Garantía HazloLegal. */
 enum ClaimReason: string implements HasLabel
 {
     case Typo = 'typo';

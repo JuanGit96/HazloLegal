@@ -207,7 +207,7 @@
             <label class="checkbox">
                 <input type="checkbox" name="accepts_privacy" value="1" required @checked(old('accepts_privacy'))>
                 <span>
-                    Autorizo que mi caso se comparta con los abogados de la red de Hazlo Legal para que lo
+                    Autorizo que mi caso se comparta con los abogados de la red de HazloLegal para que lo
                     evalúen, y el tratamiento de mis datos conforme a la
                     <a href="{{ route('pages.privacy') }}" target="_blank">política de privacidad</a>
                     y la Ley 1581 de 2012. <span class="req" aria-hidden="true">*</span>

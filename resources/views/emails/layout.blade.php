@@ -11,7 +11,7 @@
     <meta name="x-apple-disable-message-reformatting">
     <meta name="color-scheme" content="light">
     <meta name="supported-color-schemes" content="light">
-    <title>@yield('subject', 'Hazlo Legal')</title>
+    <title>@yield('subject', 'HazloLegal')</title>
     <style>
         body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
         table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
@@ -32,7 +32,7 @@
 <body style="margin:0; padding:0; background-color:#F1F5F9;">
     {{-- Preheader: lo que se lee en la bandeja antes de abrir --}}
     <div style="display:none; font-size:1px; color:#F1F5F9; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;">
-        @yield('preheader', 'Hazlo Legal · trámites legales con abogados titulados en Colombia')
+        @yield('preheader', 'HazloLegal · trámites legales con abogados titulados en Colombia')
     </div>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F1F5F9;">

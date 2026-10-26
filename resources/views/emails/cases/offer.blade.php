@@ -3,7 +3,7 @@
 @section('subject', "Caso nuevo {$case->reference}")
 @section('accent', $case->urgency === \App\Domain\LegalCases\Enums\CaseUrgency::Critical ? '#DC2626' : '#EA580C')
 @section('preheader', "{$case->practice_area->getLabel()} · {$case->title} · se lo queda el primero que acepte")
-@section('footnote', 'Recibes este correo porque eres abogado de la red de Hazlo Legal y el caso corresponde a tu área. Puedes pausar las invitaciones escribiéndonos.')
+@section('footnote', 'Recibes este correo porque eres abogado de la red de HazloLegal y el caso corresponde a tu área. Puedes pausar las invitaciones escribiéndonos.')
 
 @section('content')
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">

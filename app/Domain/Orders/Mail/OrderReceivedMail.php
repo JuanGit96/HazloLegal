@@ -16,7 +16,7 @@ class OrderReceivedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "Tu pedido {$this->order->reference} quedó registrado · Hazlo Legal",
+            subject: "Tu pedido {$this->order->reference} quedó registrado · HazloLegal",
             replyTo: [config('hazlolegal.contact.email')],
         );
     }

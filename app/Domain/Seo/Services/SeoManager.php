@@ -33,7 +33,7 @@ final class SeoManager
     public function catalog(Collection $documents): SeoMeta
     {
         $meta = new SeoMeta(
-            title: 'Catálogo de trámites legales en Colombia | Precios y tiempos | Hazlo Legal',
+            title: 'Catálogo de trámites legales en Colombia | Precios y tiempos | HazloLegal',
             description: 'Tutelas, derechos de petición, contratos de arrendamiento, NDA, promesas de compraventa y más. Precio fijo publicado y entrega desde 4 horas.',
             canonical: route('documents.index'),
             breadcrumbs: [
@@ -73,8 +73,8 @@ final class SeoManager
     public function blogIndex(?PostCategory $category = null): SeoMeta
     {
         $title = $category
-            ? ($category->seo_title ?: "{$category->name} | Guías legales | Hazlo Legal")
-            : 'Guías legales gratis para Colombia | Blog de Hazlo Legal';
+            ? ($category->seo_title ?: "{$category->name} | Guías legales | HazloLegal")
+            : 'Guías legales gratis para Colombia | Blog de HazloLegal';
 
         $description = $category
             ? ($category->seo_description ?: "Guías y formatos sobre {$category->name} explicados por abogados colombianos.")

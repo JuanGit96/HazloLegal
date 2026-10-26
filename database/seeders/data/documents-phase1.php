@@ -328,7 +328,7 @@ HTML,
             'Proceso de restitución del inmueble (lo cotizamos como caso complejo)',
             'Registro del contrato o trámites ante la alcaldía',
         ],
-        'seo_title' => 'Contrato de Arrendamiento de Vivienda Urbana | Ley 820 | Hazlo Legal',
+        'seo_title' => 'Contrato de Arrendamiento de Vivienda Urbana | Ley 820 | HazloLegal',
         'seo_description' => 'Contrato de arriendo de vivienda conforme a la Ley 820 de 2003, con inventario y cláusulas exigibles. Redactado por abogados colombianos. Entrega en 24 horas.',
         'focus_keyword' => 'contrato de arrendamiento vivienda urbana',
         'seo_keywords' => [

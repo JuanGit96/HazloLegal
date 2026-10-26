@@ -25,7 +25,7 @@
                 <div class="socials">
                     @foreach ($icons as $key => $path)
                         @if (!empty($social[$key]))
-                            <a href="{{ $social[$key] }}" class="social" target="_blank" rel="noopener me" aria-label="{{ $labels[$key] }} de Hazlo Legal" title="{{ $labels[$key] }}">
+                            <a href="{{ $social[$key] }}" class="social" target="_blank" rel="noopener me" aria-label="{{ $labels[$key] }} de HazloLegal" title="{{ $labels[$key] }}">
                                 <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">{!! $path !!}</svg>
                             </a>
                         @endif

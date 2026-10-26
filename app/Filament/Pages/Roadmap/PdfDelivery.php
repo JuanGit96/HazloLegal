@@ -19,7 +19,7 @@ class PdfDelivery extends RoadmapPage
 
     public function summary(): string
     {
-        return 'Convertir el documento aprobado en un PDF con la identidad de Hazlo Legal y entregarlo por los canales prometidos.';
+        return 'Convertir el documento aprobado en un PDF con la identidad de HazloLegal y entregarlo por los canales prometidos.';
     }
 
     public function why(): string

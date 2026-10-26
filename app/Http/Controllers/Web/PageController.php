@@ -27,7 +27,7 @@ class PageController
 
         $meta = $this->seo->withFaqSchema(
             $this->seo->page(
-                title: 'Certificado de Garantía Hazlo Legal: corregimos o devolvemos tu dinero',
+                title: 'Certificado de Garantía HazloLegal: corregimos o devolvemos tu dinero',
                 description: 'Si tu documento tiene errores de redacción o datos, lo corregimos en 24 horas sin costo. Si una entidad lo rechaza por defecto de forma nuestro, te devolvemos el 100 %. Por escrito.',
                 canonical: route('pages.guarantee'),
                 crumbs: [
@@ -67,7 +67,7 @@ class PageController
     {
         return view('pages.how-it-works', [
             'meta' => $this->seo->page(
-                title: 'Cómo funciona Hazlo Legal: de tu problema al documento en 4 pasos',
+                title: 'Cómo funciona HazloLegal: de tu problema al documento en 4 pasos',
                 description: 'Eliges el trámite, cuentas tu caso y recibes el PDF listo para radicar, sobre formatos escritos por abogados colombianos. Sin oficinas, sin honorarios sorpresa.',
                 canonical: route('pages.how-it-works'),
                 crumbs: [
@@ -84,7 +84,7 @@ class PageController
     {
         return view('pages.about', [
             'meta' => $this->seo->page(
-                title: 'Quiénes somos | Abogados titulados detrás de Hazlo Legal',
+                title: 'Quiénes somos | Abogados titulados detrás de HazloLegal',
                 description: 'Somos un equipo de abogados colombianos que automatizó lo repetitivo para cobrar menos y responder más rápido. Te explicamos exactamente cómo se hace cada documento.',
                 canonical: route('pages.about'),
                 crumbs: [
@@ -100,8 +100,8 @@ class PageController
     {
         return view('pages.terms', [
             'meta' => $this->seo->page(
-                title: 'Términos y condiciones | Hazlo Legal',
-                description: 'Condiciones de uso del servicio de documentos y acompañamiento legal de Hazlo Legal.',
+                title: 'Términos y condiciones | HazloLegal',
+                description: 'Condiciones de uso del servicio de documentos y acompañamiento legal de HazloLegal.',
                 canonical: route('pages.terms'),
             ),
         ]);
@@ -111,7 +111,7 @@ class PageController
     {
         return view('pages.privacy', [
             'meta' => $this->seo->page(
-                title: 'Política de tratamiento de datos personales | Hazlo Legal',
+                title: 'Política de tratamiento de datos personales | HazloLegal',
                 description: 'Cómo recolectamos, usamos y protegemos tus datos personales conforme a la Ley 1581 de 2012 y el Decreto 1377 de 2013.',
                 canonical: route('pages.privacy'),
             ),

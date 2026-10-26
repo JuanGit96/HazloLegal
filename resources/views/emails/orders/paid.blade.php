@@ -65,7 +65,7 @@
     <x-email.button :href="route('checkout.confirmation', $order->reference)" label="Ver el estado de mi pedido" color="#059669" />
 
     <x-email.note tone="success" icon="🛡️">
-        Tu pedido está cubierto por el <strong>Certificado de Garantía Hazlo Legal</strong>:
+        Tu pedido está cubierto por el <strong>Certificado de Garantía HazloLegal</strong>:
         si el documento sale con errores nuestros lo corregimos sin costo, y si una entidad
         lo rechaza por un defecto de forma nuestro te devolvemos el 100 %.
         <a href="{{ route('pages.guarantee') }}" style="color:#047857;">Ver el certificado</a>.

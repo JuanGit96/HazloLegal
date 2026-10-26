@@ -17,7 +17,7 @@ class AdminUserSeeder extends Seeder
         User::query()->updateOrCreate(
             ['email' => 'admin@hazlolegal.co'],
             [
-                'name' => 'Equipo Hazlo Legal',
+                'name' => 'Equipo HazloLegal',
                 'password' => Hash::make('hazlolegal2026'),
                 'email_verified_at' => now(),
             ],

@@ -143,11 +143,11 @@
 
         <div class="compare-wrap reveal">
             <table class="compare">
-                <caption class="visually-hidden">Comparación entre resolver tu trámite con Hazlo Legal o acudiendo a una oficina de abogados</caption>
+                <caption class="visually-hidden">Comparación entre resolver tu trámite con HazloLegal o acudiendo a una oficina de abogados</caption>
                 <thead>
                     <tr>
                         <th scope="col">&nbsp;</th>
-                        <th scope="col" class="is-us">Hazlo Legal</th>
+                        <th scope="col" class="is-us">HazloLegal</th>
                         <th scope="col">Oficina de abogados</th>
                     </tr>
                 </thead>
@@ -281,7 +281,7 @@
 
         <p class="center mt-8 text-sm text-muted">
             Todos los planes están cubiertos por el
-            <a href="{{ route('pages.guarantee') }}"><strong>Certificado de Garantía Hazlo Legal</strong></a>:
+            <a href="{{ route('pages.guarantee') }}"><strong>Certificado de Garantía HazloLegal</strong></a>:
             si el documento sale con un error nuestro, lo corregimos o te devolvemos el dinero.
         </p>
     </div>
@@ -296,7 +296,7 @@
 
                 <div>
                     <span class="eyebrow" style="color: var(--green-700);">Nuestro compromiso</span>
-                    <h2 style="margin-bottom: var(--s3);">Certificado de Garantía Hazlo Legal</h2>
+                    <h2 style="margin-bottom: var(--s3);">Certificado de Garantía HazloLegal</h2>
                     <p class="text-muted" style="font-size: var(--t-lg);">
                         No te pedimos que confíes a ciegas. Te lo damos por escrito: si el documento
                         sale con errores nuestros, lo arreglamos. Y si una entidad lo rechaza por un

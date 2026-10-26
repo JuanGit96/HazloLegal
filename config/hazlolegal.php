@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /*
 |--------------------------------------------------------------------------
-| Configuración de negocio de Hazlo Legal
+| Configuración de negocio de HazloLegal
 |--------------------------------------------------------------------------
 | Todo lo que el equipo comercial cambia sin tocar código vive aquí o en
 | el panel. Lo que cambia por entorno (números, cuentas, IDs) va por .env.
@@ -13,8 +13,8 @@ declare(strict_types=1);
 return [
 
     'brand' => [
-        'name' => 'Hazlo Legal',
-        'legal_name' => env('HL_LEGAL_NAME', 'Hazlo Legal S.A.S.'),
+        'name' => 'HazloLegal',
+        'legal_name' => env('HL_LEGAL_NAME', 'HazloLegal S.A.S.'),
         'nit' => env('HL_NIT', '901.000.000-1'),
         'tagline' => 'Certeza legal, sin honorarios sorpresa.',
         'founded' => '2026',
@@ -78,7 +78,7 @@ return [
     ],
 
     'seo' => [
-        'default_title' => 'Hazlo Legal | Documentos y trámites legales en Colombia, listos en 24 horas',
+        'default_title' => 'HazloLegal | Documentos y trámites legales en Colombia, listos en 24 horas',
         'default_description' => 'Tutelas, derechos de petición y contratos redactados por abogados colombianos titulados. Entrega en 24 horas o 4 horas express, con garantía de corrección por escrito.',
         'og_image' => '/img/og-hazlolegal.png',
         'locale' => 'es_CO',

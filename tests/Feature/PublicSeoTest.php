@@ -148,7 +148,7 @@ class PublicSeoTest extends TestCase
     {
         $this->get(route('home'))
             ->assertOk()
-            ->assertSee('Certificado de Garantía Hazlo Legal')
+            ->assertSee('Certificado de Garantía HazloLegal')
             ->assertSee('wa-float', escape: false)
             ->assertSee('wa.me', escape: false);
     }

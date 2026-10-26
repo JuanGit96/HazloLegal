@@ -71,7 +71,7 @@ class LegalCaseController
     {
         return view('cases.received', [
             'meta' => $this->seo->page(
-                title: "Caso {$case->reference} recibido | Hazlo Legal",
+                title: "Caso {$case->reference} recibido | HazloLegal",
                 description: 'Tu caso ya está en manos de nuestros abogados.',
                 canonical: route('cases.received', $case->reference),
                 noindex: true,
@@ -98,7 +98,7 @@ class LegalCaseController
 
         return view('cases.offer-result', [
             'meta' => $this->seo->page(
-                title: 'Respuesta registrada | Hazlo Legal',
+                title: 'Respuesta registrada | HazloLegal',
                 description: 'Resultado de tu respuesta al caso.',
                 canonical: url()->current(),
                 noindex: true,
@@ -123,7 +123,7 @@ class LegalCaseController
 
         return view('cases.offer-result', [
             'meta' => $this->seo->page(
-                title: 'Respuesta registrada | Hazlo Legal',
+                title: 'Respuesta registrada | HazloLegal',
                 description: 'Resultado de tu respuesta al caso.',
                 canonical: url()->current(),
                 noindex: true,

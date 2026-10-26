@@ -1,4 +1,4 @@
-# Hazlo Legal
+# HazloLegal
 
 Plataforma de documentos y trámites legales para Colombia: catálogo con precio
 fijo, embudo de compra, reparto de casos complejos entre abogados y blog como

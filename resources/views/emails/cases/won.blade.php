@@ -3,7 +3,7 @@
 @section('subject', "El caso {$case->reference} es tuyo")
 @section('accent', '#059669')
 @section('preheader', "Llegaste primero. Aquí están los datos de contacto de {$case->client_name}.")
-@section('footnote', 'La información de este caso está sujeta a reserva profesional. No la compartas fuera de la red de Hazlo Legal.')
+@section('footnote', 'La información de este caso está sujeta a reserva profesional. No la compartas fuera de la red de HazloLegal.')
 
 @section('content')
     <h1 class="hl-h1" style="margin:0 0 12px 0; font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:26px; line-height:33px; font-weight:800; letter-spacing:-.5px; color:#0F172A;">

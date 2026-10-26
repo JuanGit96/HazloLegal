@@ -7,7 +7,7 @@
 
         <div class="section-head">
             <span class="eyebrow">El proceso</span>
-            <h1>Cómo funciona Hazlo Legal</h1>
+            <h1>Cómo funciona HazloLegal</h1>
             <p>
                 Automatizamos lo repetitivo para cobrar menos y responder más rápido.
                 Lo que exige criterio jurídico lo sigue haciendo un abogado, a mano.

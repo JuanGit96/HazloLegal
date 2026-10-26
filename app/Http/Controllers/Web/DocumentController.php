@@ -62,7 +62,7 @@ class DocumentController
         }
 
         $meta = $this->seo->page(
-            title: "{$practiceArea->getLabel()}: trámites y documentos legales | Hazlo Legal",
+            title: "{$practiceArea->getLabel()}: trámites y documentos legales | HazloLegal",
             description: "Documentos de {$practiceArea->getLabel()} redactados por abogados colombianos. Precio fijo y entrega desde 4 horas.",
             canonical: route('documents.area', $practiceArea->value),
             crumbs: [

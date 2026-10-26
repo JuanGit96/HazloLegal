@@ -53,7 +53,7 @@ return [
             'Garantía del resultado: la decisión es del juez',
             'Obtención de tu historia clínica (la EPS debe entregártela si la pides)',
         ],
-        'seo_title' => 'Cómo hacer una Acción de Tutela por Salud en Colombia | Hazlo Legal',
+        'seo_title' => 'Cómo hacer una Acción de Tutela por Salud en Colombia | HazloLegal',
         'seo_description' => 'Tutela contra tu EPS redactada por un abogado especialista a partir de tus hechos. Medida provisional si hay riesgo de vida. Entrega en 24 horas, desde $90.000.',
         'focus_keyword' => 'como hacer una tutela por salud',
         'seo_keywords' => [

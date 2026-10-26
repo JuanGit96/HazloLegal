@@ -1,4 +1,4 @@
-# Convenciones de Hazlo Legal
+# Convenciones de HazloLegal
 
 Lee esto antes de tocar el código. El `README.md` explica qué es el proyecto;
 esto explica cómo se escribe.

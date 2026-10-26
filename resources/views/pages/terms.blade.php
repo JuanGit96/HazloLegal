@@ -13,17 +13,17 @@
             <p>
                 Este sitio es operado por {{ config('hazlolegal.brand.legal_name') }}, NIT
                 {{ config('hazlolegal.brand.nit') }}, con domicilio en {{ config('hazlolegal.contact.address') }},
-                {{ config('hazlolegal.contact.city') }}, Colombia (en adelante, «Hazlo Legal»).
+                {{ config('hazlolegal.contact.city') }}, Colombia (en adelante, «HazloLegal»).
             </p>
 
             <h2>2. Qué es y qué no es este servicio</h2>
             <p>
-                Hazlo Legal presta servicios de <strong>elaboración de documentos jurídicos</strong> y, en la
+                HazloLegal presta servicios de <strong>elaboración de documentos jurídicos</strong> y, en la
                 modalidad de caso complejo, facilita el contacto con abogados independientes inscritos en su red.
             </p>
             <p>
                 <strong>El uso de este sitio no crea una relación abogado-cliente.</strong> Dicha relación surge
-                únicamente cuando se confirma el pago del servicio y Hazlo Legal acepta expresamente el encargo,
+                únicamente cuando se confirma el pago del servicio y HazloLegal acepta expresamente el encargo,
                 o cuando un abogado de la red acepta un caso complejo y celebra directamente con el usuario el
                 correspondiente contrato de prestación de servicios profesionales.
             </p>
@@ -39,7 +39,7 @@
                     <strong>Documento listo para usar.</strong> Entrega de un documento jurídico en formato PDF
                     (y Word cuando aplique), elaborado con base en la información que suministre el usuario.
                     En los trámites identificados como <em>automatizados</em>, el documento se ensambla sobre un
-                    formato elaborado previamente por abogados de Hazlo Legal y <strong>no es objeto de revisión
+                    formato elaborado previamente por abogados de HazloLegal y <strong>no es objeto de revisión
                     individual caso por caso</strong>. En los trámites identificados como <em>de redacción a la
                     medida</em>, lo elabora un abogado a partir de los hechos del usuario. La ficha de cada
                     trámite indica cuál de las dos modalidades aplica, antes del pago.
@@ -50,7 +50,7 @@
                     minutos previa a la redacción y dos rondas de ajustes.
                 </li>
                 <li>
-                    <strong>Caso complejo.</strong> Hazlo Legal recibe la descripción del caso y la remite a los
+                    <strong>Caso complejo.</strong> HazloLegal recibe la descripción del caso y la remite a los
                     abogados de su red. La cotización no tiene costo. Los honorarios, el alcance y la
                     responsabilidad profesional se acuerdan directamente entre el usuario y el abogado que acepte
                     el caso.
@@ -66,7 +66,7 @@
                 <li>No utilizar el servicio para fines ilícitos o contrarios al orden público.</li>
             </ul>
             <p>
-                Hazlo Legal no responde por errores derivados de información inexacta, incompleta o
+                HazloLegal no responde por errores derivados de información inexacta, incompleta o
                 extemporánea suministrada por el usuario.
             </p>
 
@@ -81,7 +81,7 @@
             <h2>6. Precios y pago</h2>
             <p>
                 Los precios están expresados en pesos colombianos (COP) e incluyen los impuestos aplicables.
-                El pago es previo a la prestación del servicio. Hazlo Legal no solicita datos de tarjetas de
+                El pago es previo a la prestación del servicio. HazloLegal no solicita datos de tarjetas de
                 crédito o débito por WhatsApp, por teléfono ni por ningún canal distinto de la pasarela de pago
                 del sitio.
             </p>
@@ -89,8 +89,8 @@
             <h2>7. Garantía y devoluciones</h2>
             <p>
                 Las condiciones de corrección y devolución se rigen por el
-                <a href="{{ route('pages.guarantee') }}">Certificado de Garantía Hazlo Legal</a>,
-                que forma parte integral de estos términos. En particular, Hazlo Legal
+                <a href="{{ route('pages.guarantee') }}">Certificado de Garantía HazloLegal</a>,
+                que forma parte integral de estos términos. En particular, HazloLegal
                 <strong>no garantiza el resultado</strong> de la decisión de un juez, de una entidad pública o
                 de un particular, por tratarse de hechos ajenos a su control.
             </p>
@@ -111,7 +111,7 @@
             <p>
                 Los documentos entregados al usuario son para su uso particular en el caso descrito.
                 El contenido del sitio, las plantillas maestras, las marcas y el software son propiedad de
-                Hazlo Legal y no pueden reproducirse ni explotarse comercialmente sin autorización escrita.
+                HazloLegal y no pueden reproducirse ni explotarse comercialmente sin autorización escrita.
             </p>
 
             <h2>10. Confidencialidad</h2>
@@ -122,14 +122,14 @@
 
             <h2>11. Limitación de responsabilidad</h2>
             <p>
-                La responsabilidad de Hazlo Legal se limita al valor pagado por el servicio.
-                En la modalidad de caso complejo, Hazlo Legal actúa como intermediario tecnológico:
+                La responsabilidad de HazloLegal se limita al valor pagado por el servicio.
+                En la modalidad de caso complejo, HazloLegal actúa como intermediario tecnológico:
                 la responsabilidad profesional por la atención del caso recae en el abogado que lo acepte.
             </p>
 
             <h2>12. Modificaciones</h2>
             <p>
-                Hazlo Legal puede modificar estos términos. La versión vigente es la publicada en esta página,
+                HazloLegal puede modificar estos términos. La versión vigente es la publicada en esta página,
                 con su fecha de actualización. Los pedidos ya confirmados se rigen por la versión vigente al
                 momento del pago.
             </p>

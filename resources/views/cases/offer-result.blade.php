@@ -35,7 +35,7 @@
         AssignmentOutcome::Unavailable => [
             'icon' => '⚠️', 'tone' => 'warn',
             'title' => 'Este caso ya no está disponible',
-            'lead' => 'Fue cerrado o anulado por el equipo de Hazlo Legal.',
+            'lead' => 'Fue cerrado o anulado por el equipo de HazloLegal.',
         ],
     };
 @endphp
@@ -147,7 +147,7 @@
         @endif
 
         <div class="btn-row btn-row--center mt-10">
-            <a href="{{ route('home') }}" class="btn btn--outline">Ir a Hazlo Legal</a>
+            <a href="{{ route('home') }}" class="btn btn--outline">Ir a HazloLegal</a>
             <a href="mailto:{{ config('hazlolegal.contact.cases_email') }}?subject=Caso%20{{ $case->reference }}" class="btn btn--ghost">
                 Escribir al equipo
             </a>
