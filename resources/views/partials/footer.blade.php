@@ -17,8 +17,7 @@
         <div class="site-footer__grid">
             <div class="site-footer__about">
                 <a href="{{ route('home') }}" class="logo" style="margin-bottom: var(--s4);">
-                    <span class="logo__mark" aria-hidden="true">⚖</span>
-                    Hazlo<em>Legal</em>
+                    <span class="logo__word">Hazlo</span><span class="logo__hl">Legal</span>
                 </a>
                 <p>Documentos y trámites legales construidos por abogados colombianos, con precio fijo publicado y garantía de corrección por escrito.</p>
 
@@ -46,6 +45,10 @@
             <div>
                 <h4>La empresa</h4>
                 <div class="footer-links">
+                    <a href="{{ route('account.request') }}">Mis trámites</a>
+                    <a href="{{ route('tools.index') }}">Herramientas gratis</a>
+                    <a href="{{ route('lawyers.index') }}">Directorio de abogados</a>
+                    <a href="{{ route('lawyers.join') }}">¿Eres abogado?</a>
                     <a href="{{ route('pages.about') }}">Quiénes somos</a>
                     <a href="{{ route('pages.how-it-works') }}">Cómo funciona</a>
                     <a href="{{ route('pages.guarantee') }}">Certificado de Garantía</a>
@@ -55,9 +58,11 @@
 
                 <h4 style="margin-top: var(--s8);">Legal</h4>
                 <div class="footer-links">
+                    <a href="{{ route('pages.contact') }}">Contacto</a>
                     <a href="{{ route('pages.terms') }}">Términos y condiciones</a>
                     <a href="{{ route('pages.privacy') }}">Tratamiento de datos</a>
                     <a href="{{ route('pages.signature') }}">Validez de la firma electrónica</a>
+                    <a href="{{ route('pages.data-deletion') }}">Eliminar mis datos</a>
                 </div>
             </div>
 

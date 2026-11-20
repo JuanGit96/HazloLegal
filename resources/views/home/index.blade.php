@@ -4,11 +4,11 @@
 @php
     $wa = app(\App\Domain\Shared\Services\WhatsAppLinkBuilder::class);
     $trust = config('hazlolegal.trust');
-    $documentPlan = $plans->firstWhere('key', \App\Domain\Catalog\Enums\PlanKey::Document);
     $entry = $pricing->formatCop($entryPrice);
-    // Promesa honesta y calculada, no una cuenta regresiva falsa.
-    $cutoff = now()->setTime(15, 0);
-    $sameDay = now()->isWeekday() && now()->lt($cutoff);
+    $headline = $settings->get('hook_headline', 'Tu derecho de petición, ==gratis== y sin vacíos legales');
+    $sub = $settings->get('hook_subheadline', 'Lo generas en minutos y te lo llevas listo para radicar.');
+    $freeCount = $settings->get('hook_free_count');
+    $firstFree = $freeDocuments->first();
 @endphp
 
 {{-- ============================================ HERO --}}
@@ -16,35 +16,38 @@
     <div class="container hero__grid">
         <div>
             <div class="hero__kicker">
-                <span class="pill pill--success">✓ Formatos escritos por abogados</span>
-                <span class="pill pill--brand">Ley colombiana vigente</span>
+                <span class="pill pill--success">Gratis · sin registro</span>
+                <span class="pill pill--brand">Formatos escritos por abogados</span>
             </div>
 
-            <h1>Tutelas, contratos y derechos de petición <span class="accent">hechos por abogados colombianos</span></h1>
+            {{-- El titular y el subtítulo se editan desde el panel: son lo
+                 primero que se prueba cuando la conversión no sube. Lo que se
+                 escriba entre ==dobles iguales== sale con el marcador. --}}
+            <h1>{!! \App\Domain\Shared\Services\TextMarker::render($headline) !!}</h1>
 
-            <p class="hero__lead">
-                Certeza legal, sin honorarios sorpresa. Recibe tu documento listo para radicar
-                en 24 horas &mdash; o en menos de 4 si tienes un término encima.
-            </p>
+            <p class="hero__lead">{{ $sub }}</p>
 
             <div class="btn-row">
-                <a href="#catalogo" class="btn btn--primary btn--lg">Buscar mi trámite</a>
-                <a href="#precios" class="btn btn--outline btn--lg">Ver precios desde {{ $entry }}</a>
+                @if ($firstFree)
+                    <a href="{{ route('checkout.configure', $firstFree->slug) }}" class="btn btn--primary btn--lg">
+                        Generar el mío gratis
+                    </a>
+                @endif
+                <a href="{{ route('tools.index') }}" class="btn btn--outline btn--lg">Ver todo lo gratis</a>
             </div>
 
             <p class="btn-note">
-                @if ($sameDay)
-                    🕒 Si pides el plan Express antes de las 3:00 p.m., lo recibes <strong>hoy mismo</strong>.
-                @else
-                    🕒 Pedidos Express recibidos ahora se entregan mañana a primera hora.
-                @endif
+                Sin tarjeta, sin suscripción. Si después quieres firma, instructivo o un abogado,
+                lo sumas por aparte desde {{ $entry === 'Gratis' ? '$19.900' : $entry }}.
             </p>
 
             <div class="hero__proof">
+                @if ($freeCount)
                 <div class="hero__proof-item">
-                    <strong>{{ number_format($trust['documents_delivered'], 0, ',', '.') }}+</strong>
-                    <span>documentos entregados</span>
+                    <strong>{{ $freeCount }}</strong>
+                    <span>documentos generados</span>
                 </div>
+                @endif
                 <div class="hero__proof-item">
                     <strong>{{ $trust['avg_delivery_hours'] }} h</strong>
                     <span>entrega promedio real</span>
@@ -63,10 +66,10 @@
                     <span class="doc-preview__dot"></span>
                     <span class="doc-preview__dot"></span>
                     <span class="doc-preview__dot"></span>
-                    <span class="doc-preview__name">accion-de-tutela-salud.pdf</span>
+                    <span class="doc-preview__name">derecho-de-peticion.pdf</span>
                 </div>
                 <div class="doc-preview__body">
-                    <div class="doc-preview__title">Acción de tutela</div>
+                    <div class="doc-preview__title">Derecho de petición</div>
                     <div class="doc-preview__line doc-preview__line--accent"></div>
                     <div class="doc-preview__line"></div>
                     <div class="doc-preview__line doc-preview__line--mid"></div>
@@ -75,7 +78,7 @@
 
                     <div class="doc-preview__seal">
                         <span>✓</span>
-                        <span>Formato vigente · Ley 1751 de 2015 y Decreto 2591 de 1991</span>
+                        <span>Formato vigente · Ley 1755 de 2015</span>
                     </div>
 
                     <div class="doc-preview__sign">
@@ -91,34 +94,114 @@
     </div>
 </section>
 
-{{-- ============================================ TIRA DE CONFIANZA --}}
-<div class="trust-strip">
-    <div class="container">
-        <p class="trust-strip__label">Por qué puedes confiarnos tu trámite</p>
-        <div class="trust-strip__items">
-            <span class="trust-item"><span class="trust-item__icon" aria-hidden="true">⚖️</span> <span><strong>Formatos de abogados</strong> · actualizados cuando cambia la ley</span></span>
-            <span class="trust-item"><span class="trust-item__icon" aria-hidden="true">✍️</span> <span><strong>Firma electrónica</strong> · Ley 527 de 1999</span></span>
-            <span class="trust-item"><span class="trust-item__icon" aria-hidden="true">🔒</span> <span><strong>Datos protegidos</strong> · Ley 1581 de 2012</span></span>
-            <span class="trust-item"><span class="trust-item__icon" aria-hidden="true">🛡️</span> <span><strong>Garantía por escrito</strong> · corregimos o devolvemos</span></span>
-            <span class="trust-item"><span class="trust-item__icon" aria-hidden="true">💳</span> <span><strong>Pago seguro</strong> · Nequi, PSE o tarjeta</span></span>
-        </div>
-    </div>
+{{-- ============================================ GANCHO DE REVISIÓN --}}
+@if ($settings->bool('hook_ai_enabled', true))
+<div class="hook-strip">
+    <span class="hook-strip__item"><span aria-hidden="true">✨</span> Revisamos ortografía y redacción</span>
+    <span class="hook-strip__item"><span aria-hidden="true">🛡️</span> Formato escrito por abogados</span>
+    <span class="hook-strip__item"><span aria-hidden="true">⚖️</span> Tono formal ante la entidad</span>
+    <span class="hook-strip__item"><span aria-hidden="true">📄</span> PDF listo para radicar</span>
 </div>
+@endif
+
+{{-- ============================================ LO GRATIS --}}
+@if ($settings->bool('free_docs_enabled', true) && ($freeDocuments->isNotEmpty() || $calculators->isNotEmpty()))
+<section class="section section--white" id="gratis">
+    <div class="container">
+        <div class="section-head reveal">
+            <span class="eyebrow">Empieza por aquí</span>
+            <h2>Lo que puedes resolver <span class="hl">hoy y gratis</span></h2>
+            <p>
+                No es una prueba de 7 días ni una versión recortada: el documento sale completo,
+                listo para firmar y radicar, y es tuyo.
+            </p>
+        </div>
+
+        <div class="grid grid--3 reveal">
+            @foreach ($freeDocuments as $free)
+                <a href="{{ route('checkout.configure', $free->slug) }}" class="tool-card">
+                    <span class="tool-card__tag">Gratis</span>
+                    <span class="tool-card__emoji" aria-hidden="true">{{ $free->emojiOrArea() }}</span>
+                    <h3>{{ $free->short_name ?: $free->name }}</h3>
+                    <p>{{ $free->hook ?: \Illuminate\Support\Str::limit($free->tagline ?: $free->summary, 90) }}</p>
+                    <span class="tool-card__cta">Generarlo ahora →</span>
+                </a>
+            @endforeach
+
+            @foreach ($calculators as $calculator)
+                <a href="{{ route('tools.calculator', $calculator->slug) }}" class="tool-card tool-card--light">
+                    <span class="tool-card__tag">Calculadora</span>
+                    <span class="tool-card__emoji" aria-hidden="true">{{ $calculator->emoji ?: '🧮' }}</span>
+                    <h3>{{ $calculator->name }}</h3>
+                    <p>{{ \Illuminate\Support\Str::limit($calculator->intro, 90) }}</p>
+                    <span class="tool-card__cta" style="color: var(--brand);">Calcular →</span>
+                </a>
+            @endforeach
+        </div>
+
+        <div class="center mt-10">
+            <a href="{{ route('tools.index') }}" class="btn btn--outline">Ver todas las herramientas gratis</a>
+        </div>
+
+        <p class="center text-xs text-muted mt-6" style="max-width: 640px; margin-left: auto; margin-right: auto;">
+            Para entregarte el documento te pedimos tu correo y tu autorización de tratamiento de datos
+            (Ley 1581 de 2012). Tú decides si además quieres que un abogado te contacte.
+            <a href="{{ route('pages.privacy') }}">Así usamos tus datos</a>.
+        </p>
+    </div>
+</section>
+@endif
+
+{{-- ============================================ ADICIONALES --}}
+@if ($addons->isNotEmpty())
+<section class="section section--sunken" id="adicionales">
+    <div class="container">
+        <div class="section-head reveal">
+            <span class="eyebrow">Sin paquetes ni letra menuda</span>
+            <h2>Tú armas el trámite. <span class="hl hl--blue hl--right">Pagas solo lo que le sumes</span></h2>
+            <p>
+                No vendemos planes con cosas que no necesitas. Empiezas por el documento y
+                le agregas lo que tu caso pida. Cada cosa con su precio, a la vista.
+            </p>
+        </div>
+
+        <div class="grid grid--3 reveal">
+            @foreach ($addons as $addon)
+                <div class="tile">
+                    <span class="tile__icon" aria-hidden="true">{{ $addon->emoji ?: '➕' }}</span>
+                    <h3>{{ $addon->name }}</h3>
+                    <p>{{ $addon->tagline }}</p>
+                    <p style="margin-top: var(--s4); font-weight: 800; color: var(--brand-dark);">
+                        @if ($addon->default_price === 0)
+                            Incluido
+                        @else
+                            +{{ $pricing->formatCop($addon->default_price) }}
+                        @endif
+                    </p>
+                </div>
+            @endforeach
+        </div>
+
+        <p class="center text-sm text-muted mt-8">
+            El precio de cada adicional puede cambiar según el trámite: acompañar una tutela no es
+            lo mismo que acompañar un contrato de arriendo. Siempre lo ves antes de pagar.
+        </p>
+    </div>
+</section>
+@endif
 
 {{-- ============================================ CATÁLOGO --}}
 <section class="section section--white" id="catalogo">
     <div class="container">
         <div class="section-head reveal">
             <span class="eyebrow">Catálogo</span>
-            <h2>¿Qué necesitas resolver hoy?</h2>
+            <h2>¿Qué necesitas <span class="hl hl--blue">resolver hoy</span>?</h2>
             <p>Precio fijo publicado y tiempo de entrega comprometido. Entra a tu caso y mira exactamente qué recibes.</p>
         </div>
 
         <div class="catalog-grid reveal">
             @foreach ($documents as $document)
-                <x-doc-card
-                    :document="$document"
-                    :price="$documentPlan ? $pricing->formatCop($pricing->quote($document, $documentPlan)->amount) : null" />
+                <x-doc-card :document="$document" :price="$document->priceLabel()" />
             @endforeach
         </div>
 
@@ -137,7 +220,7 @@
     <div class="container">
         <div class="section-head reveal">
             <span class="eyebrow">Compara antes de decidir</span>
-            <h2>Lo mismo que resolverías en una oficina, sin la oficina</h2>
+            <h2>Lo mismo que resolverías en una oficina, <span class="hl hl--blue hl--right">sin la oficina</span></h2>
             <p>Quitamos la parte cara del proceso, no la parte que te protege.</p>
         </div>
 
@@ -199,88 +282,87 @@
 </section>
 
 {{-- ============================================ PRECIOS --}}
+{{-- Una sola tarjeta por nivel y el precio real al lado. Lo que diferencia
+     a un nivel del siguiente es un adicional concreto, no una lista de
+     beneficios vagos. --}}
 <section class="section section--white" id="precios">
     <div class="container">
         <div class="section-head reveal">
             <span class="eyebrow">Precios</span>
-            <h2>Un precio claro antes de empezar</h2>
-            <p>Sin anticipos, sin «depende». Eliges el nivel de acompañamiento que tu caso necesita.</p>
+            <h2>Tres formas de resolverlo. <span class="hl hl--blue">Tú eliges hasta dónde</span></h2>
+            <p>Sin anticipos y sin «depende». El precio sale del trámite más lo que le sumes.</p>
         </div>
 
         <div class="pricing-grid reveal">
-            @foreach ($plans as $plan)
-                @php
-                    $isComplex = $plan->is_quote_only;
-                    $isFeatured = $plan->is_highlighted;
-                    $href = $isComplex ? route('cases.create') : route('checkout.documents', $plan->key->value);
-                    $upgrade = $pricing->expressUpgradeCost($plan);
-                @endphp
-
-                <div @class(['plan', 'plan--featured' => $isFeatured, 'plan--dark' => $isComplex])>
-                    @if ($plan->badge)
-                        <span class="badge-float">{{ $plan->badge }}</span>
-                    @endif
-
-                    <div class="plan__head">
-                        <h3>{{ $plan->name }}</h3>
-                        <p class="plan__tagline">{{ $plan->tagline }}</p>
-                    </div>
-
-                    <div class="plan__price">
-                        @if ($plan->price === null)
-                            Cotizar
-                        @else
-                            @if ($plan->key === \App\Domain\Catalog\Enums\PlanKey::Document)
-                                <span style="font-size: var(--t-lg); font-weight: 600; color: var(--text-subtle);">desde</span>
-                            @endif
-                            {{ $pricing->formatCop($plan->price) }}
-                            <small>COP</small>
-                        @endif
-                    </div>
-
-                    <p class="plan__anchor">
-                        @if ($isComplex)
-                            La cotización no cuesta nada y no te compromete.
-                        @elseif ($plan->delivery_hours)
-                            Entrega en {{ $plan->delivery_hours }} horas hábiles · pago único
-                        @endif
-                    </p>
-
-                    <ul class="plan__features">
-                        @foreach ($plan->includes ?? [] as $feature)
-                            <li>{!! \Illuminate\Support\Str::inlineMarkdown($feature) !!}</li>
-                        @endforeach
-                    </ul>
-
-                    {{-- El Express no es una tarjeta aparte: es una opción dentro de este plan. --}}
-                    @if ($plan->hasSpeedChoice() && $upgrade)
-                        <div class="speed-note">
-                            <strong>¿Lo necesitas hoy?</strong> Al elegir tu trámite puedes subir a
-                            <strong>Express (menos de 4 horas)</strong> por {{ $pricing->formatCop($upgrade) }} más.
-                        </div>
-                    @endif
-
-                    <a href="{{ $href }}"
-                       @class(['btn', 'btn--block', 'mt-6',
-                               'btn--primary' => $isFeatured,
-                               'btn--white' => $isComplex,
-                               'btn--outline' => ! $isFeatured && ! $isComplex])>
-                        {{ $plan->cta_label }}
-                    </a>
-
-                    <p class="plan__foot">
-                        @if ($isComplex)
-                            Te responde un abogado, no un bot.
-                        @else
-                            Cubierto por el Certificado de Garantía
-                        @endif
-                    </p>
+            <div class="plan">
+                <div class="plan__head">
+                    <h3>Hazlo tú</h3>
+                    <p class="plan__tagline">Para trámites estándar que solo necesitan estar bien escritos.</p>
                 </div>
-            @endforeach
+
+                <div class="plan__price">Gratis<small>algunos trámites</small></div>
+                <p class="plan__anchor">Listo en minutos · sin tarjeta</p>
+
+                <ul class="plan__features">
+                    <li>Documento completo en PDF</li>
+                    <li>Revisión automática de ortografía y redacción</li>
+                    <li>Formato escrito por abogados y al día con la norma</li>
+                    <li>Lo descargas y lo radicas tú</li>
+                </ul>
+
+                <a href="{{ route('tools.index') }}" class="btn btn--outline btn--block mt-6">Ver los gratis</a>
+                <p class="plan__foot">No incluye instructivo de radicación.</p>
+            </div>
+
+            <div class="plan plan--featured">
+                <span class="badge-float">MÁS ELEGIDO</span>
+
+                <div class="plan__head">
+                    <h3>Hazlo con guía</h3>
+                    <p class="plan__tagline">El documento y el instructivo que te dice exactamente qué hacer con él.</p>
+                </div>
+
+                <div class="plan__price">
+                    <span style="font-size: var(--t-lg); font-weight: 600; color: var(--text-subtle);">desde</span>
+                    {{ $entry === 'Gratis' ? '$19.900' : $entry }}
+                    <small>COP</small>
+                </div>
+                <p class="plan__anchor">Pago único · sin mensualidad</p>
+
+                <ul class="plan__features">
+                    <li>Todo lo anterior</li>
+                    <li><strong>Instructivo de radicación</strong>: dónde entregarlo, qué anexar y qué plazo tiene la entidad</li>
+                    <li>Qué hacer si no te responden</li>
+                    <li>Opción de entrega inmediata</li>
+                </ul>
+
+                <a href="{{ route('documents.index') }}" class="btn btn--primary btn--block mt-6">Elegir mi trámite</a>
+                <p class="plan__foot">Cubierto por el Certificado de Garantía</p>
+            </div>
+
+            <div class="plan plan--dark">
+                <div class="plan__head">
+                    <h3>Que lo haga un abogado</h3>
+                    <p class="plan__tagline">Para lo que no cabe en un formato: hechos propios, cálculos, cláusulas a medida.</p>
+                </div>
+
+                <div class="plan__price">Cotizar<small>según el caso</small></div>
+                <p class="plan__anchor">La cotización no cuesta y no te compromete.</p>
+
+                <ul class="plan__features">
+                    <li>Un abogado lee tu caso y redacta sobre él</li>
+                    <li>Puedes hablar con él antes de radicar</li>
+                    <li>Te acompaña hasta la respuesta de la entidad</li>
+                    <li>Si tu caso da para proceso, te lo decimos</li>
+                </ul>
+
+                <a href="{{ route('cases.create') }}" class="btn btn--white btn--block mt-6">Contar mi caso</a>
+                <p class="plan__foot">Te responde un abogado, no un bot.</p>
+            </div>
         </div>
 
         <p class="center mt-8 text-sm text-muted">
-            Todos los planes están cubiertos por el
+            Lo que pagas está cubierto por el
             <a href="{{ route('pages.guarantee') }}"><strong>Certificado de Garantía HazloLegal</strong></a>:
             si el documento sale con un error nuestro, lo corregimos o te devolvemos el dinero.
         </p>
@@ -357,7 +439,7 @@
     <div class="container">
         <div class="section-head reveal">
             <span class="eyebrow">Proceso</span>
-            <h2>De tu problema al documento firmado, en 4 pasos</h2>
+            <h2>De tu problema al documento firmado, <span class="hl hl--blue hl--right">en 4 pasos</span></h2>
             <p>Sin desplazamientos, sin salas de espera y sin cobrar la hora de consulta.</p>
         </div>
 
@@ -365,7 +447,7 @@
             <div class="step step--center">
                 <div class="step__num" aria-hidden="true">1</div>
                 <h3>Eliges tu trámite</h3>
-                <p>Precio y plazo visibles antes de pagar. Si tienes afán, subes a Express.</p>
+                <p>Precio y plazo a la vista. Varios no cuestan nada.</p>
             </div>
             <div class="step step--center">
                 <div class="step__num" aria-hidden="true">2</div>
@@ -374,8 +456,8 @@
             </div>
             <div class="step step--center">
                 <div class="step__num" aria-hidden="true">3</div>
-                <h3>Se arma tu documento</h3>
-                <p>Sobre el formato de ese trámite, con las validaciones que frenan los errores de forma que más rechazos causan.</p>
+                <h3>Le sumas lo que necesites</h3>
+                <p>Instructivo, entrega inmediata, firma o un abogado que lo revise. Cada cosa con su precio.</p>
             </div>
             <div class="step step--center">
                 <div class="step__num" aria-hidden="true">4</div>
@@ -406,7 +488,7 @@
     <div class="container">
         <div class="section-head reveal">
             <span class="eyebrow">Cómo evitamos errores</span>
-            <h2>Un flujo diseñado para que no te rechacen el documento</h2>
+            <h2>Un flujo diseñado para que <span class="hl hl--blue">no te rechacen el documento</span></h2>
             <p>La mayoría de los trámites se caen por detalles de forma. Atacamos justo eso.</p>
         </div>
 
@@ -441,7 +523,7 @@
     <div class="container">
         <div class="section-head reveal">
             <span class="eyebrow">Casos reales</span>
-            <h2>Lo que resolvieron nuestros clientes</h2>
+            <h2>Lo que resolvieron <span class="hl hl--blue hl--right">nuestros clientes</span></h2>
             <p>Resultados concretos, no adjetivos.</p>
         </div>
     </div>
@@ -477,8 +559,11 @@
     <div class="container">
         <div class="section-head reveal">
             <span class="eyebrow">Quién está detrás</span>
-            <h2>Los abogados que escriben nuestros formatos</h2>
-            <p>Ellos redactan y mantienen el catálogo, y son quienes toman los casos complejos.</p>
+            <h2>Abogados colombianos, <span class="hl hl--blue hl--right">con nombre y apellido</span></h2>
+            <p>
+                Nuestro equipo jurídico escribe y mantiene los formatos. Y cuando tu caso necesita
+                a alguien que lo lleve, estos son los abogados de la red que lo toman.
+            </p>
         </div>
 
         <div class="grid grid--4 reveal">
@@ -488,7 +573,7 @@
         </div>
 
         <div class="center mt-10">
-            <a href="{{ route('pages.about') }}" class="btn btn--outline">Conocer al equipo</a>
+            <a href="{{ route('lawyers.index') }}" class="btn btn--outline">Ver el directorio completo</a>
         </div>
     </div>
 </section>
@@ -500,8 +585,8 @@
     <div class="container">
         <div class="section-head reveal">
             <span class="eyebrow">Guías gratis</span>
-            <h2>Aprende antes de pagar</h2>
-            <p>Explicamos cada trámite paso a paso. Si después de leer lo quieres hacer solo, nos parece bien.</p>
+            <h2>Entiende tu trámite <span class="hl hl--blue">en cinco minutos</span></h2>
+            <p>Qué dice la ley, qué plazos tienes y qué hacer si no te responden. Explicado en español.</p>
         </div>
 
         <div class="grid grid--3 reveal">
@@ -519,6 +604,9 @@
                             @if ($post->author)
                                 <span aria-hidden="true">·</span>
                                 <span>Por {{ $post->author->name }}</span>
+                            @else
+                                <span aria-hidden="true">·</span>
+                                <span>Equipo {{ config('hazlolegal.brand.name') }}</span>
                             @endif
                         </div>
                     </div>
@@ -539,7 +627,7 @@
     <div class="container container--narrow">
         <div class="section-head reveal">
             <span class="eyebrow">Preguntas frecuentes</span>
-            <h2>Lo que todos nos preguntan antes de pagar</h2>
+            <h2>Lo que todos <span class="hl hl--blue">nos preguntan</span></h2>
         </div>
 
         <div class="reveal">
@@ -559,6 +647,63 @@
     </div>
 </section>
 @endif
+
+{{-- ============================================ PARA ABOGADOS --}}
+<section class="section section--sunken" id="abogados">
+    <div class="container">
+        <div class="guarantee reveal" style="background: var(--ink); color: #fff; border-color: var(--ink);">
+            <div class="guarantee__grid">
+                <div>
+                    <span class="eyebrow" style="color: var(--amber-400);">¿Eres abogado?</span>
+                    <h2 style="margin-bottom: var(--s3); color: #fff;">
+                        Nosotros atraemos a quien tiene el problema. Tú atiendes el caso
+                    </h2>
+                    <p style="font-size: var(--t-lg); color: #CBD5E1;">
+                        Cada mes miles de personas llegan aquí buscando cómo resolver algo legal.
+                        La mayoría se lo resuelve sola con un formato. Una parte necesita a alguien
+                        como tú, y hoy no sabe a quién llamar.
+                    </p>
+
+                    <ul class="guarantee-list" style="color: #CBD5E1;">
+                        <li>
+                            <span class="guarantee-list__check" aria-hidden="true">✓</span>
+                            <span>
+                                <strong style="color:#fff;">Perfil público en el directorio</strong>
+                                Con tu especialidad, tu ciudad y tu forma de atender. Indexable en Google.
+                            </span>
+                        </li>
+                        <li>
+                            <span class="guarantee-list__check" aria-hidden="true">✓</span>
+                            <span>
+                                <strong style="color:#fff;">Apareces en los instructivos que circulan</strong>
+                                El PDF que el cliente imprime y lleva a la ventanilla lleva tu nombre.
+                            </span>
+                        </li>
+                        <li>
+                            <span class="guarantee-list__check" aria-hidden="true">✓</span>
+                            <span>
+                                <strong style="color:#fff;">Aviso cuando alguien pide acompañamiento</strong>
+                                En tu área y tu ciudad. El primero que acepta se queda el caso.
+                            </span>
+                        </li>
+                        <li>
+                            <span class="guarantee-list__check" aria-hidden="true">✓</span>
+                            <span>
+                                <strong style="color:#fff;">Contactos que autorizaron ser contactados</strong>
+                                Solo de quien marcó esa casilla. Sin listas compradas y sin sorpresas con la SIC.
+                            </span>
+                        </li>
+                    </ul>
+
+                    <div class="btn-row mt-8">
+                        <a href="{{ route('lawyers.join') }}" class="btn btn--action btn--lg">Ver planes y registrarme</a>
+                        <a href="{{ route('lawyers.index') }}" class="btn btn--white">Ver el directorio</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
 {{-- ============================================ CTA FINAL --}}
 <x-cta-band

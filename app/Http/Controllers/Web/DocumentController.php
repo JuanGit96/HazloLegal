@@ -6,9 +6,11 @@ namespace App\Http\Controllers\Web;
 
 use App\Domain\Catalog\Enums\PracticeArea;
 use App\Domain\Catalog\Models\LegalDocument;
+use App\Domain\Catalog\Services\AddonOfferService;
 use App\Domain\Catalog\Services\CatalogService;
 use App\Domain\Catalog\Services\PricingService;
 use App\Domain\Seo\Services\SeoManager;
+use App\Domain\Settings\Services\SettingsService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -18,7 +20,9 @@ class DocumentController
     public function __construct(
         private readonly CatalogService $catalog,
         private readonly PricingService $pricing,
+        private readonly AddonOfferService $offers,
         private readonly SeoManager $seo,
+        private readonly SettingsService $settings,
     ) {}
 
     public function index(Request $request): View
@@ -43,8 +47,7 @@ class DocumentController
                 ->unique()
                 ->sortBy(fn (PracticeArea $area) => $area->getLabel())
                 ->values(),
-            'plans' => $this->catalog->plans(),
-            'pricing' => $this->pricing,
+            'freeDocuments' => $this->catalog->freeDocuments(),
             'search' => $search,
         ]);
     }
@@ -63,7 +66,7 @@ class DocumentController
 
         $meta = $this->seo->page(
             title: "{$practiceArea->getLabel()}: trámites y documentos legales | HazloLegal",
-            description: "Documentos de {$practiceArea->getLabel()} redactados por abogados colombianos. Precio fijo y entrega desde 4 horas.",
+            description: "Documentos de {$practiceArea->getLabel()} listos en minutos. Algunos gratis, todos escritos por abogados colombianos.",
             canonical: route('documents.area', $practiceArea->value),
             crumbs: [
                 ['name' => 'Inicio', 'url' => url('/')],
@@ -76,8 +79,7 @@ class DocumentController
             'meta' => $meta,
             'area' => $practiceArea,
             'documents' => $documents,
-            'plans' => $this->catalog->plans(),
-            'pricing' => $this->pricing,
+            'lawyers' => $this->catalog->directoryLawyersFor($practiceArea),
         ]);
     }
 
@@ -85,28 +87,22 @@ class DocumentController
     {
         abort_unless($document->is_active, 404);
 
-        $documentPlan = $this->catalog->plan('document');
-        $advisoryPlan = $this->catalog->plan('advisory');
-
-        $standardQuote = $this->pricing->quote($document, $documentPlan);
-        $expressQuote = $document->available_express
-            ? $this->pricing->quote($document, $documentPlan, \App\Domain\Catalog\Enums\DeliverySpeed::Express)
-            : null;
+        // La cotización de la ficha es la del trámite «pelado»: lo que hay
+        // que pagar para empezar. Los adicionales se muestran aparte, con su
+        // precio, para que el número grande no mienta.
+        $quote = $this->pricing->quote($document);
 
         $this->catalog->registerView($document);
 
         return view('documents.show', [
-            'meta' => $this->seo->document($document, $standardQuote),
+            'meta' => $this->seo->document($document, $quote),
             'document' => $document,
-            'standardQuote' => $standardQuote,
-            'expressQuote' => $expressQuote,
-            'advisoryQuote' => $advisoryPlan ? $this->pricing->quote($document, $advisoryPlan) : null,
-            'documentPlan' => $documentPlan,
-            'advisoryPlan' => $advisoryPlan,
+            'quote' => $quote,
+            'offers' => $this->offers->offersFor($document),
+            'showDiscounts' => $this->settings->bool('promo_enabled', true),
             'related' => $this->catalog->relatedDocuments($document),
             'testimonials' => $document->testimonials()->limit(3)->get(),
             'posts' => $document->posts()->published()->recent()->limit(3)->get(),
-            'pricing' => $this->pricing,
         ]);
     }
 }

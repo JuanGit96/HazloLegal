@@ -9,11 +9,11 @@
                     background: var(--green-50); border: 3px solid var(--green-600); border-radius: 50%; font-size: 2.2rem;"
              aria-hidden="true">✓</div>
 
-        <h1>Tu caso ya está con los abogados</h1>
+        <h1>Tu caso ya está <span class="hl hl--blue">con los abogados</span></h1>
         <p class="text-muted" style="font-size: var(--t-lg);">
             Lo enviamos a los especialistas en {{ \Illuminate\Support\Str::lower($case->practice_area->getLabel()) }}
-            de nuestra red. El primero que lo acepte se queda con él y te escribimos de inmediato
-            con su nombre, su especialidad y su experiencia.
+            de nuestra red. Los que quieran tomarlo se postulan, y te escribimos para que
+            <strong>elijas tú</strong> entre ellos.
         </p>
 
         <p class="pill pill--brand" style="font-size: var(--t-base); padding: var(--s3) var(--s5);">
@@ -33,13 +33,21 @@
                 <li>
                     <span class="guarantee-list__check" aria-hidden="true">2</span>
                     <span>
-                        <strong>Te avisamos en cuanto alguien lo acepte</strong>
-                        Recibirás un correo en {{ $case->client_email }} con el perfil completo del abogado.
-                        Plazo máximo: {{ $ttlHours }} horas.
+                        <strong>Te avisamos en cuanto alguien se postule</strong>
+                        Recibirás un correo en {{ $case->client_email }} con el enlace para ver los
+                        perfiles. Plazo máximo: {{ $ttlHours }} horas.
                     </span>
                 </li>
                 <li>
                     <span class="guarantee-list__check" aria-hidden="true">3</span>
+                    <span>
+                        <strong>Eliges tú</strong>
+                        Comparas experiencia, ciudad y forma de atender, y escoges. Ninguno tiene
+                        tus datos de contacto hasta que decides.
+                    </span>
+                </li>
+                <li>
+                    <span class="guarantee-list__check" aria-hidden="true">4</span>
                     <span>
                         <strong>El abogado te contacta y cotiza</strong>
                         Evaluará tu caso y te propondrá un esquema de honorarios claro. Sin compromiso
@@ -48,6 +56,14 @@
                 </li>
             </ul>
         </div>
+
+        @if ($case->acceptedOffers()->exists())
+            <div class="center mt-8">
+                <a href="{{ $case->clientUrl() }}" class="btn btn--primary btn--lg">
+                    Ver los abogados interesados
+                </a>
+            </div>
+        @endif
 
         <div class="card card--flat mt-8" style="background: var(--slate-50); text-align: left;">
             <h3 style="font-size: var(--t-base);">Tu caso</h3>

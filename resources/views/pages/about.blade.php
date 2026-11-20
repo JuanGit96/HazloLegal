@@ -7,7 +7,7 @@
 
         <div class="section-head">
             <span class="eyebrow">Quiénes somos</span>
-            <h1>Abogados que se cansaron de cobrar por lo repetitivo</h1>
+            <h1>Abogados que se cansaron de <span class="hl hl--blue">cobrar por lo repetitivo</span></h1>
             <p>
                 Un trámite estándar no debería costar lo mismo que un litigio.
                 Separamos lo que una máquina puede ensamblar de lo que exige criterio jurídico,
@@ -32,8 +32,8 @@
                 Clasificamos los trámites más frecuentes del país en dos grupos.
                 Los que tienen una estructura estable &mdash;un NDA, una promesa de compraventa,
                 un derecho de petición de habeas data&mdash; los convertimos en plantillas maestras
-                que nuestros abogados escribieron, validaron y mantienen actualizadas. El sistema
-                las ensambla con tus datos y un abogado audita el resultado antes de enviarlo.
+                que nuestro equipo jurídico escribió, validó y mantiene al día. El sistema las
+                ensambla con tus datos y comprueba que no falte nada de lo que la entidad exige.
             </p>
             <p>
                 Los que exigen narrar hechos, hacer cálculos o escribir cláusulas condicionales
@@ -54,7 +54,7 @@
             <p>
                 En los trámites de <strong>Fase 1</strong> el documento se arma solo, sobre un formato que
                 escribió un abogado de nuestro equipo y que mantenemos actualizado. Nadie lo revisa caso por
-                caso, y por eso cuesta $90.000 y no $400.000. Lo decimos en la ficha de cada trámite.
+                caso, y por eso cuesta lo que cuesta y no $400.000. Lo decimos en la ficha de cada trámite.
             </p>
             <p>
                 En los de <strong>Fase 2</strong> y en los casos complejos sí hay un abogado leyendo tu caso
@@ -68,9 +68,12 @@
 <section class="section section--sunken">
     <div class="container">
         <div class="section-head">
-            <span class="eyebrow">El equipo</span>
-            <h2>Quién escribe los formatos</h2>
-            <p>Abogados colombianos en ejercicio. Ellos escriben los formatos del catálogo y toman los casos complejos.</p>
+            <span class="eyebrow">La red</span>
+            <h2>Los abogados que toman los casos</h2>
+            <p>
+                Abogados colombianos en ejercicio, cada uno con su especialidad. Son quienes
+                acompañan un trámite cuando lo contratas y quienes toman los casos complejos.
+            </p>
         </div>
 
         <div class="grid grid--3">

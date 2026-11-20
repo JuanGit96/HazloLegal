@@ -5,7 +5,7 @@
     <div class="container container--prose">
         <x-breadcrumbs :items="$meta->breadcrumbs" />
 
-        <h1>¿Es válida la firma electrónica en Colombia?</h1>
+        <h1>¿Es válida <span class="hl hl--blue">la firma electrónica</span> en Colombia?</h1>
         <p class="text-muted" style="font-size: var(--t-lg);">
             Sí, y tiene plena fuerza probatoria. Pero no sirve para todo.
             Te explicamos cuándo basta, cuándo necesitas firma digital certificada

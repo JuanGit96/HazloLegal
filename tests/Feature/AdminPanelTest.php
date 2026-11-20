@@ -9,8 +9,12 @@ use Database\Seeders\BlogSeeder;
 use Database\Seeders\DemoActivitySeeder;
 use Database\Seeders\FaqSeeder;
 use Database\Seeders\LawyerSeeder;
+use Database\Seeders\CalculatorSeeder;
+use Database\Seeders\LawyerPlanSeeder;
 use Database\Seeders\LegalDocumentSeeder;
-use Database\Seeders\ServicePlanSeeder;
+use Database\Seeders\PricingSeeder;
+use Database\Seeders\ServiceAddonSeeder;
+use Database\Seeders\SiteSettingSeeder;
 use Database\Seeders\TestimonialSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -25,9 +29,13 @@ class AdminPanelTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            ServicePlanSeeder::class,
+            ServiceAddonSeeder::class,
             LawyerSeeder::class,
             LegalDocumentSeeder::class,
+            PricingSeeder::class,
+            LawyerPlanSeeder::class,
+            SiteSettingSeeder::class,
+            CalculatorSeeder::class,
             FaqSeeder::class,
             TestimonialSeeder::class,
             BlogSeeder::class,
@@ -44,7 +52,10 @@ class AdminPanelTest extends TestCase
             'casos complejos' => ['filament.admin.resources.legal-cases.index'],
             'garantías' => ['filament.admin.resources.guarantee-claims.index'],
             'trámites' => ['filament.admin.resources.legal-documents.index'],
-            'planes' => ['filament.admin.resources.service-plans.index'],
+            'adicionales' => ['filament.admin.resources.service-addons.index'],
+            'planes de abogado' => ['filament.admin.resources.lawyer-plans.index'],
+            'suscripciones' => ['filament.admin.resources.lawyer-subscriptions.index'],
+            'calculadoras' => ['filament.admin.resources.calculators.index'],
             'abogados' => ['filament.admin.resources.lawyers.index'],
             'artículos' => ['filament.admin.resources.posts.index'],
             'categorías' => ['filament.admin.resources.post-categories.index'],
@@ -59,6 +70,22 @@ class AdminPanelTest extends TestCase
     public function test_los_listados_del_panel_cargan(string $routeName): void
     {
         $this->get(route($routeName))->assertOk();
+    }
+
+    public function test_la_matriz_de_precios_carga_y_muestra_el_cruce(): void
+    {
+        $this->get(route('filament.admin.pages.price-matrix'))
+            ->assertOk()
+            ->assertSee('Cómo leer esta tabla')
+            ->assertSee('Derecho de petición');
+    }
+
+    public function test_los_ajustes_del_sitio_cargan_agrupados(): void
+    {
+        $this->get(route('filament.admin.pages.site-settings'))
+            ->assertOk()
+            ->assertSee('Marca y logo')
+            ->assertSee('Ganchos y textos');
     }
 
     public function test_el_tablero_carga_con_sus_graficas(): void
@@ -111,5 +138,11 @@ class AdminPanelTest extends TestCase
         $this->get(route('filament.admin.resources.lawyers.edit', $lawyer))->assertOk();
         $this->get(route('filament.admin.resources.legal-documents.edit', $document))->assertOk();
         $this->get(route('filament.admin.resources.posts.edit', $post))->assertOk();
+
+        $addon = \App\Domain\Catalog\Models\ServiceAddon::query()->firstOrFail();
+        $this->get(route('filament.admin.resources.service-addons.edit', $addon))->assertOk();
+
+        $calculator = \App\Domain\Tools\Models\Calculator::query()->firstOrFail();
+        $this->get(route('filament.admin.resources.calculators.edit', $calculator))->assertOk();
     }
 }

@@ -46,7 +46,7 @@
                         <td align="center" style="padding:0 0 22px 0;">
                             <a href="{{ url('/') }}" style="text-decoration:none;">
                                 <span style="font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:22px; font-weight:800; letter-spacing:-.6px; color:#1E3A8A;">
-                                    Hazlo<span style="color:#2563EB;">Legal</span>
+                                    Hazlo<span style="background-color:#1D4ED8; color:#FFFFFF; padding:1px 6px 3px; border-radius:6px;">Legal</span>
                                 </span>
                             </a>
                         </td>

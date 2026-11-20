@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Orders\Schemas;
 
-use App\Domain\Catalog\Enums\DeliverySpeed;
-use App\Domain\Lawyers\Models\Lawyer;
 use App\Domain\Orders\Enums\OrderStatus;
+use App\Domain\Orders\Enums\OrderTier;
 use App\Domain\Orders\Enums\PaymentMethod;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
-use Filament\Schemas\Components\Grid;
+use Filament\Forms\Components\Repeater;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
@@ -49,10 +48,22 @@ class OrderForm
                             ->label('Entregado el')
                             ->seconds(false),
 
-                        TextInput::make('delivered_file_path')
-                            ->label('Ruta del documento entregado')
-                            ->columnSpan(2)
-                            ->placeholder('Se llenará automáticamente cuando exista el módulo de generación de PDF'),
+                        TextInput::make('document_path')
+                            ->label('Documento generado')
+                            ->disabled()
+                            ->placeholder('Todavía no se ha generado'),
+
+                        TextInput::make('instructions_path')
+                            ->label('Instructivo generado')
+                            ->disabled()
+                            ->placeholder('No lleva instructivo'),
+
+                        Select::make('featured_lawyer_id')
+                            ->label('Abogado patrocinado en el instructivo')
+                            ->relationship('featuredLawyer', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->placeholder('Ninguno'),
                     ]),
 
                 Section::make('Pedido')
@@ -70,20 +81,27 @@ class OrderForm
                             ->preload()
                             ->required(),
 
-                        Select::make('service_plan_id')
-                            ->label('Plan')
-                            ->relationship('plan', 'name')
+                        Select::make('tier')
+                            ->label('Nivel')
+                            ->options(OrderTier::class)
                             ->required()
-                            ->native(false),
+                            ->native(false)
+                            ->helperText('Se calcula a partir de los adicionales; cámbialo solo para corregir un dato.'),
 
-                        Select::make('speed')
-                            ->label('Velocidad')
-                            ->options(DeliverySpeed::class)
-                            ->required()
-                            ->native(false),
+                        TextInput::make('base_amount')
+                            ->label('Precio base')
+                            ->numeric()
+                            ->prefix('$')
+                            ->suffix('COP'),
+
+                        TextInput::make('addons_amount')
+                            ->label('Suma de adicionales')
+                            ->numeric()
+                            ->prefix('$')
+                            ->suffix('COP'),
 
                         TextInput::make('amount')
-                            ->label('Valor')
+                            ->label('Total cobrado')
                             ->numeric()
                             ->prefix('$')
                             ->suffix('COP')
@@ -92,6 +110,38 @@ class OrderForm
                         Toggle::make('wants_signature')
                             ->label('Pidió firma electrónica')
                             ->inline(false),
+
+                        Toggle::make('accepts_marketing')
+                            ->label('Autorizó recibir correos')
+                            ->inline(false)
+                            ->disabled()
+                            ->helperText('Lo marcó el cliente. No se cambia desde aquí.'),
+
+                        Toggle::make('shareable_with_lawyers')
+                            ->label('Autorizó compartir su caso con abogados')
+                            ->inline(false)
+                            ->disabled(),
+                    ]),
+
+                Section::make('Adicionales contratados')
+                    ->description('El precio queda congelado tal como se cobró. Si mañana sube el adicional, este pedido sigue diciendo lo que el cliente pagó.')
+                    ->schema([
+                        Repeater::make('addons')
+                            ->label('')
+                            ->relationship()
+                            ->schema([
+                                TextInput::make('name')->label('Adicional')->disabled(),
+                                TextInput::make('price')
+                                    ->label('Precio cobrado')
+                                    ->numeric()
+                                    ->prefix('$')
+                                    ->disabled(),
+                            ])
+                            ->columns(2)
+                            ->deletable(false)
+                            ->addable(false)
+                            ->reorderable(false)
+                            ->columnSpanFull(),
                     ]),
 
                 Section::make('Pago')

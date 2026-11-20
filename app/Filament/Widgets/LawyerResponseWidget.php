@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 /** Mide la salud de la red: si nadie acepta, el servicio no funciona. */
 class LawyerResponseWidget extends ChartWidget
 {
-    protected static ?int $sort = 4;
+    protected static ?int $sort = 5;
 
     protected int|string|array $columnSpan = 1;
 

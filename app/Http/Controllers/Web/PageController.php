@@ -75,7 +75,8 @@ class PageController
                     ['name' => 'Cómo funciona', 'url' => route('pages.how-it-works')],
                 ],
             ),
-            'plans' => $catalog->plans(),
+            'addons' => \App\Domain\Catalog\Models\ServiceAddon::query()->active()->get(),
+            'freeDocuments' => $catalog->freeDocuments(4),
             'pricing' => $pricing,
         ]);
     }

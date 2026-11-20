@@ -8,8 +8,11 @@ use App\Domain\Catalog\Models\LegalDocument;
 use Database\Seeders\BlogSeeder;
 use Database\Seeders\FaqSeeder;
 use Database\Seeders\LawyerSeeder;
+use Database\Seeders\CalculatorSeeder;
 use Database\Seeders\LegalDocumentSeeder;
-use Database\Seeders\ServicePlanSeeder;
+use Database\Seeders\PricingSeeder;
+use Database\Seeders\ServiceAddonSeeder;
+use Database\Seeders\SiteSettingSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -22,9 +25,12 @@ class PublicSeoTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            ServicePlanSeeder::class,
+            ServiceAddonSeeder::class,
             LawyerSeeder::class,
             LegalDocumentSeeder::class,
+            PricingSeeder::class,
+            SiteSettingSeeder::class,
+            CalculatorSeeder::class,
             FaqSeeder::class,
             BlogSeeder::class,
         ]);
@@ -68,6 +74,21 @@ class PublicSeoTest extends TestCase
             ->assertSee('"reviewedBy"', escape: false)
             ->assertSee('"@type":"Person"', escape: false)
             ->assertSee('Daniela Restrepo Gómez');
+    }
+
+    public function test_un_articulo_del_equipo_declara_a_la_marca_como_autora(): void
+    {
+        // No todo lo que se publica es jurídico: una guía de uso o una
+        // comparativa la firma la casa, y el marcado tiene que decirlo sin
+        // inventar un abogado que no lo escribió.
+        $post = \App\Domain\Content\Models\Post::query()->published()->firstOrFail();
+        $post->update(['author_lawyer_id' => null]);
+
+        $this->get($post->url())
+            ->assertOk()
+            ->assertSee('"@type":"BlogPosting"', escape: false)
+            ->assertSee('Escrito por el equipo de')
+            ->assertDontSee('"reviewedBy"', escape: false);
     }
 
     public function test_la_tarjeta_profesional_nunca_se_publica(): void
@@ -132,14 +153,30 @@ class PublicSeoTest extends TestCase
             ->assertOk()
             ->assertSee('Sitemap: '.route('sitemap'))
             ->assertSee('Disallow: /contratar')
-            ->assertSee('Disallow: /admin');
+            ->assertSee('Disallow: /admin')
+            ->assertSee('Disallow: /portal');
+    }
+
+    public function test_ningun_estatico_tapa_las_rutas_de_seo(): void
+    {
+        // El servidor sirve public/ antes de llegar a PHP: un robots.txt o un
+        // sitemap.xml ahí dentro se come la ruta sin que ningún test de
+        // integración se entere, porque los tests van directo al router.
+        foreach (['robots.txt', 'sitemap.xml'] as $file) {
+            $this->assertFileDoesNotExist(
+                public_path($file),
+                "public/{$file} taparía la ruta que lo genera."
+            );
+        }
     }
 
     public function test_las_paginas_del_embudo_no_se_indexan(): void
     {
-        $document = LegalDocument::query()->first();
+        // Uno que sí pase por el checkout: los que solo se hacen con abogado
+        // redirigen a cotización.
+        $document = LegalDocument::query()->where('self_service_enabled', true)->firstOrFail();
 
-        $this->get(route('checkout.configure', ['document', $document->slug]))
+        $this->get(route('checkout.configure', $document->slug))
             ->assertOk()
             ->assertSee('noindex, nofollow', escape: false);
     }
@@ -153,14 +190,47 @@ class PublicSeoTest extends TestCase
             ->assertSee('wa.me', escape: false);
     }
 
-    public function test_la_seccion_de_precios_muestra_un_solo_plan_de_documento(): void
+    public function test_la_home_ofrece_lo_gratis_antes_que_lo_pago(): void
     {
-        // El Express no es una tarjeta aparte: es una opción dentro del plan.
+        // El modelo entero depende de esto: si lo gratuito no se ve primero,
+        // no hay quien entre al embudo.
         $response = $this->get(route('home'));
 
         $response->assertOk()
-            ->assertSee('Documento listo para usar')
-            ->assertSee('Express (menos de 4 horas)')
-            ->assertDontSee('Trámite Express');
+            ->assertSee('hoy y gratis', escape: false)
+            ->assertSee('Tú armas el trámite');
+    }
+
+    public function test_cada_adicional_muestra_su_precio_antes_de_pagar(): void
+    {
+        // Un adicional sin precio a la vista es una sorpresa en la factura.
+        $document = LegalDocument::query()->where('slug', 'derecho-de-peticion')->firstOrFail();
+
+        $this->get(route('checkout.configure', $document->slug))
+            ->assertOk()
+            ->assertSee('Instructivo', escape: false)
+            ->assertSee('$19.900');
+    }
+
+    public function test_la_home_pide_consentimiento_de_datos_de_forma_visible(): void
+    {
+        // Regalar el documento a cambio del dato solo es legítimo si el
+        // titular sabe qué está autorizando (Ley 1581 de 2012).
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('Ley 1581 de 2012')
+            ->assertSee('autorización de tratamiento de datos');
+    }
+
+    public function test_el_consentimiento_de_abogados_es_una_casilla_aparte(): void
+    {
+        // Autorizar el correo no autoriza que un abogado llame: son dos
+        // finalidades distintas y tienen que marcarse por separado.
+        $document = LegalDocument::query()->where('slug', 'derecho-de-peticion')->firstOrFail();
+
+        $this->get(route('checkout.configure', $document->slug))
+            ->assertOk()
+            ->assertSee('name="accepts_marketing"', escape: false)
+            ->assertSee('name="shareable_with_lawyers"', escape: false);
     }
 }

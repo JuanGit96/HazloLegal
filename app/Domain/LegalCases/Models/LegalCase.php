@@ -31,6 +31,7 @@ class LegalCase extends Model
             'budget_range' => BudgetRange::class,
             'has_documents' => 'boolean',
             'assigned_at' => 'datetime',
+            'shortlisted_at' => 'datetime',
             'dispatched_at' => 'datetime',
             'expires_at' => 'datetime',
         ];
@@ -46,6 +47,12 @@ class LegalCase extends Model
     public function pendingOffers(): HasMany
     {
         return $this->offers()->where('status', CaseOfferStatus::Pending);
+    }
+
+    /** Los abogados que se postularon y esperan que el cliente elija. */
+    public function acceptedOffers(): HasMany
+    {
+        return $this->offers()->where('status', CaseOfferStatus::Accepted);
     }
 
     public function assignedLawyer(): BelongsTo
@@ -66,6 +73,27 @@ class LegalCase extends Model
     }
 
     // -------------------------------------------------- Comportamiento
+
+    /**
+     * El enlace con el que el cliente abre su caso.
+     *
+     * Lleva la llave porque la referencia es correlativa: sin ella,
+     * cualquiera podría leer el caso de otro cambiando un número.
+     */
+    public function clientUrl(): string
+    {
+        return route('cases.choose', [
+            'case' => $this->reference,
+            't' => $this->client_token,
+        ]);
+    }
+
+    public function grantsAccessWith(?string $token): bool
+    {
+        return $this->client_token !== null
+            && $token !== null
+            && hash_equals($this->client_token, $token);
+    }
 
     public function isTaken(): bool
     {

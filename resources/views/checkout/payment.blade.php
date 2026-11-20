@@ -9,63 +9,134 @@
 
         <div class="section-head">
             <span class="eyebrow">Pedido {{ $order->reference }}</span>
-            <h1>Último paso: confirma tu pago</h1>
+            <h1>Último paso: <span class="hl">confirma tu pago</span></h1>
             <p>El reloj de la entrega arranca cuando confirmamos el pago, no antes.</p>
-        </div>
-
-        <div class="alert alert--warn" style="max-width: 760px; margin: 0 auto var(--s8);">
-            <span class="alert__icon" aria-hidden="true">🧪</span>
-            <div>
-                <strong>Prototipo de demostración.</strong>
-                <p style="margin-top: var(--s1);">
-                    Esta pantalla aún no cobra: al confirmar simulamos un pago aprobado para que puedas
-                    recorrer el flujo completo. La integración con la pasarela real va en la siguiente etapa.
-                </p>
-            </div>
         </div>
 
         <div class="checkout-layout">
             <div>
-                <form action="{{ route('checkout.pay', $order->reference) }}" method="post">
-                    @csrf
-
-                    <h2 style="font-size: var(--t-xl);">¿Cómo quieres pagar?</h2>
-
-                    <div class="choice-grid" style="margin-bottom: var(--s8);">
-                        @foreach ($paymentMethods as $i => $method)
-                            <label class="choice">
-                                <input type="radio" name="payment_method" value="{{ $method->value }}" required
-                                       @checked($i === 0)>
-                                <span class="choice__box">
-                                    <span class="choice__head">
-                                        <span class="choice__title">{{ $method->getLabel() }}</span>
-                                        <span class="choice__radio" aria-hidden="true"></span>
-                                    </span>
-                                    <span class="choice__meta">{{ $method->helper() }}</span>
-                                </span>
-                            </label>
-                        @endforeach
+                @if (session('paymentError'))
+                    <div class="alert alert--danger" style="margin-bottom: var(--s6);">
+                        <span class="alert__icon" aria-hidden="true">!</span>
+                        <div>
+                            <strong>El pago no se completó.</strong>
+                            <p style="margin-top: var(--s1);">{{ session('paymentError') }} Puedes intentarlo otra vez.</p>
+                        </div>
                     </div>
+                @endif
 
-                    <div class="card card--flat" style="background: var(--slate-50); margin-bottom: var(--s8);">
-                        <h3 style="font-size: var(--t-base);">Datos para transferencia manual</h3>
-                        <p class="text-sm text-muted mb-0">
-                            Nequi / Daviplata: <strong class="mono">{{ $payments['nequi'] }}</strong><br>
-                            {{ $payments['bank'] }}: <strong class="mono">{{ $payments['bank_account'] }}</strong><br>
-                            A nombre de <strong>{{ config('hazlolegal.brand.legal_name') }}</strong><br>
-                            Referencia: <strong class="mono">{{ $order->reference }}</strong>
-                        </p>
-                    </div>
+                @if ($bump && $bump->price > 0)
+                    {{-- Se suma al mismo pedido y vuelve a esta pantalla con
+                         el total actualizado. --}}
+                    <form action="{{ route('checkout.add-addon', $order->reference) }}" method="post" class="bump">
+                        @csrf
+                        <input type="hidden" name="addon" value="{{ $bump->key() }}">
 
-                    <button type="submit" class="btn btn--primary btn--lg">
-                        Confirmar pago de {{ $order->formattedAmount() }}
-                    </button>
+                        <span class="bump__tag">Añádelo antes de pagar</span>
 
-                    <p class="text-xs text-muted" style="margin-top: var(--s4);">
-                        🔒 Nunca pedimos datos de tarjeta por WhatsApp ni por teléfono.
-                        Si alguien lo hace en nuestro nombre, no somos nosotros.
+                        <div class="bump__body">
+                            <strong>{{ $bump->addon->emoji }} {{ $bump->addon->name }}</strong>
+                            @if ($bump->reason)
+                                <p>{{ $bump->reason }}</p>
+                            @endif
+                        </div>
+
+                        <button type="submit" class="bump__add">
+                            + {{ $bump->formattedPrice() }}
+                        </button>
+                    </form>
+                @endif
+
+                @if ($transaction)
+                    <h2 style="font-size: var(--t-xl);">Paga de forma segura</h2>
+                    <p class="text-sm text-muted">
+                        Te llevamos a Wompi para completar el pago. Puedes pagar con tarjeta, Nequi,
+                        PSE o transferencia desde Bancolombia.
                     </p>
-                </form>
+
+                    {{-- El formulario sale al dominio de Wompi: aquí nunca
+                         entra un número de tarjeta. La firma de integridad
+                         impide que alguien edite el monto por el camino. --}}
+                    <form action="{{ $wompi->checkoutUrl() }}" method="GET" class="pay-form">
+                        @foreach ($checkoutFields as $name => $value)
+                            <input type="hidden" name="{{ $name }}" value="{{ $value }}">
+                        @endforeach
+
+                        <button type="submit" class="btn btn--primary btn--lg btn--block">
+                            Pagar {{ $order->formattedAmount() }}
+                        </button>
+                    </form>
+
+                    <div class="pay-badges">
+                        <span>🔒 Pago cifrado</span>
+                        <span>💳 Tarjeta</span>
+                        <span>📱 Nequi</span>
+                        <span>🏦 PSE</span>
+                    </div>
+
+                    @if ($wompi->isSandbox())
+                        <div class="alert alert--warn" style="margin-top: var(--s6);">
+                            <span class="alert__icon" aria-hidden="true">🧪</span>
+                            <div>
+                                <strong>Modo de pruebas.</strong>
+                                <p style="margin-top: var(--s1);">
+                                    Estás en el entorno de pruebas de Wompi: ningún cobro es real.
+                                    Usa la tarjeta de prueba <strong class="mono">4242 4242 4242 4242</strong>,
+                                    cualquier fecha futura y CVC <strong class="mono">123</strong>.
+                                </p>
+                            </div>
+                        </div>
+                    @endif
+
+                    <details class="pay-manual">
+                        <summary>Prefiero transferir manualmente</summary>
+
+                        <div class="card card--flat" style="background: var(--slate-50); margin-top: var(--s4);">
+                            <p class="text-sm text-muted mb-0">
+                                Nequi / Daviplata: <strong class="mono">{{ $payments['nequi'] }}</strong><br>
+                                {{ $payments['bank'] }}: <strong class="mono">{{ $payments['bank_account'] }}</strong><br>
+                                A nombre de <strong>{{ config('hazlolegal.brand.legal_name') }}</strong><br>
+                                Referencia: <strong class="mono">{{ $order->reference }}</strong>
+                            </p>
+                            <p class="text-xs text-muted" style="margin-top: var(--s3); margin-bottom: 0;">
+                                Mándanos el comprobante por WhatsApp y lo confirmamos a mano.
+                            </p>
+                        </div>
+                    </details>
+                @else
+                    {{-- Sin pasarela configurada: se simula para poder recorrer
+                         el flujo completo en desarrollo. --}}
+                    <form action="{{ route('checkout.pay', $order->reference) }}" method="post">
+                        @csrf
+
+                        <h2 style="font-size: var(--t-xl);">¿Cómo quieres pagar?</h2>
+
+                        <div class="choice-grid" style="margin-bottom: var(--s8);">
+                            @foreach ($paymentMethods as $i => $method)
+                                <label class="choice">
+                                    <input type="radio" name="payment_method" value="{{ $method->value }}" required
+                                           @checked($i === 0)>
+                                    <span class="choice__box">
+                                        <span class="choice__head">
+                                            <span class="choice__title">{{ $method->getLabel() }}</span>
+                                            <span class="choice__radio" aria-hidden="true"></span>
+                                        </span>
+                                        <span class="choice__meta">{{ $method->helper() }}</span>
+                                    </span>
+                                </label>
+                            @endforeach
+                        </div>
+
+                        <button type="submit" class="btn btn--primary btn--lg">
+                            Confirmar pago de {{ $order->formattedAmount() }}
+                        </button>
+                    </form>
+                @endif
+
+                <p class="text-xs text-muted" style="margin-top: var(--s5);">
+                    🔒 Nunca pedimos datos de tarjeta por WhatsApp ni por teléfono.
+                    Si alguien lo hace en nuestro nombre, no somos nosotros.
+                </p>
             </div>
 
             <aside class="checkout-aside">
@@ -81,13 +152,15 @@
                             <dt>Trámite</dt>
                             <dd>{{ $order->document->short_name ?: $order->document->name }}</dd>
                         </div>
+                        @foreach ($order->addons as $addon)
+                            <div class="summary__row">
+                                <dt>{{ $addon->name }}</dt>
+                                <dd>{{ $addon->price === 0 ? 'Incluido' : $addon->formattedPrice() }}</dd>
+                            </div>
+                        @endforeach
                         <div class="summary__row">
-                            <dt>Plan</dt>
-                            <dd>{{ $order->plan->name }}</dd>
-                        </div>
-                        <div class="summary__row">
-                            <dt>Velocidad</dt>
-                            <dd>{{ $order->speed->shortLabel() }}</dd>
+                            <dt>Entrega</dt>
+                            <dd>{{ $order->isExpress() ? 'Ahora mismo' : $order->document->deliveryLabel() }}</dd>
                         </div>
                         <div class="summary__row">
                             <dt>A nombre de</dt>
@@ -106,7 +179,7 @@
 
                     <p class="text-xs text-muted" style="margin-top: var(--s5);">
                         ¿Algo quedó mal?
-                        <a href="{{ route('checkout.configure', [$order->plan->key->value, $order->document->slug]) }}">
+                        <a href="{{ route('checkout.configure', $order->document->slug) }}">
                             Volver a empezar el pedido
                         </a>
                     </p>

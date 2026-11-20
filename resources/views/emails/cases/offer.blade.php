@@ -2,7 +2,7 @@
 
 @section('subject', "Caso nuevo {$case->reference}")
 @section('accent', $case->urgency === \App\Domain\LegalCases\Enums\CaseUrgency::Critical ? '#DC2626' : '#EA580C')
-@section('preheader', "{$case->practice_area->getLabel()} · {$case->title} · se lo queda el primero que acepte")
+@section('preheader', "{$case->practice_area->getLabel()} · {$case->title} · postúlate si te interesa")
 @section('footnote', 'Recibes este correo porque eres abogado de la red de HazloLegal y el caso corresponde a tu área. Puedes pausar las invitaciones escribiéndonos.')
 
 @section('content')
@@ -27,7 +27,7 @@
         Hola {{ \Illuminate\Support\Str::before($lawyer->name, ' ') }}, entró un caso de
         <strong>{{ \Illuminate\Support\Str::lower($case->practice_area->getLabel()) }}</strong>.
         Lo enviamos a varios colegas al mismo tiempo y
-        <strong style="color:#C2410C;">se lo queda el primero que lo acepte</strong>.
+        <strong style="color:#C2410C;">el cliente elige entre quienes se postulen</strong>.
     </p>
 
     <x-email.note tone="muted" icon="🔖">
@@ -97,7 +97,7 @@
     </table>
 
     <p style="margin:0 0 22px 0; font-size:13px; line-height:20px; color:#64748B; text-align:center;">
-        Al aceptar recibes de inmediato los datos de contacto del cliente y el compromiso
+        Si el cliente te elige recibes sus datos de contacto y el compromiso
         de escribirle dentro de las siguientes 24 horas.
     </p>
 

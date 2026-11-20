@@ -62,12 +62,12 @@ class PostForm
                             ->columns(2)
                             ->schema([
                                 Select::make('author_lawyer_id')
-                                    ->label('Abogado que lo firma y revisa')
+                                    ->label('Abogado que lo firma')
                                     ->relationship('author', 'name', fn ($query) => $query->where('is_author', true))
                                     ->searchable()
                                     ->preload()
-                                    ->required()
-                                    ->helperText('Google exige autoría verificable en contenido legal (E-E-A-T). Sin abogado firmante, el artículo posiciona peor.'),
+                                    ->placeholder('Lo firma el equipo de HazloLegal')
+                                    ->helperText('Déjalo vacío si lo escribe el equipo. En contenido legal un abogado con nombre posiciona mejor (E-E-A-T), así que reserva la firma del equipo para lo informativo: guías de uso, comparativas, noticias.'),
 
                                 Select::make('post_category_id')
                                     ->label('Categoría')

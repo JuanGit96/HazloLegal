@@ -6,7 +6,7 @@ namespace App\Domain\Catalog\Services;
 
 use App\Domain\Catalog\Enums\PracticeArea;
 use App\Domain\Catalog\Models\LegalDocument;
-use App\Domain\Catalog\Models\ServicePlan;
+use App\Domain\Lawyers\Models\Lawyer;
 use Illuminate\Support\Collection;
 
 /** Única puerta de entrada al catálogo: controladores y Filament pasan por aquí. */
@@ -40,20 +40,39 @@ final class CatalogService
             ->values();
     }
 
-    public function plans(): Collection
+    /**
+     * Los trámites que no cuestan nada.
+     *
+     * Son la puerta de entrada del negocio: alguien llega por el derecho de
+     * petición gratis, deja sus datos con autorización de tratamiento y, si
+     * le sirve, vuelve a pagar por lo siguiente.
+     */
+    public function freeDocuments(int $limit = 6): Collection
     {
-        return ServicePlan::query()->active()->get();
+        return LegalDocument::query()
+            ->active()
+            ->where('is_free', true)
+            ->ordered()
+            ->limit($limit)
+            ->get();
     }
 
-    public function plan(string $key): ?ServicePlan
+    /** Trámites que sí se pueden pedir solo, sin abogado. */
+    public function selfServiceDocuments(): Collection
     {
-        return ServicePlan::query()->active()->where('key', $key)->first();
+        return $this->documents()->filter(fn (LegalDocument $doc) => $doc->allowsSelfService())->values();
     }
 
-    /** Los planes que se muestran en la grilla de precios del home. */
-    public function publicPlans(): Collection
+    /** Abogados publicados del directorio para un área, ya priorizados por plan. */
+    public function directoryLawyersFor(PracticeArea $area, int $limit = 3): Collection
     {
-        return $this->plans();
+        return Lawyer::query()
+            ->where('is_published', true)
+            ->whereJsonContains('practice_areas', $area->value)
+            ->orderByDesc('is_featured')
+            ->orderBy('last_placement_at')
+            ->limit($limit)
+            ->get();
     }
 
     public function relatedDocuments(LegalDocument $document, int $limit = 3): Collection

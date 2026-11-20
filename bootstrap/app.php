@@ -24,6 +24,13 @@ return Application::configure(basePath: dirname(__DIR__))
                 | Request::HEADER_X_FORWARDED_PROTO
                 | Request::HEADER_X_FORWARDED_AWS_ELB,
         );
+
+        // El webhook de la pasarela no viene de un formulario nuestro, así
+        // que no trae token CSRF. Lo que prueba que es legítimo es la firma
+        // del propio evento, que se verifica en el controlador.
+        $middleware->validateCsrfTokens(except: [
+            'wompi/eventos',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

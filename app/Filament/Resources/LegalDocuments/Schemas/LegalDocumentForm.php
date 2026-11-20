@@ -82,34 +82,66 @@ class LegalDocumentForm
                                     ->columnSpanFull(),
                             ]),
 
-                        Tab::make('Precio y entrega')
+                        Tab::make('Precio y niveles')
                             ->columns(2)
                             ->schema([
-                                TextInput::make('price_modifier')
-                                    ->label('Ajuste de precio')
+                                TextInput::make('base_price')
+                                    ->label('Precio base')
                                     ->numeric()
                                     ->default(0)
                                     ->prefix('$')
                                     ->suffix('COP')
-                                    ->helperText('Se suma al precio del plan. 0 = cuesta lo mismo que cualquier otro trámite.'),
+                                    ->required()
+                                    ->helperText('0 = el trámite es gratis. Lo que se cobre encima sale de los adicionales.'),
+
+                                TextInput::make('compare_at_price')
+                                    ->label('Precio tachado')
+                                    ->numeric()
+                                    ->prefix('$')
+                                    ->suffix('COP')
+                                    ->helperText('Solo si ese precio fue real alguna vez. Inventarlo es publicidad engañosa (Ley 1480 de 2011).'),
+
+                                TextInput::make('discount_percentage')
+                                    ->label('O un descuento en %')
+                                    ->numeric()
+                                    ->default(0)
+                                    ->suffix('%')
+                                    ->maxValue(90)
+                                    ->helperText('Si pones un porcentaje, el precio tachado se calcula solo.'),
 
                                 TextInput::make('sort_order')
                                     ->label('Orden en el catálogo')
                                     ->numeric()
                                     ->default(0),
 
-                                Toggle::make('available_express')
-                                    ->label('Admite entrega Express')
+                                TextInput::make('delivery_hours')
+                                    ->label('Horas de entrega')
+                                    ->numeric()
+                                    ->default(24)
+                                    ->suffix('horas')
+                                    ->required()
+                                    ->helperText('Sin el adicional de entrega inmediata, esto es lo que se promete.'),
+
+                                TextInput::make('express_delivery_hours')
+                                    ->label('Horas con entrega inmediata')
+                                    ->numeric()
+                                    ->default(0)
+                                    ->suffix('horas')
+                                    ->helperText('0 = se entrega al instante.'),
+
+                                Toggle::make('self_service_enabled')
+                                    ->label('Se puede pedir sin abogado')
                                     ->default(true)
-                                    ->inline(false),
+                                    ->inline(false)
+                                    ->helperText('Apágalo en lo que no se puede automatizar sin hacer daño, como una tutela: entonces solo se vende con acompañamiento.'),
+
+                                Toggle::make('is_free')
+                                    ->label('Aparece entre los gratuitos')
+                                    ->inline(false)
+                                    ->helperText('Lo muestra en /gratis y en la franja de la home. Debe ir de la mano de un precio base de 0.'),
 
                                 Toggle::make('supports_signature')
                                     ->label('Admite firma electrónica')
-                                    ->inline(false),
-
-                                Toggle::make('requires_lawyer_review')
-                                    ->label('Exige revisión de abogado')
-                                    ->default(true)
                                     ->inline(false),
 
                                 Toggle::make('is_active')
@@ -120,6 +152,126 @@ class LegalDocumentForm
                                 Toggle::make('is_featured')
                                     ->label('Destacado en la home')
                                     ->inline(false),
+
+                                TextInput::make('hook')
+                                    ->label('Gancho')
+                                    ->helperText('La frase corta de la tarjeta en /gratis. «Te responden en 15 días o pueden tutelar».')
+                                    ->columnSpanFull(),
+                            ]),
+
+                        Tab::make('Plantilla del documento')
+                            ->schema([
+                                TextInput::make('template_heading')
+                                    ->label('Encabezado del PDF')
+                                    ->placeholder('SEÑORES')
+                                    ->helperText('La primera línea del documento que recibe el cliente.'),
+
+                                Textarea::make('template_body')
+                                    ->label('Cuerpo del documento')
+                                    ->rows(18)
+                                    ->helperText('Marcadores disponibles: {{ cliente.nombre }}, {{ cliente.documento }}, {{ cliente.correo }}, {{ cliente.telefono }}, {{ cliente.ciudad }}, {{ caso.resumen }}, {{ fecha.larga }}, {{ tramite.nombre }}, {{ pedido.referencia }}. Separa párrafos con una línea en blanco.')
+                                    ->columnSpanFull(),
+
+                                Repeater::make('template_fields')
+                                    ->label('Campos extra del formulario')
+                                    ->helperText('Lo que se le pregunta al cliente además del resumen del caso.')
+                                    ->schema([
+                                        TextInput::make('key')
+                                            ->label('Clave')
+                                            ->required()
+                                            ->helperText('Se usa como marcador: {{ campo.clave }}'),
+                                        TextInput::make('label')->label('Pregunta')->required(),
+                                        Select::make('type')
+                                            ->label('Tipo')
+                                            ->options([
+                                                'text' => 'Texto corto',
+                                                'textarea' => 'Texto largo',
+                                                'date' => 'Fecha',
+                                                'number' => 'Número',
+                                            ])
+                                            ->default('text')
+                                            ->native(false),
+                                        Toggle::make('required')->label('Obligatorio')->inline(false),
+                                    ])
+                                    ->columns(2)
+                                    ->collapsible()
+                                    ->itemLabel(fn (array $state) => $state['label'] ?? null)
+                                    ->columnSpanFull(),
+
+                                Repeater::make('filing_steps')
+                                    ->label('Pasos de radicación (van en el instructivo PDF)')
+                                    ->schema([
+                                        TextInput::make('title')->label('Paso')->required(),
+                                        Textarea::make('body')->label('Explicación')->rows(3)->required(),
+                                    ])
+                                    ->collapsible()
+                                    ->itemLabel(fn (array $state) => $state['title'] ?? null)
+                                    ->columnSpanFull(),
+
+                                TextInput::make('filing_entity')
+                                    ->label('Ante quién se radica')
+                                    ->placeholder('La EPS, o cualquier juez de la República'),
+
+                                TextInput::make('response_deadline_days')
+                                    ->label('Plazo legal de respuesta')
+                                    ->numeric()
+                                    ->suffix('días')
+                                    ->helperText('Se imprime en el instructivo para que el cliente sepa cuándo reclamar.'),
+                            ]),
+
+                        Tab::make('Instructivo')
+                            ->schema([
+                                Textarea::make('instructions_intro')
+                                    ->label('De qué se trata, en una frase')
+                                    ->rows(3)
+                                    ->helperText('Lo primero que lee. Tiene que entenderlo alguien que nunca ha radicado nada.')
+                                    ->columnSpanFull(),
+
+                                TagsInput::make('instructions_attachments')
+                                    ->label('Qué tiene que llevar o adjuntar')
+                                    ->helperText('Se imprime como una lista con casillas para marcar con lápiz.')
+                                    ->columnSpanFull(),
+
+                                Repeater::make('instructions_warnings')
+                                    ->label('Cuándo este documento no alcanza')
+                                    ->helperText('Las señales del semáforo, explicadas. Van en el instructivo y no en el checkout: avisar cuando ya tiene el documento en la mano sirve más que una alerta que cerró de paso.')
+                                    ->schema([
+                                        TextInput::make('title')->label('Situación')->required(),
+                                        Textarea::make('body')->label('Qué debería hacer entonces')->rows(3)->required(),
+                                    ])
+                                    ->collapsible()
+                                    ->itemLabel(fn (array $state) => $state['title'] ?? null)
+                                    ->columnSpanFull(),
+
+                                Repeater::make('glossary')
+                                    ->label('Palabras que va a encontrar')
+                                    ->helperText('«Radicado», «días hábiles», «silencio positivo». Si el cliente no las entiende, no sigue los pasos.')
+                                    ->schema([
+                                        TextInput::make('term')->label('Palabra')->required(),
+                                        TextInput::make('definition')->label('Qué significa, sin tecnicismos')->required(),
+                                    ])
+                                    ->collapsible()
+                                    ->itemLabel(fn (array $state) => $state['term'] ?? null)
+                                    ->columns(2)
+                                    ->columnSpanFull(),
+
+                                Repeater::make('filing_channels')
+                                    ->label('Dónde se radica')
+                                    ->helperText('Los canales oficiales, con su enlace y la fecha en que se verificó. Un enlace muerto en el instructivo es el reclamo más fácil de evitar.')
+                                    ->schema([
+                                        TextInput::make('name')->label('Canal')->required(),
+                                        TextInput::make('url')->label('Enlace')->url(),
+                                        \Filament\Forms\Components\DatePicker::make('verified_at')->label('Verificado el'),
+                                    ])
+                                    ->collapsible()
+                                    ->itemLabel(fn (array $state) => $state['name'] ?? null)
+                                    ->columns(3)
+                                    ->columnSpanFull(),
+
+                                TextInput::make('instructions_footer')
+                                    ->label('Frase fija del pie')
+                                    ->placeholder('HazloLegal no radica por usted.')
+                                    ->columnSpanFull(),
                             ]),
 
                         Tab::make('Qué recibe el cliente')

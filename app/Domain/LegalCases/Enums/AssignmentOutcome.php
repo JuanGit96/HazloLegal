@@ -8,6 +8,10 @@ enum AssignmentOutcome: string
 {
     /** Este abogado se quedó con el caso. */
     case Won = 'won';
+
+    /** Se postuló y espera que el cliente elija. */
+    case Shortlisted = 'shortlisted';
+
     /** Ya lo tenía asignado (recargó el enlace). */
     case AlreadyYours = 'already_yours';
     /** Otro abogado llegó primero. */
@@ -21,6 +25,6 @@ enum AssignmentOutcome: string
 
     public function isSuccess(): bool
     {
-        return in_array($this, [self::Won, self::AlreadyYours], true);
+        return in_array($this, [self::Won, self::AlreadyYours, self::Shortlisted], true);
     }
 }

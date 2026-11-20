@@ -8,6 +8,8 @@ use App\Domain\Catalog\Models\LegalDocument;
 use App\Filament\Resources\LegalDocuments\Pages\CreateLegalDocument;
 use App\Filament\Resources\LegalDocuments\Pages\EditLegalDocument;
 use App\Filament\Resources\LegalDocuments\Pages\ListLegalDocuments;
+use App\Filament\Resources\LegalDocuments\RelationManagers\AddonsRelationManager;
+use App\Filament\Resources\LegalDocuments\RelationManagers\ClausesRelationManager;
 use App\Filament\Resources\LegalDocuments\Schemas\LegalDocumentForm;
 use App\Filament\Resources\LegalDocuments\Tables\LegalDocumentsTable;
 use App\Filament\Support\NavGroup;
@@ -43,6 +45,14 @@ class LegalDocumentResource extends Resource
     public static function table(Table $table): Table
     {
         return LegalDocumentsTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            ClausesRelationManager::class,
+            AddonsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

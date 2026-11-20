@@ -9,8 +9,13 @@
     $display = match ($outcome) {
         AssignmentOutcome::Won => [
             'icon' => '🎉', 'tone' => 'success',
-            'title' => '¡El caso es tuyo!',
-            'lead' => 'Llegaste primero. El cliente ya recibió un correo con tu nombre y tus credenciales.',
+            'title' => '¡El cliente te eligió!',
+            'lead' => 'El caso es tuyo. Abajo están sus datos de contacto: escríbele hoy mismo.',
+        ],
+        AssignmentOutcome::Shortlisted => [
+            'icon' => '✋', 'tone' => 'info',
+            'title' => 'Te postulaste',
+            'lead' => 'El cliente ya sabe que quieres su caso y está viendo los perfiles de quienes también se postularon. Te avisamos en cuanto decida.',
         ],
         AssignmentOutcome::AlreadyYours => [
             'icon' => '✓', 'tone' => 'success',
@@ -19,13 +24,13 @@
         ],
         AssignmentOutcome::TakenByOther => [
             'icon' => '⏱️', 'tone' => 'warn',
-            'title' => 'Otro abogado llegó primero',
-            'lead' => 'Este caso ya fue aceptado por un colega de la red. Te avisaremos del siguiente.',
+            'title' => 'El cliente eligió a otro colega',
+            'lead' => 'Esta vez no fue. Te avisaremos del siguiente caso de tu área.',
         ],
         AssignmentOutcome::Declined => [
             'icon' => '👍', 'tone' => 'info',
             'title' => 'Registramos que no tomas este caso',
-            'lead' => 'Gracias por responder rápido: así el caso llega antes a otro colega. No afecta tu prioridad en los próximos.',
+            'lead' => 'Gracias por responder: así el cliente ve antes una lista real de interesados. No afecta tu prioridad en los próximos.',
         ],
         AssignmentOutcome::Expired => [
             'icon' => '🕒', 'tone' => 'warn',
@@ -56,8 +61,9 @@
             </p>
         </div>
 
-        {{-- Datos del cliente: sólo para quien ganó el caso. --}}
-        @if ($outcome->isSuccess())
+        {{-- Datos del cliente: sólo para quien el cliente eligió. Un
+             postulado ve el caso, nunca a la persona. --}}
+        @if (in_array($outcome, [AssignmentOutcome::Won, AssignmentOutcome::AlreadyYours], true))
             <div class="card card--pad-lg mt-10" style="border-color: var(--green-600); background: var(--green-50);">
                 <h2 style="font-size: var(--t-lg);">Datos de contacto del cliente</h2>
                 <p class="text-sm text-muted">Contáctalo dentro de las próximas 24 horas. Es el compromiso de la red.</p>

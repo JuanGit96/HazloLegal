@@ -4,7 +4,7 @@
 <section class="section section--white">
     <div class="container">
         <div class="section-head">
-            <h1>¿Qué nivel de acompañamiento necesitas?</h1>
+            <h1>¿Qué nivel de <span class="hl hl--blue">acompañamiento</span> necesitas?</h1>
             <p>Puedes cambiar de opción en cualquier momento antes de pagar.</p>
         </div>
 

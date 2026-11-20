@@ -9,7 +9,10 @@
 :root {
     color-scheme: light only;
 
-    /* Marca */
+    /* Marca.
+       Azul más profundo y naranja más cálido que el azul/gris por defecto:
+       el objetivo es que no se parezca a cualquier plantilla. El crema de
+       fondo (en vez de gris frío) es lo que más cambia la sensación. */
     --blue-50:  #EFF6FF;
     --blue-100: #DBEAFE;
     --blue-200: #BFDBFE;
@@ -48,14 +51,22 @@
     --slate-800: #1E293B;
     --slate-900: #0F172A;
 
+    /* Crema y arena: el fondo cálido es la decisión que más aleja el
+       sitio del gris azulado que traen todas las plantillas. */
+    --cream-50:  #FEFCF8;
+    --cream-100: #FDF8F0;
+    --cream-200: #F7EFE2;
+    --sand-300:  #E8DCC8;
+    --ink:       #10151F;
+
     /* Semánticos */
-    --bg:            var(--slate-50);
+    --bg:            var(--cream-50);
     --bg-raised:     #FFFFFF;
-    --bg-sunken:     var(--slate-100);
+    --bg-sunken:     var(--cream-100);
     --bg-brand-soft: var(--blue-50);
     --bg-inverse:    var(--blue-900);
 
-    --text:        var(--slate-900);
+    --text:        var(--ink);
     --text-muted:  var(--slate-600);
     --text-subtle: var(--slate-500);
     --text-on-dark: #FFFFFF;
@@ -63,10 +74,10 @@
     --border:        var(--slate-200);
     --border-strong: var(--slate-300);
 
-    --brand:       var(--blue-600);
+    --brand:       #1D4ED8;
     --brand-dark:  var(--blue-900);
-    --action:      var(--orange-600);
-    --action-dark: var(--orange-700);
+    --action:      #F97316;
+    --action-dark: #EA580C;
     --success:     var(--green-600);
 
     /* Espaciado: escala de 4 px */
@@ -75,7 +86,8 @@
     --s12: 3rem;   --s16: 4rem;   --s20: 5rem;   --s24: 6rem;
 
     /* Tipografía fluida */
-    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-display: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
 
     --t-xs:   .8125rem;
@@ -89,7 +101,7 @@
     --t-5xl:  clamp(2.25rem, 1.5rem + 3.4vw, 3.5rem);
 
     /* Radios y sombras */
-    --r-sm: 6px;  --r: 10px;  --r-md: 14px;  --r-lg: 20px;  --r-xl: 28px;  --r-full: 999px;
+    --r-sm: 8px;  --r: 12px;  --r-md: 18px;  --r-lg: 24px;  --r-xl: 32px;  --r-full: 999px;
 
     --sh-xs: 0 1px 2px rgba(15, 23, 42, .06);
     --sh-sm: 0 1px 3px rgba(15, 23, 42, .08), 0 1px 2px rgba(15, 23, 42, .04);
@@ -105,6 +117,13 @@
 
 /* -------------------------------------------------- 2. Reset */
 *, *::before, *::after { box-sizing: border-box; }
+
+/* El atributo `hidden` tiene que ganarle a cualquier `display` del
+   componente. Sin esto, un .alert (display:flex) o un .field (display:grid)
+   marcados como hidden se siguen viendo: salía un recuadro azul vacío encima
+   de los adicionales y los campos de «firma» del registro no se ocultaban
+   nunca. Es la razón por la que esta regla existe en todos los resets. */
+[hidden] { display: none !important; }
 
 html {
     scroll-behavior: smooth;
@@ -137,7 +156,7 @@ a:hover { color: var(--blue-700); }
 :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: var(--r-sm); }
 
 h1, h2, h3, h4, h5 { margin: 0 0 var(--s4); line-height: 1.18; letter-spacing: -.021em; font-weight: 800; text-wrap: balance; }
-h1 { font-size: var(--t-5xl); letter-spacing: -.032em; }
+h1 { font-size: var(--t-5xl); letter-spacing: -.038em; font-weight: 800; font-family: var(--font-display); }
 h2 { font-size: var(--t-3xl); letter-spacing: -.026em; }
 h3 { font-size: var(--t-xl); font-weight: 700; }
 h4 { font-size: var(--t-lg); font-weight: 700; letter-spacing: -.012em; }
@@ -177,6 +196,31 @@ hr { border: 0; border-top: 1px solid var(--border); margin: var(--s10) 0; }
 .section--dark   { background: var(--bg-inverse); color: var(--text-on-dark); }
 .section--dark h1, .section--dark h2, .section--dark h3 { color: #fff; }
 .section--dark p { color: var(--blue-100); }
+
+/* -------------------------------------------------- Texto sobre azul
+   Sobre fondo oscuro no se repinta elemento por elemento: se reasignan
+   los tokens de texto. Pintar uno a uno es lo que hizo que el parrafo
+   del hero de /gratis saliera gris sobre azul: `.section-head p` fijaba
+   --text-muted y ganaba por orden a `.section--dark p`. Reasignando el
+   token, cualquier pieza que entre manana hereda el contraste correcto. */
+.section--dark, .cta-band {
+    --text:        #FFFFFF;
+    --text-muted:  var(--blue-100);
+    --text-subtle: var(--blue-200);
+}
+
+/* Salvo las tarjetas claras que viven dentro de una seccion oscura: ahi
+   vuelven los tokens de siempre, o el texto claro desaparece sobre el
+   blanco de la tarjeta. Una tarjeta clara nueva se marca con .on-light. */
+.section--dark :is(.card, .quote, .doc-card, .addon__box, .buybox, .author-box, .choice__box, .on-light),
+.cta-band :is(.card, .quote, .doc-card, .addon__box, .buybox, .author-box, .choice__box, .on-light) {
+    --text:        var(--ink);
+    --text-muted:  var(--slate-600);
+    --text-subtle: var(--slate-500);
+}
+
+/* El azul de marca desaparece contra el azul del fondo. */
+.section--dark .breadcrumbs a:hover, .cta-band .breadcrumbs a:hover { color: #fff; }
 .section--bordered { border-block: 1px solid var(--border); }
 
 .section-head { max-width: 680px; margin: 0 auto var(--s12); text-align: center; }
@@ -209,18 +253,28 @@ hr { border: 0; border-top: 1px solid var(--border); margin: var(--s10) 0; }
 }
 .site-header__inner { display: flex; align-items: center; justify-content: space-between; gap: var(--s5); height: 100%; }
 
+/* El logo es el marcador aplicado a la propia marca: «Hazlo» escrito y
+   «Legal» resaltado. No lleva icono: la balanza es el cliche del sector
+   y lo unico que aportaba era parecerse a los demas. */
 .logo {
-    display: inline-flex; align-items: center; 
-    font-size: 1.3rem; font-weight: 800; letter-spacing: -.03em;
-    color: var(--brand-dark); text-decoration: none; flex-shrink: 0;
+    display: inline-flex; align-items: baseline; gap: .12em;
+    font-family: var(--font-display); line-height: 1.1;
+    font-size: 1.3rem; font-weight: 800; letter-spacing: -.035em;
+    color: var(--ink); text-decoration: none; flex-shrink: 0;
 }
-.logo:hover { color: var(--brand-dark); }
-.logo__mark {
-    display: grid; place-items: center; width: 32px; height: 32px;
-    background: linear-gradient(135deg, var(--blue-600), var(--blue-900));
-    color: #fff; border-radius: 9px; font-size: .95rem; box-shadow: var(--sh-sm);
+.logo:hover { color: var(--ink); }
+.logo__hl {
+    display: inline-block;
+    padding: .04em .26em .12em;
+    background: var(--brand);
+    color: #fff;
+    border-radius: 7px;
+    transform: rotate(-2deg);
 }
-.logo em { font-style: normal; color: var(--brand); }
+/* Sobre fondo oscuro el azul se pierde; ahi el resaltador es naranja. */
+.logo--invert { color: #fff; }
+.logo--invert:hover { color: #fff; }
+.logo--invert .logo__hl { background: var(--action); }
 
 .nav { display: flex; align-items: center; gap: var(--s6); }
 .nav a { color: var(--text-muted); font-size: var(--t-sm); font-weight: 600; text-decoration: none; white-space: nowrap; }
@@ -345,7 +399,6 @@ hr { border: 0; border-top: 1px solid var(--border); margin: var(--s10) 0; }
 .hero > * { position: relative; }
 .hero__grid { display: grid; grid-template-columns: 1.08fr .92fr; gap: var(--s12); align-items: center; }
 .hero h1 { margin-bottom: var(--s5); }
-.hero h1 .accent { color: var(--brand); }
 .hero__lead { font-size: var(--t-lg); color: var(--text-muted); margin-bottom: var(--s6); max-width: 36ch; }
 .hero__kicker { display: flex; flex-wrap: wrap; gap: var(--s2); margin-bottom: var(--s5); }
 
@@ -716,7 +769,7 @@ hr { border: 0; border-top: 1px solid var(--border); margin: var(--s10) 0; }
 
 .doc-hero__aside { position: sticky; top: calc(var(--header-h) + var(--s5)); }
 .buybox { padding: var(--s6); background: #fff; border: 2px solid var(--brand); border-radius: var(--r-lg); box-shadow: var(--sh-md); }
-.buybox__price { display: flex; align-items: baseline; gap: var(--s2); font-size: var(--t-4xl); font-weight: 800; color: var(--brand-dark); letter-spacing: -.035em; }
+.buybox__price { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s2); font-size: var(--t-4xl); font-weight: 800; color: var(--brand-dark); letter-spacing: -.035em; }
 .buybox__price small { font-size: var(--t-sm); font-weight: 600; color: var(--text-subtle); }
 .buybox__rows { list-style: none; padding: 0; margin: var(--s5) 0; display: grid; gap: var(--s3); }
 .buybox__rows li { display: flex; gap: var(--s3); align-items: flex-start; font-size: var(--t-sm); color: var(--text-muted); }
@@ -848,3 +901,752 @@ hr { border: 0; border-top: 1px solid var(--border); margin: var(--s10) 0; }
 .mt-10 { margin-top: var(--s10); }
 .nowrap { white-space: nowrap; }
 .mono { font-family: var(--font-mono); }
+
+/* ==========================================================================
+   30. Identidad propia
+   Componentes que sacan al sitio del molde genérico: la palabra resaltada
+   en bloque de color, las tarjetas cálidas y las fichas de adicionales.
+   ========================================================================== */
+
+/* -------------------------------------------------- El marcador
+   La firma visual de la marca. Un bloque de color ligeramente torcido,
+   como si alguien hubiera pasado un resaltador sobre la palabra que
+   importa. Va en el logo y en el titular de cada pagina publica.
+
+   Dos reglas para no gastarlo: solo el final del titular (si se resalta
+   la frase entera no resalta nada) y un solo marcador por seccion. Azul
+   para lo que somos, naranja para lo que el visitante puede hacer hoy y
+   gratis. */
+.hl {
+    display: inline-block;
+    position: relative;
+    max-width: 100%;
+    padding: 0 .22em .06em;
+    background: var(--hl-bg, var(--action));
+    color: #fff;
+    border-radius: 10px;
+    transform: rotate(var(--hl-tilt, -1deg));
+    /* Solido a proposito: una sombra heredada del titular lo convierte
+       en un boton y deja de leerse como resaltador. */
+    text-shadow: none;
+}
+.hl--blue   { --hl-bg: var(--brand); }
+.hl--orange { --hl-bg: var(--action); }
+.hl--ink    { --hl-bg: var(--ink); }
+
+/* Dos marcadores seguidos con la misma inclinacion parecen un error de
+   maquetacion; alternados parecen hechos a mano. */
+.hl--right { --hl-tilt: 1deg; }
+.hl--flat  { --hl-tilt: 0deg; }
+
+/* El azul desaparece contra un fondo azul oscuro: ahi manda el naranja. */
+.section--dark .hl, .cta-band .hl { --hl-bg: var(--action); }
+
+/* Subrayado dibujado a mano, alternativa más sutil */
+.underline-hand {
+    position: relative;
+    display: inline-block;
+}
+.underline-hand::after {
+    content: '';
+    position: absolute;
+    left: -2px; right: -2px; bottom: .02em;
+    height: .34em;
+    background: var(--orange-100);
+    border-radius: 4px;
+    z-index: -1;
+}
+
+/* -------------------------------------------------- Tarjeta cálida */
+.tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: var(--s6);
+    background: var(--bg-raised);
+    border: 1px solid var(--sand-300);
+    border-radius: var(--r-lg);
+    transition: transform .2s cubic-bezier(.2,.7,.3,1), box-shadow .2s, border-color .2s;
+}
+.tile:hover { transform: translateY(-4px); box-shadow: 0 18px 40px -16px rgba(16,21,31,.22); border-color: var(--brand); }
+.tile__arrow {
+    position: absolute; top: var(--s5); right: var(--s5);
+    color: var(--action); font-size: 1.1rem; line-height: 1;
+    transition: transform .2s;
+}
+.tile:hover .tile__arrow { transform: translate(3px, -3px); }
+.tile__icon {
+    display: grid; place-items: center;
+    width: 56px; height: 56px; margin-bottom: var(--s5);
+    background: var(--cream-200);
+    border-radius: var(--r-md);
+    font-size: 1.7rem;
+}
+.tile h3 { font-size: var(--t-base); margin-bottom: var(--s2); }
+.tile p { font-size: var(--t-sm); color: var(--text-muted); margin: 0; }
+
+/* -------------------------------------------------- Franja de estadísticas */
+.stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--s6);
+    padding: var(--s8) 0;
+}
+.stat { text-align: center; }
+.stat__value {
+    display: block;
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 1.4rem + 2.4vw, 2.9rem);
+    font-weight: 800;
+    letter-spacing: -.04em;
+    color: var(--brand);
+    line-height: 1;
+}
+.stat__label { font-size: var(--t-xs); color: var(--text-subtle); text-transform: uppercase; letter-spacing: .08em; margin-top: var(--s2); display: block; }
+
+/* -------------------------------------------------- Ficha de adicional (topping) */
+.addon {
+    position: relative;
+    display: block;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+.addon input { position: absolute; opacity: 0; width: 0; height: 0; }
+
+.addon__box {
+    display: flex;
+    gap: var(--s4);
+    height: 100%;
+    padding: var(--s5);
+    background: #fff;
+    border: 2px solid var(--sand-300);
+    border-radius: var(--r-md);
+    transition: border-color .15s, box-shadow .15s, background-color .15s;
+}
+.addon:hover .addon__box { border-color: var(--brand); }
+.addon input:checked + .addon__box {
+    border-color: var(--brand);
+    background: var(--blue-50);
+    box-shadow: 0 0 0 4px rgba(29, 78, 216, .12);
+}
+.addon input:focus-visible + .addon__box { box-shadow: var(--ring); }
+
+.addon__check {
+    flex-shrink: 0;
+    width: 24px; height: 24px; margin-top: 2px;
+    border: 2px solid var(--border-strong);
+    border-radius: 7px;
+    display: grid; place-items: center;
+    transition: all .15s;
+}
+.addon input:checked + .addon__box .addon__check {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: #fff;
+}
+.addon__check svg { width: 14px; height: 14px; opacity: 0; transition: opacity .15s; }
+.addon input:checked + .addon__box .addon__check svg { opacity: 1; }
+
+.addon__body { flex: 1; min-width: 0; }
+.addon__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3); flex-wrap: wrap; }
+.addon__name { font-size: var(--t-base); font-weight: 700; letter-spacing: -.01em; }
+.addon__price { font-size: var(--t-base); font-weight: 800; color: var(--brand-dark); white-space: nowrap; }
+.addon__price s { font-size: var(--t-xs); font-weight: 500; color: var(--slate-400); margin-right: var(--s2); }
+.addon__price--free { color: var(--success); }
+.addon__reason { font-size: var(--t-sm); color: var(--text-muted); margin: var(--s2) 0 0; }
+.addon__bullets { list-style: none; padding: 0; margin: var(--s3) 0 0; display: grid; gap: var(--s1); }
+.addon__bullets li { position: relative; padding-left: var(--s5); font-size: var(--t-xs); color: var(--text-muted); }
+.addon__bullets li::before { content: '✓'; position: absolute; left: 0; color: var(--success); font-weight: 800; }
+.addon__tags { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s3); }
+
+/* -------------------------------------------------- Barra de precio en vivo */
+.price-live {
+    display: flex; align-items: baseline; gap: var(--s3); flex-wrap: wrap;
+}
+.price-live__total { font-family: var(--font-display); font-size: var(--t-3xl); font-weight: 800; letter-spacing: -.035em; color: var(--brand-dark); }
+.price-live__compare { font-size: var(--t-base); color: var(--slate-400); text-decoration: line-through; }
+.price-live__save { font-size: var(--t-xs); font-weight: 700; color: var(--success); background: var(--green-50); padding: .2rem .6rem; border-radius: var(--r-full); }
+
+/* -------------------------------------------------- Franja de gancho (IA) */
+.hook-strip {
+    display: flex; align-items: center; justify-content: center;
+    flex-wrap: wrap; gap: var(--s3) var(--s6);
+    padding: var(--s4) var(--s5);
+    background: linear-gradient(90deg, var(--blue-50), var(--cream-100), var(--orange-50));
+    border-block: 1px solid var(--sand-300);
+    font-size: var(--t-sm);
+    font-weight: 600;
+}
+.hook-strip__item { display: inline-flex; align-items: center; gap: var(--s2); color: var(--text); }
+.hook-strip__item span[aria-hidden] { font-size: 1.1rem; }
+
+/* -------------------------------------------------- Herramientas gratis */
+.tool-card {
+    position: relative;
+    display: flex; flex-direction: column;
+    height: 100%;
+    padding: var(--s6);
+    background: linear-gradient(160deg, var(--blue-900), var(--blue-950));
+    color: #fff;
+    border-radius: var(--r-lg);
+    text-decoration: none;
+    overflow: hidden;
+    transition: transform .2s, box-shadow .2s;
+}
+.tool-card::after {
+    content: '';
+    position: absolute; right: -40px; top: -40px;
+    width: 160px; height: 160px; border-radius: 50%;
+    background: rgba(255,255,255,.05);
+}
+.tool-card:hover { transform: translateY(-4px); box-shadow: 0 20px 44px -18px rgba(30,58,138,.6); color: #fff; }
+.tool-card__tag {
+    align-self: flex-start;
+    font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+    background: rgba(255,255,255,.14); color: #BFDBFE;
+    padding: .25rem .6rem; border-radius: var(--r-full);
+    margin-bottom: var(--s4);
+}
+.tool-card__emoji { position: absolute; top: var(--s5); right: var(--s5); font-size: 1.6rem; }
+.tool-card h3 { color: #fff; font-size: var(--t-lg); margin-bottom: var(--s2); }
+.tool-card p { color: #BFDBFE; font-size: var(--t-sm); margin-bottom: var(--s5); }
+.tool-card__cta { margin-top: auto; font-size: var(--t-xs); font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--amber-500); }
+
+.tool-card--light {
+    background: var(--bg-raised);
+    border: 1px solid var(--sand-300);
+    color: var(--text);
+}
+.tool-card--light::after { background: var(--cream-100); }
+.tool-card--light h3 { color: var(--text); }
+.tool-card--light p { color: var(--text-muted); }
+.tool-card--light .tool-card__tag { background: var(--cream-200); color: var(--text-muted); }
+.tool-card--light:hover { color: var(--text); box-shadow: 0 18px 40px -16px rgba(16,21,31,.2); }
+
+/* -------------------------------------------------- Abogado en directorio */
+.lawyer-tile {
+    display: flex; gap: var(--s5);
+    padding: var(--s6);
+    background: var(--bg-raised);
+    border: 1px solid var(--sand-300);
+    border-radius: var(--r-lg);
+    transition: box-shadow .2s, border-color .2s, transform .2s;
+}
+.lawyer-tile:hover { transform: translateY(-2px); box-shadow: 0 16px 36px -16px rgba(16,21,31,.2); border-color: var(--brand); }
+.lawyer-tile--featured { border-color: var(--action); border-width: 2px; }
+.lawyer-tile__avatar {
+    flex-shrink: 0;
+    display: grid; place-items: center;
+    width: 76px; height: 76px;
+    background: linear-gradient(140deg, var(--blue-100), var(--blue-200));
+    color: var(--blue-900);
+    border-radius: var(--r-md);
+    font-size: var(--t-xl); font-weight: 800;
+}
+.lawyer-tile__body { flex: 1; min-width: 0; }
+.lawyer-tile__name { font-size: var(--t-lg); font-weight: 700; margin: 0 0 2px; }
+.lawyer-tile__role { font-size: var(--t-sm); color: var(--brand); font-weight: 600; margin: 0 0 var(--s3); }
+.lawyer-tile__meta { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s3); }
+
+/* -------------------------------------------------- Responsive: lo primero */
+@media (max-width: 640px) {
+    .tile { padding: var(--s5); }
+    .tile__icon { width: 48px; height: 48px; font-size: 1.4rem; margin-bottom: var(--s4); }
+    .addon__box { padding: var(--s4); gap: var(--s3); }
+    .addon__head { flex-direction: column; gap: var(--s1); }
+    .addon__price { font-size: var(--t-sm); }
+    .lawyer-tile { flex-direction: column; gap: var(--s4); }
+    .lawyer-tile__avatar { width: 60px; height: 60px; font-size: var(--t-base); }
+    .hook-strip { font-size: var(--t-xs); gap: var(--s2) var(--s4); }
+    .stat-row { gap: var(--s4); padding: var(--s6) 0; }
+    .hl { border-radius: 8px; }
+}
+
+/* ============================================================
+   PIEZAS DEL MODELO «BASE + ADICIONALES»
+   Se añadieron con el cambio de modelo de negocio; están aquí
+   abajo y no repartidas arriba para que se vea de un vistazo
+   qué entró con ese cambio.
+   ============================================================ */
+
+/* ---------------- Franja de trámites gratuitos ---------------- */
+/* Va antes de los chips de área en el catálogo: lo gratuito tiene
+   que verse antes que la lista completa, o nadie entra al embudo. */
+.free-strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s4) var(--s6);
+    padding: var(--s5) var(--s6);
+    margin: 0 auto var(--s8);
+    max-width: 900px;
+    background: var(--green-50);
+    border: 1px solid var(--green-100);
+    border-radius: var(--r-md);
+}
+
+.free-strip__head { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
+.free-strip__head p { color: var(--green-700); }
+
+.free-strip__list { display: flex; flex-wrap: wrap; gap: var(--s2); }
+
+.free-strip__item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s2);
+    padding: var(--s2) var(--s4);
+    background: #fff;
+    border: 1px solid var(--green-100);
+    border-radius: var(--r-full);
+    font-size: var(--t-sm);
+    font-weight: 600;
+    color: var(--green-700);
+    text-decoration: none;
+    transition: transform .15s, box-shadow .15s, border-color .15s;
+}
+
+.free-strip__item:hover {
+    transform: translateY(-2px);
+    border-color: var(--green-600);
+    box-shadow: 0 8px 20px -10px rgba(5, 150, 105, .5);
+    text-decoration: none;
+}
+
+/* ---------------- Caja de compra: adicionales y precio libre ---------------- */
+.buybox__price--free { color: var(--success); }
+
+.buybox__compare {
+    /* Línea propia por encima del precio real: al lado, los dos números se
+       leen como uno solo y el precio deja de entenderse. */
+    flex: 0 0 100%;
+    order: -1;
+    font-size: var(--t-base);
+    font-weight: 500;
+    color: var(--slate-400);
+    text-decoration: line-through;
+    letter-spacing: 0;
+}
+
+.buybox__addons { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--s2); }
+
+.buybox__addons a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s3);
+    padding: var(--s2) var(--s3);
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--r-sm);
+    font-size: var(--t-sm);
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: border-color .15s, background .15s;
+}
+
+.buybox__addons a:hover { border-color: var(--brand); background: var(--blue-50); text-decoration: none; }
+.buybox__addons b { color: var(--brand-dark); white-space: nowrap; }
+
+/* ---------------- Confirmación: entrega y venta posterior ---------------- */
+.done-mark {
+    display: grid;
+    place-items: center;
+    width: 84px;
+    height: 84px;
+    margin: 0 auto var(--s6);
+    background: var(--green-50);
+    border: 3px solid var(--green-600);
+    border-radius: 50%;
+    font-size: 2.2rem;
+}
+
+.deliver__files { display: grid; gap: var(--s3); margin-top: var(--s5); }
+
+.deliver__file {
+    display: flex;
+    align-items: center;
+    gap: var(--s4);
+    padding: var(--s4) var(--s5);
+    background: var(--cream-100);
+    border: 1px solid var(--sand-300);
+    border-radius: var(--r);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color .15s, transform .15s, box-shadow .15s;
+}
+
+.deliver__file:hover {
+    border-color: var(--brand);
+    transform: translateY(-2px);
+    box-shadow: var(--sh-sm);
+    text-decoration: none;
+}
+
+.deliver__icon { font-size: 1.6rem; flex-shrink: 0; }
+.deliver__file > span:nth-child(2) { flex: 1; min-width: 0; }
+.deliver__file strong { display: block; font-size: var(--t-base); }
+.deliver__file small { display: block; font-size: var(--t-xs); color: var(--text-muted); margin-top: 2px; }
+
+.deliver__dl {
+    flex-shrink: 0;
+    font-size: var(--t-xs);
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--brand);
+}
+
+.upsell { border-color: var(--action); border-width: 2px; }
+.upsell__form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s4);
+    margin-top: var(--s5);
+}
+
+/* ---------------- Botón de acción (naranja sólido) ---------------- */
+/* El CTA de la banda de captación de abogados va sobre fondo oscuro: el
+   primario azul se pierde ahí. */
+.btn--action {
+    background: var(--action);
+    color: #fff;
+    border-color: var(--action);
+    box-shadow: var(--sh-action);
+}
+
+.btn--action:hover {
+    background: var(--action-dark);
+    border-color: var(--action-dark);
+    color: #fff;
+}
+
+/* ---------------- Tarjeta de abogado enlazable ---------------- */
+a.lawyer-card { text-decoration: none; color: inherit; }
+
+.lawyer-card__more {
+    display: block;
+    margin-top: var(--s4);
+    font-size: var(--t-xs);
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--brand);
+}
+
+@media (max-width: 640px) {
+    .free-strip { flex-direction: column; align-items: flex-start; padding: var(--s4); }
+    .deliver__file { flex-wrap: wrap; }
+    .deliver__dl { width: 100%; }
+    .upsell__form { flex-direction: column; align-items: stretch; }
+    .done-mark { width: 68px; height: 68px; font-size: 1.8rem; }
+}
+
+/* El enlace «Gratis» del menú: destacado sin gritar. Es el único del
+   encabezado que promete algo, y es la puerta de entrada del embudo. */
+.nav__free {
+    position: relative;
+    color: var(--green-700) !important;
+    font-weight: 700;
+}
+
+.nav__free::before {
+    content: '';
+    position: absolute;
+    inset: -.35rem -.6rem;
+    background: var(--green-50);
+    border: 1px solid var(--green-100);
+    border-radius: var(--r-full);
+    z-index: -1;
+    transition: background .15s, border-color .15s;
+}
+
+.nav__free:hover::before { background: var(--green-100); border-color: var(--green-600); }
+
+/* Pedido pagado que todavía está en preparación. */
+.waiting { border-color: var(--brand); background: var(--blue-50); }
+.waiting .upsell__form { margin-top: var(--s5); }
+
+/* ============================================================
+   PANTALLA DE FIRMA (solo celular)
+   ============================================================ */
+.sign-body { background: var(--cream-100); }
+
+.sign {
+    max-width: 460px;
+    margin: 0 auto;
+    padding: var(--s8) var(--s5) var(--s16);
+}
+
+.sign__head { text-align: center; margin-bottom: var(--s8); }
+.sign__head h1 { font-size: var(--t-2xl); margin: var(--s5) 0 var(--s2); }
+.sign__head p { font-size: var(--t-sm); color: var(--text-muted); margin: 0; }
+
+.sign__who {
+    display: grid;
+    gap: 2px;
+    padding: var(--s4) var(--s5);
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    margin-bottom: var(--s6);
+}
+.sign__who span { font-size: var(--t-xs); color: var(--text-subtle); text-transform: uppercase; letter-spacing: .06em; }
+.sign__who strong { font-size: var(--t-lg); }
+.sign__who small { font-size: var(--t-xs); color: var(--text-muted); }
+
+.sign__hint { text-align: center; font-size: var(--t-sm); color: var(--text-muted); margin: 0 0 var(--s3); }
+
+/* El recuadro de firma: blanco y grande, como un papel. */
+.sign__pad {
+    position: relative;
+    background: #fff;
+    border: 2px dashed var(--border-strong);
+    border-radius: var(--r-md);
+    height: 220px;
+    margin-bottom: var(--s6);
+    overflow: hidden;
+    touch-action: none;
+}
+
+.sign__pad canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+
+.sign__line {
+    position: absolute;
+    left: var(--s6); right: var(--s6); bottom: 48px;
+    border-bottom: 1px solid var(--slate-300);
+    pointer-events: none;
+}
+
+.sign__clear {
+    position: absolute;
+    top: var(--s3); right: var(--s3);
+    padding: var(--s1) var(--s3);
+    background: var(--cream-100);
+    border: 1px solid var(--border);
+    border-radius: var(--r-full);
+    font: inherit;
+    font-size: var(--t-xs);
+    color: var(--text-muted);
+    cursor: pointer;
+}
+.sign__clear:hover { background: var(--cream-200); color: var(--text); }
+
+.sign__check { margin-bottom: var(--s6); }
+
+.sign__legal {
+    margin-top: var(--s5);
+    font-size: var(--t-xs);
+    color: var(--text-subtle);
+    text-align: center;
+}
+
+/* Llamada a firmar con QR en la página del pedido. */
+.sign-cta { border-color: var(--action); border-width: 2px; }
+.sign-cta__grid {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s8);
+    margin-top: var(--s6);
+}
+.sign-cta__qr {
+    width: 160px;
+    height: 160px;
+    padding: var(--s3);
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+}
+@media (max-width: 640px) {
+    .sign-cta__grid { gap: var(--s5); }
+    .sign-cta__qr { width: 130px; height: 130px; }
+}
+
+/* Pantalla de pago con pasarela. */
+.pay-form { margin-top: var(--s6); }
+
+.pay-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--s4);
+    margin-top: var(--s5);
+    font-size: var(--t-xs);
+    color: var(--text-subtle);
+}
+
+.pay-manual { margin-top: var(--s8); }
+.pay-manual summary {
+    cursor: pointer;
+    font-size: var(--t-sm);
+    color: var(--text-muted);
+    padding: var(--s3) 0;
+}
+.pay-manual summary:hover { color: var(--brand); }
+
+/* «Soy abogado»: otro público, así que se separa del resto del menú con una
+   línea y un color más apagado en vez de competir con los enlaces del
+   cliente. En escritorio basta el botón del encabezado. */
+.nav__pro {
+    position: relative;
+    margin-left: var(--s3);
+    padding-left: var(--s5);
+    color: var(--text-subtle) !important;
+    font-weight: 600;
+}
+
+.nav__pro::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 50%;
+    width: 1px; height: 18px;
+    margin-top: -9px;
+    background: var(--border-strong);
+}
+
+.nav__pro:hover { color: var(--brand) !important; }
+
+@media (min-width: 1001px) {
+    /* En escritorio el botón del encabezado ya lo cubre. */
+    .nav__pro { display: none; }
+}
+
+/* El botón del encabezado: ya lo oculta la regla general de .btn--ghost al
+   colapsar el menú, pero se nombra para que quede claro que es deliberado. */
+.nav__pro-btn { white-space: nowrap; }
+
+@media (max-width: 1000px) {
+    /* Con el menú colapsado manda el enlace de la navegación. */
+    .nav__pro { margin-left: 0; padding-left: 0; }
+    .nav__pro::before { display: none; }
+}
+
+/* Order bump: la última oferta, justo antes de pagar. Con borde discontinuo
+   para que se lea como un añadido y no como parte del pedido ya decidido. */
+.bump {
+    display: flex;
+    align-items: center;
+    gap: var(--s4);
+    flex-wrap: wrap;
+    padding: var(--s5);
+    margin-bottom: var(--s8);
+    background: var(--amber-50);
+    border: 2px dashed var(--amber-500);
+    border-radius: var(--r-md);
+}
+
+.bump__tag {
+    flex-basis: 100%;
+    font-size: var(--t-xs);
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--orange-700);
+}
+
+.bump__body { flex: 1; min-width: 180px; }
+.bump__body strong { display: block; font-size: var(--t-base); }
+.bump__body p { margin: var(--s1) 0 0; font-size: var(--t-sm); color: var(--text-muted); }
+
+.bump__add {
+    flex-shrink: 0;
+    padding: var(--s3) var(--s5);
+    background: var(--action);
+    border: 0;
+    border-radius: var(--r-full);
+    font: inherit;
+    font-weight: 800;
+    color: #fff;
+    cursor: pointer;
+    transition: background .15s;
+}
+.bump__add:hover { background: var(--action-dark); }
+
+@media (max-width: 640px) {
+    .bump { flex-direction: column; align-items: stretch; }
+    .bump__add { width: 100%; }
+}
+
+.choice-grid--2 { grid-template-columns: repeat(2, 1fr); }
+.field__legend { display: block; font-weight: 600; margin-bottom: var(--s3); }
+
+@media (max-width: 560px) {
+    .choice-grid--2 { grid-template-columns: 1fr; }
+}
+
+/* El segundo enlace del grupo «otros públicos» no repite el separador. */
+.nav__pro--plain { margin-left: 0; padding-left: 0; }
+.nav__pro--plain::before { display: none; }
+
+/* Lista de trámites del cliente. */
+.order-row__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--s4);
+    flex-wrap: wrap;
+}
+
+/* ============================================================
+   ELECCIÓN DE ABOGADO POR PARTE DEL CLIENTE
+   ============================================================ */
+.pick { position: relative; display: block; cursor: pointer; }
+.pick input { position: absolute; opacity: 0; width: 0; height: 0; }
+
+.pick__box {
+    display: block;
+    padding: var(--s6);
+    background: var(--bg-raised);
+    border: 2px solid var(--border);
+    border-radius: var(--r-md);
+    transition: border-color .15s, box-shadow .15s, transform .15s;
+}
+
+.pick:hover .pick__box { border-color: var(--brand); transform: translateY(-2px); }
+.pick input:checked + .pick__box {
+    border-color: var(--brand);
+    background: var(--blue-50);
+    box-shadow: 0 12px 30px -14px rgba(37, 99, 235, .5);
+}
+.pick input:focus-visible + .pick__box { box-shadow: var(--ring); }
+
+.pick__head { display: flex; align-items: center; gap: var(--s4); }
+
+.pick__avatar {
+    display: grid;
+    place-items: center;
+    width: 52px; height: 52px;
+    flex-shrink: 0;
+    background: var(--blue-100);
+    color: var(--brand-dark);
+    border-radius: 50%;
+    font-weight: 800;
+}
+
+.pick__who { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.pick__who strong { font-size: var(--t-lg); }
+.pick__who small { font-size: var(--t-sm); color: var(--brand); font-weight: 600; }
+
+.pick__meta { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s4); }
+
+.pick__pitch {
+    display: block;
+    margin-top: var(--s4);
+    font-size: var(--t-sm);
+    color: var(--text-muted);
+    line-height: 1.65;
+}
+
+.pick__profile {
+    display: inline-block;
+    margin-top: var(--s4);
+    font-size: var(--t-xs);
+    font-weight: 700;
+    color: var(--brand);
+}
+
+@media (max-width: 640px) {
+    .pick__box { padding: var(--s5); }
+    .pick__avatar { width: 44px; height: 44px; font-size: var(--t-sm); }
+}

@@ -32,6 +32,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->brandName('HazloLegal')
+            ->brandLogo(fn () => view('filament.brand'))
             ->favicon(asset('img/favicon.svg'))
             ->colors([
                 'primary' => Color::Blue,

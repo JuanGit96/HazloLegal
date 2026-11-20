@@ -1,12 +1,11 @@
-@props(['step' => 1])
+@props(['step' => 1, 'free' => false])
 
 @php
-    $steps = [
-        1 => 'Elige tu trámite',
-        2 => 'Velocidad y datos',
-        3 => 'Pago',
-        4 => 'Listo',
-    ];
+    // En un trámite gratuito no hay paso de pago: pintarlo igual le anuncia
+    // un cobro a quien vino por algo gratis.
+    $steps = $free
+        ? [1 => 'Elige tu trámite', 2 => 'Arma tu trámite', 4 => 'Listo']
+        : [1 => 'Elige tu trámite', 2 => 'Arma tu trámite', 3 => 'Pago', 4 => 'Listo'];
 @endphp
 
 <ol class="wizard" aria-label="Progreso del pedido">

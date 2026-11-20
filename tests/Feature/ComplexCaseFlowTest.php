@@ -11,6 +11,7 @@ use App\Domain\LegalCases\Enums\CaseStatus;
 use App\Domain\LegalCases\Enums\CaseUrgency;
 use App\Domain\LegalCases\Mail\CaseOfferMail;
 use App\Domain\LegalCases\Mail\CaseReceivedMail;
+use App\Domain\LegalCases\Mail\CaseShortlistMail;
 use App\Domain\LegalCases\Mail\CaseTakenByOtherMail;
 use App\Domain\LegalCases\Mail\CaseWonMail;
 use App\Domain\LegalCases\Mail\LawyerAssignedMail;
@@ -87,60 +88,157 @@ class ComplexCaseFlowTest extends TestCase
         );
     }
 
-    public function test_el_primer_abogado_que_acepta_se_queda_con_el_caso(): void
+    public function test_aceptar_postula_al_abogado_y_avisa_al_cliente(): void
     {
         Mail::fake();
 
         $case = $this->submitCase();
-        $offers = $case->offers()->with('lawyer')->get();
-        $winnerOffer = $offers->first();
-        $loserOffer = $offers->skip(1)->first();
+        $offer = $case->offers()->with('lawyer')->first();
 
-        $this->get(route('cases.offer.respond', ['token' => $winnerOffer->token, 'decision' => 'accept']))
+        $this->get(route('cases.offer.respond', ['token' => $offer->token, 'decision' => 'accept']))
             ->assertOk()
-            ->assertSee('El caso es tuyo')
-            // Al ganador sí se le muestran los datos de contacto.
-            ->assertSee($case->client_email);
+            ->assertSee('Te postulaste')
+            // Postularse no da derecho a los datos del cliente: esos salen
+            // solo cuando el cliente elige.
+            ->assertDontSee($case->client_email)
+            ->assertDontSee($case->client_phone);
+
+        $case->refresh();
+
+        $this->assertSame(CaseStatus::Shortlisted, $case->status);
+        $this->assertNull($case->assigned_lawyer_id);
+        $this->assertNotNull($case->shortlisted_at);
+        $this->assertSame(CaseOfferStatus::Accepted, $offer->refresh()->status);
+
+        Mail::assertSent(CaseShortlistMail::class, 1);
+        Mail::assertNotSent(CaseWonMail::class);
+    }
+
+    public function test_varios_abogados_pueden_postularse_al_mismo_caso(): void
+    {
+        Mail::fake();
+
+        $case = $this->submitCase();
+        $offers = $case->offers()->get()->take(3);
+
+        foreach ($offers as $offer) {
+            $this->get(route('cases.offer.respond', ['token' => $offer->token, 'decision' => 'accept']))->assertOk();
+        }
+
+        $this->assertSame(3, $case->refresh()->acceptedOffers()->count());
+
+        // Un correo al cliente, no uno por postulado: lo contrario sería ruido.
+        Mail::assertSent(CaseShortlistMail::class, 1);
+    }
+
+    public function test_el_cliente_ve_los_postulados_y_elige(): void
+    {
+        Mail::fake();
+
+        $case = $this->submitCase();
+        $offers = $case->offers()->with('lawyer')->get()->take(2);
+
+        foreach ($offers as $offer) {
+            $this->get(route('cases.offer.respond', ['token' => $offer->token, 'decision' => 'accept']));
+        }
+
+        $case->refresh();
+        $elegido = $offers->first();
+
+        $this->get($case->clientUrl())
+            ->assertOk()
+            ->assertSee('Elige a tu abogado')
+            ->assertSee($elegido->lawyer->name);
+
+        $this->post(route('cases.pick', $case->reference), [
+            't' => $case->client_token,
+            'offer' => $elegido->id,
+        ])->assertRedirect($case->refresh()->clientUrl());
 
         $case->refresh();
 
         $this->assertSame(CaseStatus::Assigned, $case->status);
-        $this->assertSame($winnerOffer->lawyer_id, $case->assigned_lawyer_id);
-        $this->assertNotNull($case->assigned_at);
-        $this->assertSame(CaseOfferStatus::Accepted, $winnerOffer->refresh()->status);
-
-        // El resto queda marcado como "lo tomó otro".
-        $this->assertSame(CaseOfferStatus::Superseded, $loserOffer->refresh()->status);
+        $this->assertSame($elegido->lawyer_id, $case->assigned_lawyer_id);
+        $this->assertSame(CaseOfferStatus::Superseded, $offers->skip(1)->first()->refresh()->status);
 
         Mail::assertSent(LawyerAssignedMail::class, 1);
         Mail::assertSent(CaseWonMail::class, 1);
-        Mail::assertSent(CaseTakenByOtherMail::class, $offers->count() - 1);
     }
 
-    public function test_el_segundo_abogado_que_llega_ve_que_ya_fue_tomado_y_no_recibe_datos_del_cliente(): void
+    public function test_la_referencia_sola_no_abre_el_caso_de_otro(): void
+    {
+        Mail::fake();
+
+        // CC-2026-00001 es correlativa: sin la llave, cambiando un número
+        // cualquiera leería el caso ajeno.
+        $case = $this->submitCase();
+
+        $this->get(route('cases.choose', $case->reference))->assertForbidden();
+        $this->get($case->clientUrl())->assertOk();
+    }
+
+    public function test_el_cliente_no_puede_elegir_dos_veces(): void
     {
         Mail::fake();
 
         $case = $this->submitCase();
-        $offers = $case->offers()->get();
+        $offers = $case->offers()->get()->take(2);
 
-        $this->get(route('cases.offer.respond', ['token' => $offers->first()->token, 'decision' => 'accept']));
+        foreach ($offers as $offer) {
+            $this->get(route('cases.offer.respond', ['token' => $offer->token, 'decision' => 'accept']));
+        }
 
-        $response = $this->get(route('cases.offer.respond', [
-            'token' => $offers->skip(1)->first()->token,
-            'decision' => 'accept',
-        ]));
+        $case->refresh();
 
-        $response->assertOk()
-            ->assertSee('Otro abogado llegó primero')
+        $this->post(route('cases.pick', $case->reference), [
+            't' => $case->client_token,
+            'offer' => $offers->first()->id,
+        ]);
+
+        // Un doble clic no puede dejar el caso con dos abogados.
+        $this->post(route('cases.pick', $case->reference), [
+            't' => $case->client_token,
+            'offer' => $offers->skip(1)->first()->id,
+        ]);
+
+        $this->assertSame($offers->first()->lawyer_id, $case->refresh()->assigned_lawyer_id);
+        Mail::assertSent(CaseWonMail::class, 1);
+    }
+
+    public function test_quien_no_fue_elegido_nunca_ve_los_datos_del_cliente(): void
+    {
+        Mail::fake();
+
+        $case = $this->submitCase();
+        $offers = $case->offers()->get()->take(2);
+
+        foreach ($offers as $offer) {
+            $this->get(route('cases.offer.respond', ['token' => $offer->token, 'decision' => 'accept']));
+        }
+
+        $case->refresh();
+        $descartado = $offers->skip(1)->first();
+
+        $this->post(route('cases.pick', $case->reference), [
+            't' => $case->client_token,
+            'offer' => $offers->first()->id,
+        ]);
+
+        $this->get(route('cases.offer.respond', ['token' => $descartado->token, 'decision' => 'accept']))
+            ->assertOk()
+            ->assertSee('eligió a otro colega')
             ->assertDontSee($case->client_email)
             ->assertDontSee($case->client_phone);
 
-        // El caso sigue asignado al primero: no se reasigna.
-        $this->assertSame($offers->first()->lawyer_id, $case->refresh()->assigned_lawyer_id);
+        // Se avisa a todos los invitados que el caso se cerró, no solo a los
+        // que se habían postulado: el resto deja de esperarlo.
+        Mail::assertSent(
+            CaseTakenByOtherMail::class,
+            $case->offers()->where('status', CaseOfferStatus::Superseded)->count(),
+        );
     }
 
-    public function test_recargar_el_enlace_de_aceptacion_no_rompe_nada(): void
+    public function test_recargar_el_enlace_de_postulacion_no_duplica_nada(): void
     {
         Mail::fake();
 
@@ -148,13 +246,10 @@ class ComplexCaseFlowTest extends TestCase
         $offer = $case->offers()->first();
 
         $this->get(route('cases.offer.respond', ['token' => $offer->token, 'decision' => 'accept']));
-        $this->get(route('cases.offer.respond', ['token' => $offer->token, 'decision' => 'accept']))
-            ->assertOk()
-            ->assertSee('ya estaba asignado a ti');
+        $this->get(route('cases.offer.respond', ['token' => $offer->token, 'decision' => 'accept']))->assertOk();
 
-        // No se duplican los correos de asignación.
-        Mail::assertSent(LawyerAssignedMail::class, 1);
-        $this->assertSame(1, $case->offers()->where('status', CaseOfferStatus::Accepted)->count());
+        $this->assertSame(1, $case->refresh()->acceptedOffers()->count());
+        Mail::assertSent(CaseShortlistMail::class, 1);
     }
 
     public function test_un_abogado_puede_rechazar_el_caso_con_motivo(): void

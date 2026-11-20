@@ -6,10 +6,10 @@
         <x-wizard :step="$step" />
 
         <div class="section-head">
-            <span class="eyebrow">{{ $plan->name }}</span>
-            <h1>¿Cuál trámite necesitas?</h1>
+            <span class="eyebrow">Paso 1 de 3</span>
+            <h1>¿Cuál trámite <span class="hl">necesitas</span>?</h1>
             <p>
-                Elige el documento y en el siguiente paso defines la velocidad de entrega
+                Elige el documento. En el siguiente paso lo armas con lo que te haga falta
                 y nos cuentas tu caso.
             </p>
         </div>
@@ -25,8 +25,8 @@
                     @foreach ($group['documents'] as $document)
                         <x-doc-card
                             :document="$document"
-                            :price="$pricing->formatCop($pricing->quote($document, $plan)->amount)"
-                            :href="route('checkout.configure', [$plan->key->value, $document->slug])" />
+                            :price="$document->priceLabel()"
+                            :href="route('checkout.configure', $document->slug)" />
                     @endforeach
                 </div>
             </div>

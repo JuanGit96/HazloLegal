@@ -431,7 +431,7 @@ HTML,
         'tagline' => 'Obliga a una entidad o empresa a responderte por escrito y en término.',
         'summary' => 'Derecho de petición redactado por un abogado para conflictos atípicos: cobros fantasma, aseguradoras, telcos, servicios públicos, entidades públicas y peticiones de información.',
         'legal_basis' => 'Constitución Política (art. 23) y Ley 1755 de 2015',
-        'supports_signature' => false,
+        'supports_signature' => true,
         'is_featured' => true,
         'sort_order' => 55,
         'what_you_get' => [

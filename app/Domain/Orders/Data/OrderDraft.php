@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace App\Domain\Orders\Data;
 
-use App\Domain\Catalog\Enums\DeliverySpeed;
 use App\Domain\Orders\Enums\PaymentMethod;
 
 final readonly class OrderDraft
 {
+    /** @param array<int, string> $addonKeys */
     public function __construct(
         public int $legalDocumentId,
-        public int $servicePlanId,
-        public DeliverySpeed $speed,
+        public array $addonKeys,
         public string $customerName,
         public string $customerEmail,
         public string $customerPhone,
@@ -21,7 +20,8 @@ final readonly class OrderDraft
         public ?string $customerCity,
         public ?string $caseSummary,
         public array $answers = [],
-        public bool $wantsSignature = false,
+        public bool $acceptsMarketing = false,
+        public bool $shareableWithLawyers = false,
         public ?PaymentMethod $paymentMethod = null,
         public array $utm = [],
     ) {}
@@ -30,8 +30,7 @@ final readonly class OrderDraft
     {
         return new self(
             legalDocumentId: (int) $data['legal_document_id'],
-            servicePlanId: (int) $data['service_plan_id'],
-            speed: DeliverySpeed::from($data['speed'] ?? DeliverySpeed::Standard->value),
+            addonKeys: array_values(array_filter((array) ($data['addons'] ?? []))),
             customerName: trim((string) $data['customer_name']),
             customerEmail: mb_strtolower(trim((string) $data['customer_email'])),
             customerPhone: trim((string) $data['customer_phone']),
@@ -40,8 +39,9 @@ final readonly class OrderDraft
             customerCity: $data['customer_city'] ?? null,
             caseSummary: $data['case_summary'] ?? null,
             answers: $data['answers'] ?? [],
-            wantsSignature: (bool) ($data['wants_signature'] ?? false),
-            paymentMethod: isset($data['payment_method']) && $data['payment_method']
+            acceptsMarketing: (bool) ($data['accepts_marketing'] ?? false),
+            shareableWithLawyers: (bool) ($data['shareable_with_lawyers'] ?? false),
+            paymentMethod: filled($data['payment_method'] ?? null)
                 ? PaymentMethod::from($data['payment_method'])
                 : null,
             utm: array_filter([

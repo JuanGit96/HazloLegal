@@ -302,3 +302,10 @@ corepack_enable: false
 # information on the commands that can be extended and the tasks you can define
 # for them. Example:
 #hooks:
+
+# La entrega de documentos va por cola: sin un worker corriendo, un pedido
+# sin entrega inmediata se quedaría esperando para siempre en local.
+web_extra_daemons:
+  - name: queue
+    command: "php artisan queue:work --sleep=3 --tries=3 --max-time=3600"
+    directory: /var/www/html

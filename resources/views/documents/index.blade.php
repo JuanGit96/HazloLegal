@@ -1,9 +1,6 @@
 @extends('layouts.site')
 
 @section('content')
-@php
-    $documentPlan = $plans->firstWhere('key', \App\Domain\Catalog\Enums\PlanKey::Document);
-@endphp
 
 <section class="section section--white section--tight">
     <div class="container">
@@ -11,7 +8,7 @@
 
         <div class="section-head">
             <span class="eyebrow">Catálogo completo</span>
-            <h1>Trámites y documentos legales en Colombia</h1>
+            <h1>Trámites y documentos legales <span class="hl hl--blue">en Colombia</span></h1>
             <p>Precio fijo publicado, plazo comprometido y formatos escritos por abogados colombianos.</p>
         </div>
 
@@ -22,6 +19,23 @@
                    placeholder="Busca: tutela, arriendo, datacrédito, liquidación…">
             <button type="submit" class="btn btn--brand">Buscar</button>
         </form>
+
+        @if ($freeDocuments->isNotEmpty() && $search === '')
+            <div class="free-strip">
+                <div class="free-strip__head">
+                    <span class="pill pill--success">Gratis, de verdad</span>
+                    <p class="mb-0 text-sm">Estos los generas sin pagar y sin tarjeta.</p>
+                </div>
+                <div class="free-strip__list">
+                    @foreach ($freeDocuments as $free)
+                        <a href="{{ route('checkout.configure', $free->slug) }}" class="free-strip__item">
+                            <span aria-hidden="true">{{ $free->emojiOrArea() }}</span>
+                            <span>{{ $free->short_name ?: $free->name }}</span>
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+        @endif
 
         <div class="area-chips">
             <a href="{{ route('documents.index') }}" class="area-chip" @if (! request('q')) aria-current="page" @endif>Todos</a>
@@ -57,7 +71,7 @@
             <div class="catalog-grid">
                 @foreach ($documents as $document)
                     <x-doc-card :document="$document"
-                        :price="$documentPlan ? $pricing->formatCop($pricing->quote($document, $documentPlan)->amount) : null" />
+                        :price="$document->priceLabel()" />
                 @endforeach
             </div>
         @else
@@ -75,7 +89,7 @@
                     <div class="catalog-grid">
                         @foreach ($group['documents'] as $document)
                             <x-doc-card :document="$document"
-                                :price="$documentPlan ? $pricing->formatCop($pricing->quote($document, $documentPlan)->amount) : null" />
+                                :price="$document->priceLabel()" />
                         @endforeach
                     </div>
                 </div>

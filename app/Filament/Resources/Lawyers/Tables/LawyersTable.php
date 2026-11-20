@@ -27,7 +27,14 @@ class LawyersTable
                 ImageColumn::make('photo_path')
                     ->label('')
                     ->circular()
-                    ->defaultImageUrl(fn (Lawyer $record) => 'https://ui-avatars.com/api/?name='.urlencode($record->name).'&background=DBEAFE&color=1E3A8A'),
+                    // El avatar se dibuja aquí mismo: pedirlo a un generador
+                    // externo mandaría el nombre del abogado a un tercero.
+                    ->defaultImageUrl(fn (Lawyer $record) => 'data:image/svg+xml;base64,'.base64_encode(
+                        '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">'
+                        .'<rect width="64" height="64" fill="#DBEAFE"/>'
+                        .'<text x="32" y="41" font-family="sans-serif" font-size="24" font-weight="700" '
+                        .'fill="#1E3A8A" text-anchor="middle">'.e($record->initials()).'</text></svg>'
+                    )),
 
                 TextColumn::make('name')
                     ->label('Abogado')
@@ -43,6 +50,11 @@ class LawyersTable
                     ->placeholder('⚠️ Sin verificar')
                     ->tooltip('Dato interno: no se publica en el sitio.'),
 
+                TextColumn::make('kind')
+                    ->label('Tipo')
+                    ->badge()
+                    ->sortable(),
+
                 TextColumn::make('practice_areas')
                     ->label('Áreas')
                     ->badge()
@@ -53,6 +65,29 @@ class LawyersTable
                     ->label('Estado')
                     ->badge()
                     ->sortable(),
+
+                TextColumn::make('subscription.plan.name')
+                    ->label('Plan')
+                    ->badge()
+                    ->color('success')
+                    ->placeholder('Sin suscripción'),
+
+                IconColumn::make('is_published')
+                    ->label('En directorio')
+                    ->boolean()
+                    ->sortable(),
+
+                TextColumn::make('profile_views')
+                    ->label('Visitas al perfil')
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('contact_clicks')
+                    ->label('Clics de contacto')
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 IconColumn::make('accepts_cases')
                     ->label('Recibe casos')

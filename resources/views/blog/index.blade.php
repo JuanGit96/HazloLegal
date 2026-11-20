@@ -7,7 +7,13 @@
 
         <div class="section-head">
             <span class="eyebrow">Guías gratuitas</span>
-            <h1>{{ $category ? $category->name : 'Entiende tu trámite antes de pagar por él' }}</h1>
+            <h1>
+                @if ($category)
+                    <span class="hl hl--blue">{{ $category->name }}</span>
+                @else
+                    Guías para resolver <span class="hl hl--blue">tu trámite legal</span>
+                @endif
+            </h1>
             <p>
                 {{ $category?->description
                     ?: 'Explicamos cada trámite paso a paso, con las normas vigentes y los plazos reales. Escrito y revisado por abogados colombianos titulados.' }}
@@ -39,6 +45,9 @@
                             @if ($post->author)
                                 <span aria-hidden="true">·</span>
                                 <span>Revisado por {{ $post->author->name }}</span>
+                            @else
+                                <span aria-hidden="true">·</span>
+                                <span>Equipo {{ config('hazlolegal.brand.name') }}</span>
                             @endif
                         </div>
                     </article>

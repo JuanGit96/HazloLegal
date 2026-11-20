@@ -11,14 +11,22 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            AdminUserSeeder::class,
-            ServicePlanSeeder::class,
+            SiteSettingSeeder::class,
+            ServiceAddonSeeder::class,
             LawyerSeeder::class,
+            // Después de los abogados: el acceso de demostración al portal
+            // se engancha a uno de ellos.
+            AdminUserSeeder::class,
             LegalDocumentSeeder::class,
+            PricingSeeder::class,
+            ProductSeeder::class,
+            LawyerPlanSeeder::class,
+            CalculatorSeeder::class,
             FaqSeeder::class,
             TestimonialSeeder::class,
             BlogSeeder::class,
             DemoActivitySeeder::class,
+            DemoSubscriptionSeeder::class,
         ]);
     }
 }

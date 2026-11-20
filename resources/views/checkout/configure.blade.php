@@ -3,17 +3,18 @@
 @section('content')
 @php
     $wa = app(\App\Domain\Shared\Services\WhatsAppLinkBuilder::class);
-    $hasSpeedChoice = $expressQuote !== null;
-    $chosen = old('speed', $selectedSpeed->value);
+    $cop = fn ($n) => '$'.number_format((float) $n, 0, ',', '.');
 @endphp
 
 <section class="section section--white">
     <div class="container">
-        <x-wizard :step="$step" />
+        <x-wizard :step="$step" :free="$quote->isFree()" />
 
-        <div class="section-head">
-            <span class="eyebrow">{{ $plan->name }}</span>
-            <h1>{{ $document->name }}</h1>
+        <div class="section-head" style="margin-bottom: var(--s10);">
+            @if ($document->isFreeTier())
+                <span class="pill pill--success">Este trámite es gratis</span>
+            @endif
+            <h1 style="margin-top: var(--s4);">{{ $document->name }}</h1>
             <p>{{ $document->tagline ?: $document->summary }}</p>
         </div>
 
@@ -21,90 +22,147 @@
             <div class="alert alert--danger" style="max-width: 760px; margin: 0 auto var(--s8);">
                 <span class="alert__icon" aria-hidden="true">!</span>
                 <div>
-                    <strong>Revisa estos datos antes de continuar:</strong>
+                    <strong>Revisa estos datos:</strong>
                     <ul style="margin: var(--s2) 0 0; padding-left: var(--s5);">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
+                        @foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach
                     </ul>
                 </div>
             </div>
         @endif
 
-        <form action="{{ route('checkout.store', [$plan->key->value, $document->slug]) }}" method="post">
+        <form action="{{ route('checkout.store', $document->slug) }}" method="post" id="checkout-form">
             @csrf
 
             <div class="checkout-layout">
                 <div>
-                    {{-- ---------------- Velocidad de entrega: las 2 opciones ---------------- --}}
-                    @if ($hasSpeedChoice)
-                        <h2 style="font-size: var(--t-xl);">1. ¿Para cuándo lo necesitas?</h2>
-                        <p class="text-sm text-muted">Es el mismo documento y el mismo abogado. Lo único que cambia es la fila.</p>
+                    {{-- ---------------- 1. Adicionales ---------------- --}}
+                    @if ($offers->isNotEmpty())
+                        <h2 style="font-size: var(--t-xl);">1. Arma tu trámite</h2>
+                        <p class="text-sm text-muted">
+                            @if ($document->isFreeTier())
+                                El documento es gratis. Esto es lo que puedes sumarle si lo necesitas.
+                            @else
+                                Lo básico ya está incluido. Agrega solo lo que te haga falta.
+                            @endif
+                        </p>
 
-                        <div class="choice-grid" style="margin-bottom: var(--s10);">
-                            <label class="choice">
-                                <input type="radio" name="speed" value="standard"
-                                       @checked($chosen === 'standard') data-speed="standard">
-                                <span class="choice__box">
-                                    <span class="choice__head">
-                                        <span class="choice__title">Estándar</span>
-                                        <span class="choice__radio" aria-hidden="true"></span>
-                                    </span>
-                                    <span class="choice__price">{{ $pricing->formatCop($standardQuote->amount) }}</span>
-                                    <span class="choice__meta">Entrega en {{ \Illuminate\Support\Str::lcfirst($standardQuote->deliveryLabel()) }}</span>
-                                    <ul class="choice__list">
-                                        <li>Formato escrito por abogados colombianos</li>
-                                        <li>Guía de radicación incluida</li>
-                                        <li>Envío por correo y WhatsApp</li>
-                                    </ul>
-                                </span>
-                            </label>
+                        <p class="alert alert--info" id="aviso-incompatible" role="status" hidden
+                           style="margin-bottom: var(--s5);">
+                            <span class="alert__icon" aria-hidden="true">⚖️</span>
+                            <span data-texto></span>
+                        </p>
 
-                            <label class="choice">
-                                <input type="radio" name="speed" value="express"
-                                       @checked($chosen === 'express') data-speed="express">
-                                <span class="choice__box choice__box--action">
-                                    <span class="choice__head">
-                                        <span class="choice__title">Express ⚡</span>
-                                        <span class="choice__radio" aria-hidden="true"></span>
+                        <div class="grid" style="gap: var(--s3); margin: var(--s6) 0 var(--s10);">
+                            @foreach ($offers as $offer)
+                                <label class="addon">
+                                    <input type="checkbox"
+                                           name="addons[]"
+                                           value="{{ $offer->key() }}"
+                                           data-price="{{ $offer->price }}"
+                                           data-kind="{{ $offer->addon->kind->value }}"
+                                           @checked($offer->isSelected)>
+                                    <span class="addon__box">
+                                        <span class="addon__check" aria-hidden="true">
+                                            <svg viewBox="0 0 14 14" fill="none">
+                                                <path d="M2 7.5L5.5 11L12 3.5" stroke="currentColor" stroke-width="2.5"
+                                                      stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                        </span>
+
+                                        <span class="addon__body">
+                                            <span class="addon__head">
+                                                <span class="addon__name">
+                                                    {{ $offer->addon->emoji }} {{ $offer->addon->name }}
+                                                </span>
+                                                <span @class(['addon__price', 'addon__price--free' => $offer->price === 0])>
+                                                    @if ($showDiscounts && $offer->formattedCompareAt())
+                                                        <s>{{ $offer->formattedCompareAt() }}</s>
+                                                    @endif
+                                                    {{ $offer->formattedPrice() }}
+                                                </span>
+                                            </span>
+
+                                            @if ($offer->reason)
+                                                <p class="addon__reason">{{ $offer->reason }}</p>
+                                            @endif
+
+                                            @if ($offer->addon->bullets)
+                                                <ul class="addon__bullets">
+                                                    @foreach (array_slice($offer->addon->bullets, 0, 3) as $bullet)
+                                                        <li>{{ $bullet }}</li>
+                                                    @endforeach
+                                                </ul>
+                                            @endif
+
+                                            <span class="addon__tags">
+                                                @if ($offer->addon->badge)
+                                                    <span class="pill pill--action">{{ $offer->addon->badge }}</span>
+                                                @endif
+                                                @if ($offer->addon->social_proof)
+                                                    <span class="pill pill--success">{{ $offer->addon->social_proof }}</span>
+                                                @endif
+                                            </span>
+                                        </span>
                                     </span>
-                                    <span class="choice__price">{{ $pricing->formatCop($expressQuote->amount) }}</span>
-                                    <span class="choice__meta">
-                                        Entrega en {{ \Illuminate\Support\Str::lcfirst($expressQuote->deliveryLabel()) }}
-                                        @if ($upgradeCost)
-                                            · solo {{ $pricing->formatCop($upgradeCost) }} más
-                                        @endif
-                                    </span>
-                                    <ul class="choice__list">
-                                        <li>Todo lo del plan estándar</li>
-                                        <li><strong>Tu trámite salta al inicio de la fila</strong></li>
-                                        <li>Soporte directo mientras se redacta</li>
-                                    </ul>
-                                </span>
-                            </label>
+                                </label>
+                            @endforeach
                         </div>
-                    @else
-                        <input type="hidden" name="speed" value="standard">
                     @endif
 
-                    {{-- ---------------- Datos del caso ---------------- --}}
-                    <h2 style="font-size: var(--t-xl);">{{ $hasSpeedChoice ? '2' : '1' }}. Cuéntanos tu caso</h2>
-                    <p class="text-sm text-muted">
-                        Esto es lo que lee el abogado antes de redactar. Mientras más concreto, mejor queda el documento.
-                    </p>
+                    {{-- ---------------- 2. El caso ---------------- --}}
+                    <h2 style="font-size: var(--t-xl);">{{ $offers->isNotEmpty() ? '2' : '1' }}. Cuéntanos tu caso</h2>
+                    <p class="text-sm text-muted">Esto es lo que va dentro del documento. Mientras más concreto, mejor queda.</p>
 
-                    <div class="form" style="margin-top: var(--s6);">
+                    @if ($aiHook)
+                        <div class="hook-strip" style="border-radius: var(--r-md); margin: var(--s5) 0; border: 1px solid var(--sand-300);">
+                            <span class="hook-strip__item"><span aria-hidden="true">✨</span> Revisamos ortografía y redacción</span>
+                            <span class="hook-strip__item"><span aria-hidden="true">🛡️</span> Formato escrito por abogados</span>
+                            <span class="hook-strip__item"><span aria-hidden="true">⚖️</span> Tono formal ante la entidad</span>
+                        </div>
+                    @endif
+
+                    <div class="form">
+                        {{-- Las preguntas propias del trámite. Van antes del
+                             relato libre: contestar «¿a qué entidad?» es mucho
+                             más fácil que redactar, y empezar por lo fácil
+                             hace que se termine el formulario. --}}
+                        @foreach ($fields as $field)
+                            <div class="field">
+                                <label for="{{ $field->inputId() }}">
+                                    {{ $field->label }}
+                                    @if ($field->required)<span class="req">*</span>@endif
+                                </label>
+
+                                @if ($field->type === 'textarea')
+                                    <textarea id="{{ $field->inputId() }}"
+                                              name="{{ $field->inputName() }}"
+                                              class="textarea"
+                                              @required($field->required)
+                                              placeholder="{{ $field->placeholder }}">{{ old('fields.'.$field->key) }}</textarea>
+                                @else
+                                    <input type="{{ $field->type === 'date' ? 'date' : ($field->type === 'number' ? 'number' : 'text') }}"
+                                           id="{{ $field->inputId() }}"
+                                           name="{{ $field->inputName() }}"
+                                           class="input"
+                                           @required($field->required)
+                                           value="{{ old('fields.'.$field->key) }}"
+                                           placeholder="{{ $field->placeholder }}">
+                                @endif
+
+                                @if ($field->help)
+                                    <span class="field__hint">{{ $field->help }}</span>
+                                @endif
+
+                                <x-field-error :name="'fields.'.$field->key" />
+                            </div>
+                        @endforeach
+
                         <div class="field">
-                            <label for="case_summary">
-                                ¿Qué pasó y qué necesitas? <span class="req" aria-hidden="true">*</span>
-                            </label>
+                            <label for="case_summary">¿Qué pasó y qué necesitas? <span class="req">*</span></label>
                             <textarea id="case_summary" name="case_summary" class="textarea" required minlength="30"
-                                      aria-describedby="case_summary_hint"
-                                      aria-invalid="{{ $errors->has('case_summary') ? 'true' : 'false' }}"
-                                      placeholder="Ejemplo: el 14 de enero mi médico ordenó una cirugía de rodilla. Radiqué la autorización el 20 de enero y el 3 de febrero la EPS la negó diciendo que no está en el PBS. Necesito que me la autoricen.">{{ old('case_summary') }}</textarea>
-                            <span class="field__hint" id="case_summary_hint">
-                                Incluye fechas, nombres de entidades y números de radicado si los tienes.
-                            </span>
+                                      style="min-height: 190px;"
+                                      placeholder="Ejemplo: el 14 de enero radiqué la solicitud 00123 ante mi EPS para una cirugía de rodilla. El 3 de febrero me la negaron diciendo que no está en el PBS. Necesito que la autoricen.">{{ old('case_summary') }}</textarea>
+                            <span class="field__hint">Incluye fechas, nombres de entidades y números de radicado si los tienes.</span>
                             <x-field-error name="case_summary" />
                         </div>
 
@@ -114,14 +172,8 @@
                                 <div>
                                     <strong>Para este trámite necesitaremos:</strong>
                                     <ul style="margin: var(--s2) 0 0; padding-left: var(--s5); font-size: var(--t-sm);">
-                                        @foreach ($document->required_info as $info)
-                                            <li>{{ $info }}</li>
-                                        @endforeach
+                                        @foreach ($document->required_info as $info)<li>{{ $info }}</li>@endforeach
                                     </ul>
-                                    <p style="margin-top: var(--s3); font-size: var(--t-xs);">
-                                        Si no lo tienes todo a mano, no te preocupes: después de pagar te escribimos
-                                        por WhatsApp para completar lo que falte.
-                                    </p>
                                 </div>
                             </div>
                         @endif
@@ -130,161 +182,137 @@
 
                         <div class="form-row">
                             <div class="field">
-                                <label for="customer_name">Nombre completo <span class="req" aria-hidden="true">*</span></label>
+                                <label for="customer_name">Nombre completo <span class="req">*</span></label>
                                 <input type="text" id="customer_name" name="customer_name" class="input" required
-                                       value="{{ old('customer_name') }}" autocomplete="name"
-                                       aria-invalid="{{ $errors->has('customer_name') ? 'true' : 'false' }}"
-                                       placeholder="Como aparece en tu documento">
+                                       value="{{ old('customer_name') }}" autocomplete="name">
                                 <x-field-error name="customer_name" />
                             </div>
-
                             <div class="field">
-                                <label for="customer_email">Correo electrónico <span class="req" aria-hidden="true">*</span></label>
+                                <label for="customer_email">Correo <span class="req">*</span></label>
                                 <input type="email" id="customer_email" name="customer_email" class="input" required
-                                       value="{{ old('customer_email') }}" autocomplete="email"
-                                       aria-describedby="email_hint"
-                                       aria-invalid="{{ $errors->has('customer_email') ? 'true' : 'false' }}">
-                                <span class="field__hint" id="email_hint">Aquí llega tu documento. Revísalo bien.</span>
+                                       value="{{ old('customer_email') }}" autocomplete="email">
+                                <span class="field__hint">Aquí llega tu documento.</span>
                                 <x-field-error name="customer_email" />
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="field">
-                                <label for="customer_phone">Celular (WhatsApp) <span class="req" aria-hidden="true">*</span></label>
+                                <label for="customer_phone">Celular (WhatsApp) <span class="req">*</span></label>
                                 <input type="tel" id="customer_phone" name="customer_phone" class="input" required
-                                       value="{{ old('customer_phone') }}" autocomplete="tel"
-                                       placeholder="300 123 4567"
-                                       aria-invalid="{{ $errors->has('customer_phone') ? 'true' : 'false' }}">
+                                       value="{{ old('customer_phone') }}" autocomplete="tel" placeholder="300 123 4567">
                                 <x-field-error name="customer_phone" />
                             </div>
-
                             <div class="field">
                                 <label for="customer_city">Ciudad</label>
                                 <input type="text" id="customer_city" name="customer_city" class="input"
                                        value="{{ old('customer_city') }}" autocomplete="address-level2">
-                                <x-field-error name="customer_city" />
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="field">
-                                <label for="customer_document_type">Tipo de documento <span class="req" aria-hidden="true">*</span></label>
+                                <label for="customer_document_type">Tipo de documento <span class="req">*</span></label>
                                 <select id="customer_document_type" name="customer_document_type" class="select" required>
-                                    @foreach (['CC' => 'Cédula de ciudadanía', 'CE' => 'Cédula de extranjería', 'NIT' => 'NIT', 'PA' => 'Pasaporte', 'PEP' => 'PEP / PPT'] as $value => $label)
-                                        <option value="{{ $value }}" @selected(old('customer_document_type', 'CC') === $value)>{{ $label }}</option>
+                                    @foreach (['CC' => 'Cédula de ciudadanía', 'CE' => 'Cédula de extranjería', 'NIT' => 'NIT', 'PA' => 'Pasaporte', 'PEP' => 'PEP / PPT'] as $v => $l)
+                                        <option value="{{ $v }}" @selected(old('customer_document_type', 'CC') === $v)>{{ $l }}</option>
                                     @endforeach
                                 </select>
                             </div>
-
                             <div class="field">
                                 <label for="customer_document_number">Número de documento</label>
-                                <input type="text" id="customer_document_number" name="customer_document_number" class="input"
-                                       value="{{ old('customer_document_number') }}" inputmode="numeric">
-                                <span class="field__hint">Va dentro del documento legal, por eso lo pedimos.</span>
-                                <x-field-error name="customer_document_number" />
+                                <input type="text" id="customer_document_number" name="customer_document_number"
+                                       class="input" value="{{ old('customer_document_number') }}" inputmode="numeric">
                             </div>
                         </div>
-
-                        @if ($document->supports_signature)
-                            <label class="checkbox">
-                                <input type="checkbox" name="wants_signature" value="1" @checked(old('wants_signature'))>
-                                <span>
-                                    <strong>Quiero firma electrónica con OTP</strong> para que las partes firmen desde el celular.
-                                    Sin costo adicional, con validez plena según la Ley 527 de 1999.
-                                </span>
-                            </label>
-                        @endif
 
                         <hr>
 
                         <label class="checkbox">
                             <input type="checkbox" name="accepts_terms" value="1" required @checked(old('accepts_terms'))>
-                            <span>
-                                Acepto los <a href="{{ route('pages.terms') }}" target="_blank">términos y condiciones</a>
-                                y entiendo que esto no constituye una relación abogado&#8209;cliente hasta la confirmación del pago.
-                                <span class="req" aria-hidden="true">*</span>
-                            </span>
+                            <span>Acepto los <a href="{{ route('pages.terms') }}" target="_blank">términos y condiciones</a>. <span class="req">*</span></span>
                         </label>
                         <x-field-error name="accepts_terms" />
 
                         <label class="checkbox">
                             <input type="checkbox" name="accepts_privacy" value="1" required @checked(old('accepts_privacy'))>
                             <span>
-                                Autorizo el tratamiento de mis datos personales conforme a la
+                                Autorizo el tratamiento de mis datos conforme a la
                                 <a href="{{ route('pages.privacy') }}" target="_blank">política de privacidad</a>
-                                y la Ley 1581 de 2012. <span class="req" aria-hidden="true">*</span>
+                                y la Ley 1581 de 2012. <span class="req">*</span>
                             </span>
                         </label>
                         <x-field-error name="accepts_privacy" />
+
+                        {{-- Consentimientos separados y opcionales: uno no implica el otro. --}}
+                        <label class="checkbox">
+                            <input type="checkbox" name="shareable_with_lawyers" value="1" @checked(old('shareable_with_lawyers'))>
+                            <span>
+                                <strong>Quiero que un abogado me contacte</strong> sobre este caso.
+                                Compartiremos tu caso solo con abogados de nuestra red y puedes revocarlo cuando quieras.
+                            </span>
+                        </label>
+
+                        <label class="checkbox">
+                            <input type="checkbox" name="accepts_marketing" value="1" @checked(old('accepts_marketing'))>
+                            <span>Quiero recibir guías legales gratuitas por correo. Puedo darme de baja en cualquier momento.</span>
+                        </label>
                     </div>
                 </div>
 
-                {{-- ---------------- Resumen lateral ---------------- --}}
+                {{-- ---------------- Resumen ---------------- --}}
                 <aside class="checkout-aside">
                     <div class="card summary">
-                        <h2 style="font-size: var(--t-base); margin-bottom: var(--s5);">Resumen de tu pedido</h2>
+                        <h2 style="font-size: var(--t-base); margin-bottom: var(--s5);">Tu pedido</h2>
 
                         <dl class="summary__rows">
                             <div class="summary__row">
-                                <dt>Trámite</dt>
-                                <dd>{{ $document->short_name ?: $document->name }}</dd>
+                                <dt>{{ $document->short_name ?: $document->name }}</dt>
+                                <dd data-base-price>{{ $quote->formattedBase() }}</dd>
                             </div>
-                            <div class="summary__row">
-                                <dt>Plan</dt>
-                                <dd>{{ $plan->name }}</dd>
-                            </div>
+                            <div data-addon-lines></div>
                             <div class="summary__row">
                                 <dt>Entrega</dt>
-                                <dd data-summary-delivery>
-                                    {{ $chosen === 'express' && $expressQuote ? $expressQuote->deliveryLabel() : $standardQuote->deliveryLabel() }}
-                                </dd>
+                                <dd data-delivery>{{ $quote->deliveryLabel() }}</dd>
                             </div>
                         </dl>
 
                         <div class="summary__total">
                             <span>Total</span>
-                            <span data-summary-total
-                                  data-standard="{{ $pricing->formatCop($standardQuote->amount) }}"
-                                  data-express="{{ $expressQuote ? $pricing->formatCop($expressQuote->amount) : '' }}"
-                                  data-standard-delivery="{{ $standardQuote->deliveryLabel() }}"
-                                  data-express-delivery="{{ $expressQuote?->deliveryLabel() }}">
-                                {{ $chosen === 'express' && $expressQuote ? $pricing->formatCop($expressQuote->amount) : $pricing->formatCop($standardQuote->amount) }}
+                            <span class="price-live">
+                                <span class="price-live__total" data-total>{{ $quote->formattedTotal() }}</span>
                             </span>
                         </div>
 
                         <button type="submit" class="btn btn--primary btn--block btn--lg summary__submit" style="margin-top: var(--s6);">
-                            Continuar al pago
+                            <span data-cta>{{ $quote->isFree() ? 'Generar mi documento gratis' : 'Continuar al pago' }}</span>
                         </button>
 
                         <p class="text-xs text-muted center" style="margin-top: var(--s4);">
-                            🛡️ Cubierto por el <a href="{{ route('pages.guarantee') }}" target="_blank">Certificado de Garantía</a>.
-                            Aún no se te cobra nada.
+                            🛡️ Cubierto por el <a href="{{ route('pages.guarantee') }}" target="_blank">Certificado de Garantía</a>
                         </p>
                     </div>
 
-                    <div class="card card--flat" style="margin-top: var(--s5); background: var(--slate-50);">
+                    <div class="card card--flat" style="margin-top: var(--s5); background: var(--cream-100);">
                         <p class="text-xs text-muted mb-0">
-                            <strong>¿Prefieres hablar antes de pagar?</strong><br>
-                            Escríbenos por WhatsApp a
-                            <a href="{{ $wa->forDocument($document->name) }}" target="_blank" rel="noopener">{{ $wa->display() }}</a>
-                            y te orientamos sin compromiso.
+                            <strong>¿Dudas antes de empezar?</strong><br>
+                            Escríbenos a <a href="{{ $wa->forDocument($document->name) }}" target="_blank" rel="noopener">{{ $wa->display() }}</a>.
                         </p>
                     </div>
                 </aside>
             </div>
 
-            {{-- Hueco y barra fija: sólo se ven en móvil. --}}
+            {{-- Barra fija en móvil: el resumen va arriba y sin esto el formulario
+                 termina sin botón. --}}
             <div class="checkout-spacer" aria-hidden="true"></div>
-
             <div class="checkout-bar">
                 <span class="checkout-bar__total">
                     <span>Total</span>
-                    <strong data-bar-total>
-                        {{ $chosen === 'express' && $expressQuote ? $pricing->formatCop($expressQuote->amount) : $pricing->formatCop($standardQuote->amount) }}
-                    </strong>
+                    <strong data-bar-total>{{ $quote->formattedTotal() }}</strong>
                 </span>
-                <button type="submit" class="btn btn--primary">Continuar al pago</button>
+                <button type="submit" class="btn btn--primary">
+                    <span data-cta>{{ $quote->isFree() ? 'Generar gratis' : 'Continuar' }}</span>
+                </button>
             </div>
         </form>
     </div>
@@ -292,28 +320,98 @@
 
 @push('scripts')
 <script>
-/* El resumen se actualiza al cambiar la velocidad, sin recargar la página. */
+/* Recalcula el total al marcar adicionales. Sin peticiones al servidor: el
+   precio de cada uno viaja en data-price, y el servidor vuelve a calcularlo
+   al guardar, así que esto es solo la vista. */
 (function () {
-    var total = document.querySelector('[data-summary-total]');
-    var barTotal = document.querySelector('[data-bar-total]');
-    var delivery = document.querySelector('[data-summary-delivery]');
-    var radios = document.querySelectorAll('input[name="speed"]');
+    var form = document.getElementById('checkout-form');
+    if (!form) return;
 
-    if (!total || !radios.length) return;
+    var base = {{ $quote->baseAmount }};
+    var boxes = form.querySelectorAll('input[name="addons[]"]');
+    var totals = form.querySelectorAll('[data-total], [data-bar-total]');
+    var ctas = form.querySelectorAll('[data-cta]');
+    var lines = form.querySelector('[data-addon-lines]');
+    var delivery = form.querySelector('[data-delivery]');
 
-    radios.forEach(function (radio) {
-        radio.addEventListener('change', function () {
-            var express = radio.value === 'express';
-            var price = express ? total.dataset.express : total.dataset.standard;
-            var when = express ? total.dataset.expressDelivery : total.dataset.standardDelivery;
+    var standardDelivery = @json($document->deliveryLabel());
+    var expressDelivery = 'Ahora mismo';
 
-            if (price) {
-                total.textContent = price;
-                if (barTotal) barTotal.textContent = price;
-            }
-            if (when && delivery) delivery.textContent = when;
+    function cop(n) {
+        return n === 0 ? 'Gratis' : '$' + n.toLocaleString('es-CO');
+    }
+
+    function update() {
+        var total = base;
+        var html = '';
+        var express = false;
+
+        boxes.forEach(function (box) {
+            if (!box.checked) return;
+            var price = parseInt(box.dataset.price, 10) || 0;
+            total += price;
+            if (box.value === 'express') express = true;
+
+            var label = box.closest('.addon').querySelector('.addon__name').textContent.trim();
+            html += '<div class="summary__row"><dt>' + label + '</dt><dd>' +
+                    (price === 0 ? 'Incluido' : cop(price)) + '</dd></div>';
+        });
+
+        if (lines) lines.innerHTML = html;
+        if (delivery) delivery.textContent = express ? expressDelivery : standardDelivery;
+
+        totals.forEach(function (el) { el.textContent = cop(total); });
+        ctas.forEach(function (el) {
+            el.textContent = total === 0
+                ? (el.closest('.checkout-bar') ? 'Generar gratis' : 'Generar mi documento gratis')
+                : (el.closest('.checkout-bar') ? 'Continuar' : 'Continuar al pago');
+        });
+    }
+
+    /* La entrega inmediata y que lo escriba un abogado se excluyen: nadie
+       redacta sobre hechos ajenos al instante. Al marcar una se quita la
+       otra y se dice por qué, en vez de esconder la opción: una casilla que
+       desaparece sin explicación se lee como un error de la página. */
+    var INCOMPATIBLES = { review: 'delivery', delivery: 'review' };
+
+    function excluir(elegido) {
+        var contraria = INCOMPATIBLES[elegido.dataset.kind];
+        if (!contraria || !elegido.checked) return;
+
+        var quitados = [];
+
+        boxes.forEach(function (box) {
+            if (box === elegido || box.dataset.kind !== contraria || !box.checked) return;
+
+            box.checked = false;
+            quitados.push(box.closest('.addon').querySelector('.addon__name').textContent.trim());
+        });
+
+        if (quitados.length) {
+            anunciar(quitados.join(' y '), elegido.closest('.addon').querySelector('.addon__name').textContent.trim());
+        }
+    }
+
+    function anunciar(quitado, motivo) {
+        var aviso = document.getElementById('aviso-incompatible');
+        if (!aviso) return;
+
+        aviso.querySelector('[data-texto]').innerHTML =
+            'Quitamos <strong>' + quitado + '</strong> porque no se puede combinar con <strong>' +
+            motivo + '</strong>: un documento que escribe un abogado sobre tu caso no puede estar ' +
+            'listo al instante. Puedes volver a marcarlo y se quitará el otro.';
+
+        aviso.hidden = false;
+    }
+
+    boxes.forEach(function (box) {
+        box.addEventListener('change', function () {
+            excluir(box);
+            update();
         });
     });
+
+    update();
 })();
 </script>
 @endpush

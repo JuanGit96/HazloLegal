@@ -7,7 +7,7 @@
 
         <div class="section-head">
             <span class="eyebrow">El proceso</span>
-            <h1>Cómo funciona HazloLegal</h1>
+            <h1>Cómo funciona Hazlo<span class="hl hl--blue">Legal</span></h1>
             <p>
                 Automatizamos lo repetitivo para cobrar menos y responder más rápido.
                 Lo que exige criterio jurídico lo sigue haciendo un abogado, a mano.
@@ -95,38 +95,48 @@
 <section class="section section--sunken">
     <div class="container">
         <div class="section-head">
-            <h2>Los tres niveles de acompañamiento</h2>
-            <p>Según cuánto necesites que un abogado se involucre.</p>
+            <h2>Lo que le puedes sumar a cualquier trámite</h2>
+            <p>No hay paquetes. Empiezas por el documento y agregas solo lo que tu caso pida.</p>
         </div>
 
-        <div class="pricing-grid">
-            @foreach ($plans as $plan)
-                <div @class(['plan', 'plan--featured' => $plan->is_highlighted, 'plan--dark' => $plan->is_quote_only])>
-                    @if ($plan->badge)<span class="badge-float">{{ $plan->badge }}</span>@endif
-                    <h3>{{ $plan->name }}</h3>
-                    <p class="plan__tagline">{{ $plan->tagline }}</p>
-                    <div class="plan__price">
-                        @if ($plan->price === null)
-                            Cotizar
-                        @else
-                            {{ $pricing->formatCop($plan->price) }} <small>COP</small>
-                        @endif
-                    </div>
-                    <ul class="plan__features">
-                        @foreach ($plan->includes ?? [] as $f)
-                            <li>{!! \Illuminate\Support\Str::inlineMarkdown($f) !!}</li>
-                        @endforeach
-                    </ul>
-                    <a href="{{ $plan->is_quote_only ? route('cases.create') : route('checkout.documents', $plan->key->value) }}"
-                       @class(['btn', 'btn--block',
-                               'btn--primary' => $plan->is_highlighted,
-                               'btn--white' => $plan->is_quote_only,
-                               'btn--outline' => ! $plan->is_highlighted && ! $plan->is_quote_only])>
-                        {{ $plan->cta_label }}
-                    </a>
+        <div class="grid grid--3">
+            @foreach ($addons as $addon)
+                <div class="card card--pad-lg">
+                    <h3>{{ $addon->emoji }} {{ $addon->name }}</h3>
+                    <p class="text-sm text-muted">{{ $addon->description ?: $addon->tagline }}</p>
+
+                    @if ($addon->bullets)
+                        <ul class="plan__features">
+                            @foreach ($addon->bullets as $bullet)
+                                <li>{{ $bullet }}</li>
+                            @endforeach
+                        </ul>
+                    @endif
+
+                    <p style="margin-top: auto; padding-top: var(--s4); font-weight: 800; color: var(--brand-dark);">
+                        {{ $addon->default_price === 0 ? 'Incluido' : '+'.$pricing->formatCop($addon->default_price) }}
+                    </p>
                 </div>
             @endforeach
         </div>
+
+        <p class="center text-sm text-muted mt-8">
+            El precio de cada adicional puede variar según el trámite. Siempre lo ves antes de pagar,
+            y quitarlo es un clic.
+        </p>
+
+        @if ($freeDocuments->isNotEmpty())
+            <div class="alert alert--success" style="max-width: 720px; margin: var(--s10) auto 0;">
+                <span class="alert__icon" aria-hidden="true">🎁</span>
+                <div>
+                    <strong>Hay trámites que no cuestan nada.</strong>
+                    <p style="margin-top: var(--s1);">
+                        El documento sale completo y es tuyo.
+                        <a href="{{ route('tools.index') }}">Mira cuáles son</a>.
+                    </p>
+                </div>
+            </div>
+        @endif
     </div>
 </section>
 

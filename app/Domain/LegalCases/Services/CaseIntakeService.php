@@ -27,6 +27,9 @@ final class CaseIntakeService
     {
         $case = DB::transaction(fn () => LegalCase::query()->create([
             'reference' => $this->references->for(LegalCase::class, 'CC'),
+            // La referencia es correlativa: sin esta llave, cualquiera podría
+            // abrir el caso de otro cambiando un número.
+            'client_token' => bin2hex(random_bytes(16)),
             'client_name' => $data->clientName,
             'client_email' => $data->clientEmail,
             'client_phone' => $data->clientPhone,

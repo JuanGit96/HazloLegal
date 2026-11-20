@@ -28,7 +28,7 @@ class FaqSeeder extends Seeder
             [
                 'group' => 'home',
                 'question' => '¿Cuánto tardan realmente?',
-                'answer' => 'El plan estándar entrega en **24 horas hábiles** y el Express en **menos de 4 horas**. El reloj arranca cuando confirmamos el pago y recibimos la información completa de tu caso, no antes. Nuestro promedio real de entrega es de 19 horas. Si nos pasamos del plazo por una razón nuestra, el trámite queda sin costo.',
+                'answer' => 'La entrega estándar es en **24 horas hábiles**. Si agregas **entrega inmediata**, lo recibes apenas confirmamos el pago. El reloj arranca con el pago y con la información completa de tu caso, no antes. Si nos pasamos del plazo por una razón nuestra, el trámite queda sin costo.',
                 'sort_order' => 3,
             ],
             [
@@ -52,7 +52,7 @@ class FaqSeeder extends Seeder
             [
                 'group' => 'home',
                 'question' => '¿Qué pasa con mis datos personales?',
-                'answer' => 'Los tratamos conforme a la Ley 1581 de 2012 y solo para prestarte el servicio. No los vendemos ni los compartimos con terceros con fines comerciales. Puedes pedir su eliminación cuando quieras escribiendo a nuestro correo de contacto. El detalle completo está en la [política de tratamiento de datos](/tratamiento-de-datos-personales).',
+                'answer' => 'Los tratamos conforme a la Ley 1581 de 2012 y solo para prestarte el servicio. No los vendemos ni los compartimos con terceros con fines comerciales. Puedes pedir su eliminación cuando quieras desde el [formulario de eliminación de datos](/eliminar-mis-datos), sin dar explicaciones. El detalle completo está en la [política de tratamiento de datos](/tratamiento-de-datos-personales).',
                 'sort_order' => 7,
             ],
             [

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Orders\Tables;
 
-use App\Domain\Catalog\Enums\DeliverySpeed;
+use App\Domain\Orders\Enums\OrderTier;
 use App\Domain\Orders\Enums\OrderStatus;
 use App\Domain\Orders\Models\Order;
 use App\Domain\Orders\Services\OrderService;
@@ -25,6 +25,9 @@ class OrdersTable
     public static function configure(Table $table): Table
     {
         return $table
+            // La columna de adicionales los lee uno a uno: sin esto es una
+            // consulta por fila.
+            ->modifyQueryUsing(fn (Builder $query) => $query->with('addons'))
             ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('reference')
@@ -46,9 +49,17 @@ class OrdersTable
                     ->default(fn (Order $record) => $record->document?->name)
                     ->wrap(),
 
-                TextColumn::make('speed')
-                    ->label('Velocidad')
-                    ->badge(),
+                TextColumn::make('tier')
+                    ->label('Nivel')
+                    ->badge()
+                    ->sortable(),
+
+                TextColumn::make('addons_count')
+                    ->label('Adicionales')
+                    ->counts('addons')
+                    ->badge()
+                    ->color('gray')
+                    ->description(fn (Order $record) => $record->isExpress() ? 'inmediato' : null),
 
                 TextColumn::make('status')
                     ->label('Estado')
@@ -99,9 +110,10 @@ class OrdersTable
                     ->options(OrderStatus::class)
                     ->multiple(),
 
-                SelectFilter::make('speed')
-                    ->label('Velocidad')
-                    ->options(DeliverySpeed::class),
+                SelectFilter::make('tier')
+                    ->label('Nivel')
+                    ->options(OrderTier::class)
+                    ->multiple(),
 
                 SelectFilter::make('legal_document_id')
                     ->label('Trámite')
@@ -117,6 +129,16 @@ class OrdersTable
                 Filter::make('unassigned')
                     ->label('Sin abogado asignado')
                     ->query(fn (Builder $query) => $query->whereNull('assigned_lawyer_id'))
+                    ->toggle(),
+
+                Filter::make('shareable')
+                    ->label('Autorizó que un abogado lo contacte')
+                    ->query(fn (Builder $query) => $query->where('shareable_with_lawyers', true))
+                    ->toggle(),
+
+                Filter::make('missing_document')
+                    ->label('Pagado y sin documento generado')
+                    ->query(fn (Builder $query) => $query->whereNotNull('paid_at')->whereNull('document_path'))
                     ->toggle(),
             ])
             ->recordActions([
@@ -150,6 +172,33 @@ class OrdersTable
                             ->success()
                             ->send();
                     }),
+
+                // Si el equipo corrige un dato del cliente, el PDF viejo deja
+                // de servir: hay que poder volver a generarlo sin tocar código.
+                Action::make('regenerate')
+                    ->label('Regenerar PDF')
+                    ->icon(Heroicon::OutlinedArrowPath)
+                    ->color('gray')
+                    ->requiresConfirmation()
+                    ->modalHeading('Volver a generar los archivos')
+                    ->modalDescription('Se rehacen el documento y el instructivo con los datos actuales. El cliente verá la versión nueva en su enlace.')
+                    ->visible(fn (Order $record) => $record->paid_at !== null)
+                    ->action(function (Order $record, OrderService $orders) {
+                        $orders->prepareDeliverables($record);
+
+                        Notification::make()
+                            ->title("Archivos de {$record->reference} regenerados")
+                            ->success()
+                            ->send();
+                    }),
+
+                Action::make('download')
+                    ->label('Ver documento')
+                    ->icon(Heroicon::OutlinedDocumentArrowDown)
+                    ->color('info')
+                    ->visible(fn (Order $record) => filled($record->document_path))
+                    ->url(fn (Order $record) => $record->downloadUrl('documento'))
+                    ->openUrlInNewTab(),
 
                 EditAction::make()->label('Abrir'),
             ])

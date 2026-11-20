@@ -54,6 +54,12 @@ class LegalCaseController
             'lawyerCount' => $directory->publicTeam(100)->count(),
             'faqs' => $faqs,
             'preselectedArea' => PracticeArea::tryFrom((string) $request->query('area')),
+            // Si llegó desde un trámite que solo se hace con abogado, se le
+            // nombra: llegar a un formulario genérico después de pulsar
+            // «tutela en salud» se siente como haberse perdido.
+            'fromDocument' => \App\Domain\Catalog\Models\LegalDocument::query()
+                ->where('slug', (string) $request->query('tramite'))
+                ->first(),
         ]);
     }
 
@@ -93,7 +99,7 @@ class LegalCaseController
             ->firstOrFail();
 
         $result = $decision === 'accept'
-            ? $this->assignment->accept($offer, $request->ip())
+            ? $this->assignment->accept($offer, $request->ip(), $request->input('pitch'))
             : $this->assignment->decline($offer);
 
         return view('cases.offer-result', [
@@ -109,6 +115,51 @@ class LegalCaseController
             'lawyer' => $offer->lawyer,
             'decision' => $decision,
         ]);
+    }
+
+    /**
+     * El cliente ve quién se postuló y elige.
+     *
+     * Aquí no aparecen los datos de contacto de nadie que no haya elegido
+     * todavía, ni los suyos salen hacia ningún abogado hasta que decide.
+     */
+    public function choose(LegalCase $case, Request $request): View
+    {
+        abort_unless($case->grantsAccessWith($request->query('t')), 403);
+
+        $case->load(['acceptedOffers.lawyer', 'assignedLawyer']);
+
+        return view('cases.choose', [
+            'meta' => $this->seo->page(
+                title: "Elige a tu abogado | {$case->reference}",
+                description: 'Abogados interesados en tu caso.',
+                canonical: url()->current(),
+                noindex: true,
+            ),
+            'case' => $case,
+            'offers' => $case->acceptedOffers,
+        ]);
+    }
+
+    public function pick(LegalCase $case, Request $request): RedirectResponse
+    {
+        abort_unless($case->grantsAccessWith($request->input('t')), 403);
+
+        $validated = $request->validate([
+            'offer' => ['required', 'integer'],
+        ], [
+            'offer.required' => 'Elige a uno de los abogados.',
+        ]);
+
+        $offer = CaseOffer::query()
+            ->where('legal_case_id', $case->id)
+            ->whereKey($validated['offer'])
+            ->firstOrFail();
+
+        $this->assignment->chooseLawyer($case, $offer);
+
+        return redirect()->to($case->refresh()->clientUrl())
+            ->with('status', 'Listo. Le avisamos y te escribe directamente.');
     }
 
     public function decline(string $token, Request $request): View

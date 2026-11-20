@@ -6,8 +6,10 @@ namespace App\Domain\Orders\Mail;
 
 use App\Domain\Orders\Models\Order;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Support\Facades\Storage;
 
 class OrderPaidMail extends Mailable
 {
@@ -16,7 +18,7 @@ class OrderPaidMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "Pago confirmado · {$this->order->reference} · ya estamos redactando",
+            subject: "Pago confirmado · {$this->order->reference} · aquí está tu documento",
             replyTo: [config('hazlolegal.contact.email')],
         );
     }
@@ -24,7 +26,28 @@ class OrderPaidMail extends Mailable
     public function content(): Content
     {
         return new Content(view: 'emails.orders.paid', with: [
-            'order' => $this->order->loadMissing(['document', 'plan']),
+            'order' => $this->order->loadMissing(['document', 'addons']),
         ]);
+    }
+
+    /** @return array<int, Attachment> */
+    public function attachments(): array
+    {
+        $files = [];
+        $disk = Storage::disk('local');
+
+        if ($this->order->document_path && $disk->exists($this->order->document_path)) {
+            $files[] = Attachment::fromStorageDisk('local', $this->order->document_path)
+                ->as(\App\Domain\Documents\Services\LegalDocumentPdfBuilder::fileName($this->order))
+                ->withMime('application/pdf');
+        }
+
+        if ($this->order->instructions_path && $disk->exists($this->order->instructions_path)) {
+            $files[] = Attachment::fromStorageDisk('local', $this->order->instructions_path)
+                ->as("instructivo-{$this->order->reference}.pdf")
+                ->withMime('application/pdf');
+        }
+
+        return $files;
     }
 }

@@ -28,3 +28,6 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Credenciales de pasarela: nunca al repositorio, ni las de prueba.
+/wompi.md

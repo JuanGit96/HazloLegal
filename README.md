@@ -1,11 +1,28 @@
 # HazloLegal
 
-Plataforma de documentos y trámites legales para Colombia: catálogo con precio
-fijo, embudo de compra, reparto de casos complejos entre abogados y blog como
-motor de adquisición orgánica.
+Plataforma de documentos y trámites legales para Colombia: documentos gratuitos
+como puerta de entrada, precio base más adicionales, reparto de casos complejos
+entre abogados y suscripción para abogados que quieren clientes.
 
 **Estado: prototipo funcional.** Todo el sitio se puede recorrer de principio a
-fin. Lo que todavía no es real está listado en «Qué es dummy» más abajo.
+fin. Lo que todavía no es real está en [docs/05-operacion/03-pendientes.md](docs/05-operacion/03-pendientes.md).
+
+---
+
+## 📚 Documentación
+
+La carpeta [`docs/`](docs/README.md) explica el negocio, la arquitectura, los
+embudos, el SEO y el panel, pensada para que alguien que llega sin contexto
+—persona o modelo— pueda trabajar aquí sin deducirlo todo del código.
+
+Si solo vas a leer tres archivos:
+
+1. [Qué es HazloLegal](docs/00-contexto/01-que-es-hazlolegal.md)
+2. [Modelo de negocio](docs/00-contexto/02-modelo-de-negocio.md)
+3. [Arquitectura](docs/01-arquitectura/01-vision-general.md)
+
+Y antes de tocar cualquier texto de cara al cliente:
+[Reglas de honestidad](docs/00-contexto/04-reglas-de-honestidad.md).
 
 ---
 
@@ -24,7 +41,9 @@ ddev launch
 | Sitio | https://hazlolegal.ddev.site |
 | Panel | https://hazlolegal.ddev.site/admin |
 | Correos (Mailpit) | https://hazlolegal.ddev.site:8026 |
-| Usuario de demo | `admin@hazlolegal.co` / `hazlolegal2026` |
+| Portal del abogado | https://hazlolegal.ddev.site/portal |
+| Usuario de demo (equipo) | `admin@hazlolegal.co` / `hazlolegal2026` |
+| Usuario de demo (abogado) | `daniela.restrepo@hazlolegal.co` / `abogado2026` |
 
 Reconstruir la base con datos de demostración:
 
@@ -37,6 +56,17 @@ Tests:
 ```bash
 ddev artisan test
 ```
+
+### Enseñárselo a alguien que no está en tu máquina
+
+```bash
+ddev compartir          # publica sitio + bandeja de correo por ngrok
+ddev compartir --stop   # cierra los túneles
+```
+
+Imprime un bloque con las URLs públicas y las credenciales, listo para copiar.
+Las URLs cambian en cada arranque (plan gratuito de ngrok). Cómo está hecho y
+cómo rehacerlo a mano: [`COMPARTIR-NGROK.md`](COMPARTIR-NGROK.md).
 
 **Stack:** Laravel 13 · PHP 8.5 · MariaDB 11.8 · Filament 5 · sin build step
 (el CSS del sitio público se escribe a mano y se sirve tal cual).

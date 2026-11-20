@@ -2,7 +2,7 @@
 
 @section('subject', "Pago confirmado · {$order->reference}")
 @section('accent', '#059669')
-@section('preheader', "Tu {$order->document->name} ya está en manos de un abogado.")
+@section('preheader', "Adjuntamos tu {$order->document->name}.")
 
 @section('content')
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px 0;">
@@ -14,11 +14,16 @@
     </table>
 
     <h1 class="hl-h1" style="margin:0 0 12px 0; font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:26px; line-height:33px; font-weight:800; letter-spacing:-.5px; color:#0F172A; text-align:center;">
-        Pago confirmado. Ya estamos trabajando
+        Pago confirmado
     </h1>
 
     <p style="margin:0 0 26px 0; text-align:center;">
-        Tu <strong>{{ $order->document->name }}</strong> ya entró a la fila de preparación.
+        @if ($order->document_path)
+            Tu <strong>{{ $order->document->name }}</strong> va adjunto a este correo.
+        @else
+            Tu <strong>{{ $order->document->name }}</strong> ya entró a la fila de preparación.
+            Te avisamos en cuanto esté listo.
+        @endif
     </p>
 
     @if ($order->promised_at)
@@ -39,7 +44,9 @@
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 26px 0;">
         <x-email.row label="Referencia" :value="$order->reference" />
         <x-email.row label="Trámite" :value="$order->document->name" />
-        <x-email.row label="Plan" :value="$order->plan->name.' · '.$order->speed->shortLabel()" />
+        @foreach ($order->addons as $addon)
+            <x-email.row :label="$addon->name" :value="$addon->formattedPrice()" />
+        @endforeach
         <x-email.row label="Pagado" :value="$order->formattedAmount().' COP'" />
         @if ($order->payment_method)
             <x-email.row label="Medio de pago" :value="$order->payment_method->getLabel()" />
@@ -47,22 +54,22 @@
     </table>
 
     <h2 style="margin:0 0 14px 0; font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:19px; line-height:26px; font-weight:700; color:#0F172A;">
-        Qué pasa ahora
+        Qué sigue
     </h2>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 26px 0;">
         <tr><td style="padding:0 0 12px 0; font-size:15px; line-height:24px; color:#334155; font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-            <strong style="color:#2563EB;">1.</strong> Un abogado del área lee tu caso. Si falta algún dato, te escribe por WhatsApp.
+            <strong style="color:#2563EB;">1.</strong> Revisa que tu nombre, documento y los datos de la entidad estén exactos.
         </td></tr>
         <tr><td style="padding:0 0 12px 0; font-size:15px; line-height:24px; color:#334155; font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-            <strong style="color:#2563EB;">2.</strong> Se redacta el documento y se audita ortografía, datos y normas citadas.
+            <strong style="color:#2563EB;">2.</strong> Fírmalo e imprímelo, o usa la firma electrónica si la contrataste.
         </td></tr>
         <tr><td style="padding:0; font-size:15px; line-height:24px; color:#334155; font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-            <strong style="color:#2563EB;">3.</strong> Recibes el PDF aquí y en tu WhatsApp, con la guía de radicación.
+            <strong style="color:#2563EB;">3.</strong> Radícalo y exige el número de radicado: sin él no puedes probar que lo presentaste.
         </td></tr>
     </table>
 
-    <x-email.button :href="route('checkout.confirmation', $order->reference)" label="Ver el estado de mi pedido" color="#059669" />
+    <x-email.button :href="$order->trackingUrl()" label="Ver y descargar mis archivos" color="#059669" />
 
     <x-email.note tone="success" icon="🛡️">
         Tu pedido está cubierto por el <strong>Certificado de Garantía HazloLegal</strong>:

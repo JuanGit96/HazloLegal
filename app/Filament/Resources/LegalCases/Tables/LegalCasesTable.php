@@ -107,6 +107,14 @@ class LegalCasesTable
                     ->toggle(),
             ])
             ->recordActions([
+                \Filament\Actions\Action::make('shortlist')
+                    ->label('Ver postulados')
+                    ->icon(\Filament\Support\Icons\Heroicon::OutlinedUserGroup)
+                    ->color('info')
+                    ->visible(fn (\App\Domain\LegalCases\Models\LegalCase $record) => $record->acceptedOffers()->exists())
+                    ->url(fn (\App\Domain\LegalCases\Models\LegalCase $record) => $record->clientUrl())
+                    ->openUrlInNewTab(),
+
                 Action::make('resend')
                     ->label('Reenviar')
                     ->icon(Heroicon::OutlinedMegaphone)

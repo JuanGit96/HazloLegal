@@ -6,7 +6,7 @@ namespace Database\Seeders;
 
 use App\Domain\Catalog\Enums\DeliverySpeed;
 use App\Domain\Catalog\Models\LegalDocument;
-use App\Domain\Catalog\Models\ServicePlan;
+use App\Domain\Catalog\Models\ServiceAddon;
 use App\Domain\Lawyers\Models\Lawyer;
 use App\Domain\LegalCases\Enums\CaseOfferStatus;
 use App\Domain\LegalCases\Enums\CaseStatus;
@@ -32,11 +32,10 @@ class DemoActivitySeeder extends Seeder
     {
         $references = app(ReferenceGenerator::class);
         $documents = LegalDocument::query()->get()->keyBy('slug');
-        $documentPlan = ServicePlan::query()->where('key', 'document')->first();
-        $advisoryPlan = ServicePlan::query()->where('key', 'advisory')->first();
+        $addons = ServiceAddon::query()->get()->keyBy('key');
         $lawyers = Lawyer::query()->get()->keyBy('email');
 
-        if ($documents->isEmpty() || ! $documentPlan) {
+        if ($documents->isEmpty() || $lawyers->isEmpty()) {
             return;
         }
 
@@ -61,14 +60,32 @@ class DemoActivitySeeder extends Seeder
                 continue;
             }
 
-            $plan = $slug === 'constitucion-de-sas' ? ($advisoryPlan ?? $documentPlan) : $documentPlan;
             $createdAt = now()->subDays($daysAgo)->subHours(random_int(1, 9));
-            $amount = (int) ($plan->priceFor($speed) + $document->price_modifier);
             $paid = $status !== OrderStatus::AwaitingPayment;
 
-            Order::query()->updateOrCreate(['customer_email' => $email, 'legal_document_id' => $document->id], [
+            // Los adicionales de la demo: el express cuando aplica, y el
+            // acompañamiento en el trámite que no se puede hacer solo.
+            $picked = collect();
+
+            if ($speed === DeliverySpeed::Express && $addons->has('express')) {
+                $picked->push($addons['express']);
+            }
+
+            if (! $document->self_service_enabled && $addons->has('acompanamiento')) {
+                $picked->push($addons['acompanamiento']);
+            }
+
+            $base = (int) $document->base_price;
+            $addonsAmount = (int) $picked->sum(fn (ServiceAddon $a) => $a->priceFor($document));
+
+            $order = Order::query()->updateOrCreate(['customer_email' => $email, 'legal_document_id' => $document->id], [
                 'reference' => $references->for(Order::class, 'HL'),
-                'service_plan_id' => $plan->id,
+                'access_token' => bin2hex(random_bytes(16)),
+                'tier' => $picked->contains('key', 'acompanamiento')
+                    ? \App\Domain\Orders\Enums\OrderTier::Accompanied
+                    : (($base + $addonsAmount) === 0
+                        ? \App\Domain\Orders\Enums\OrderTier::Free
+                        : \App\Domain\Orders\Enums\OrderTier::SelfService),
                 'speed' => $speed,
                 'status' => $status,
                 'customer_name' => $name,
@@ -77,7 +94,9 @@ class DemoActivitySeeder extends Seeder
                 'customer_document_number' => (string) random_int(10_000_000, 1_100_000_000),
                 'customer_city' => collect(['Bogotá', 'Medellín', 'Cali', 'Barranquilla', 'Bucaramanga'])->random(),
                 'case_summary' => 'Caso de demostración cargado por el seeder para poblar el panel.',
-                'amount' => $amount,
+                'base_amount' => $base,
+                'addons_amount' => $addonsAmount,
+                'amount' => $base + $addonsAmount,
                 'payment_method' => $paid ? collect(PaymentMethod::cases())->random() : null,
                 'paid_at' => $paid ? $createdAt->copy()->addMinutes(random_int(3, 60)) : null,
                 'promised_at' => $createdAt->copy()->addHours($speed->hours()),
@@ -86,6 +105,17 @@ class DemoActivitySeeder extends Seeder
                 'created_at' => $createdAt,
                 'updated_at' => $createdAt,
             ]);
+
+            $order->addons()->delete();
+
+            foreach ($picked as $addon) {
+                $order->addons()->create([
+                    'service_addon_id' => $addon->id,
+                    'key' => $addon->key,
+                    'name' => $addon->name,
+                    'price' => $addon->priceFor($document),
+                ]);
+            }
         }
 
         // ------------------------------------------------ Casos complejos

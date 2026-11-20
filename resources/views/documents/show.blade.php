@@ -45,47 +45,76 @@
             {{-- Caja de compra: precio, plazo y CTA siempre visibles --}}
             <aside class="doc-hero__aside">
                 <div class="buybox">
-                    <span class="eyebrow">Precio final</span>
-                    <div class="buybox__price">
-                        {{ $pricing->formatCop($standardQuote->amount) }}
-                        <small>COP</small>
-                    </div>
-                    <p class="text-sm text-muted mb-0">Pago único. Sin cuotas de manejo ni honorarios adicionales.</p>
+                    @if ($document->isFreeTier())
+                        <span class="eyebrow">Precio</span>
+                        <div class="buybox__price buybox__price--free">
+                            Gratis
+                            <small>sin tarjeta</small>
+                        </div>
+                        <p class="text-sm text-muted mb-0">
+                            El documento no cuesta nada. Si quieres, le sumas lo que necesites.
+                        </p>
+                    @elseif (! $document->allowsSelfService())
+                        <span class="eyebrow">Con abogado</span>
+                        <div class="buybox__price">
+                            {{ $document->priceLabel() }}
+                            <small>COP</small>
+                        </div>
+                        <p class="text-sm text-muted mb-0">
+                            Este trámite no se arma solo: lo redacta un abogado sobre tu caso.
+                        </p>
+                    @else
+                        <span class="eyebrow">Precio final</span>
+                        <div class="buybox__price">
+                            @if ($showDiscounts && $quote->formattedCompareAt())
+                                <s class="buybox__compare">{{ $quote->formattedCompareAt() }}</s>
+                            @endif
+                            {{ $quote->formattedTotal() }}
+                            <small>COP</small>
+                        </div>
+                        @if ($showDiscounts && $quote->savingsPercentage() > 0)
+                            <span class="pill pill--action">-{{ $quote->savingsPercentage() }}% esta semana</span>
+                        @endif
+                        <p class="text-sm text-muted mb-0">Pago único. Sin cuotas de manejo ni honorarios ocultos.</p>
+                    @endif
 
                     <ul class="buybox__rows">
-                        <li><span aria-hidden="true">🕒</span> <span>Entrega en <b>{{ $standardQuote->deliveryLabel() }}</b></span></li>
-                        @if ($expressQuote)
-                            <li><span aria-hidden="true">⚡</span> <span>Express en <b>menos de 4 horas</b> por {{ $pricing->formatCop($expressQuote->amount) }}</span></li>
-                        @endif
+                        <li><span aria-hidden="true">🕒</span> <span>Entrega en <b>{{ $quote->deliveryLabel() }}</b></span></li>
                         <li><span aria-hidden="true">⚖️</span> <span>Formato <b>escrito por abogados</b> y al día con la ley</span></li>
                         <li><span aria-hidden="true">🛡️</span> <span>Cubierto por el <b>Certificado de Garantía</b></span></li>
                         <li><span aria-hidden="true">📱</span> <span>Llega a tu <b>correo y WhatsApp</b></span></li>
                     </ul>
 
-                    <a href="{{ route('checkout.configure', [$documentPlan->key->value, $document->slug]) }}"
+                    <a href="{{ route('checkout.configure', $document->slug) }}"
                        class="btn btn--primary btn--block btn--lg">
-                        Pedir este documento
+                        @if (! $document->allowsSelfService())
+                            Contarle mi caso a un abogado
+                        @elseif ($document->isFreeTier())
+                            Generarlo gratis
+                        @else
+                            Pedir este documento
+                        @endif
                     </a>
 
-                    @if ($expressQuote)
-                        <a href="{{ route('checkout.configure', [$documentPlan->key->value, $document->slug]) }}?velocidad=express"
-                           class="btn btn--outline btn--block" style="margin-top: var(--s3);">
-                            Lo necesito en 4 horas
-                        </a>
-                    @endif
+                    @if ($offers->isNotEmpty() && $document->allowsSelfService())
+                        <div class="buybox__divider"></div>
 
-                    <div class="buybox__divider"></div>
-
-                    @if ($advisoryQuote)
-                        <p class="text-xs text-muted">
-                            ¿Prefieres hablar con el abogado antes?
-                            <a href="{{ route('checkout.configure', [$advisoryPlan->key->value, $document->slug]) }}">
-                                <strong>Documento + asesoría de 30 min por {{ $pricing->formatCop($advisoryQuote->amount) }}</strong>
-                            </a>
+                        <p class="text-xs text-muted" style="margin-bottom: var(--s3);">
+                            <strong>Puedes sumarle:</strong>
                         </p>
+                        <ul class="buybox__addons">
+                            @foreach ($offers->take(4) as $offer)
+                                <li>
+                                    <a href="{{ route('checkout.configure', $document->slug) }}?extra={{ $offer->key() }}">
+                                        <span>{{ $offer->addon->emoji }} {{ $offer->addon->short_name ?: $offer->addon->name }}</span>
+                                        <b>{{ $offer->price === 0 ? 'Incluido' : '+'.$offer->formattedPrice() }}</b>
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
                     @endif
 
-                    <p class="text-xs text-muted" style="margin-top: var(--s3);">
+                    <p class="text-xs text-muted" style="margin-top: var(--s4);">
                         ¿Dudas? <a href="{{ $wa->forDocument($document->name) }}" target="_blank" rel="noopener">Pregúntanos por WhatsApp</a>
                     </p>
                 </div>
@@ -172,10 +201,10 @@
         <div class="card card--pad-lg mt-10" style="border-color: var(--brand); background: var(--blue-50);">
             <h3>Pedir {{ $document->short_name ?: $document->name }}</h3>
             <p class="text-sm text-muted">
-                {{ $pricing->formatCop($standardQuote->amount) }} · entrega en {{ $standardQuote->deliveryLabel() }} ·
+                {{ $quote->formattedTotal() }} · entrega en {{ $quote->deliveryLabel() }} ·
                 garantía de corrección o devolución.
             </p>
-            <a href="{{ route('checkout.configure', [$documentPlan->key->value, $document->slug]) }}" class="btn btn--primary">
+            <a href="{{ route('checkout.configure', $document->slug) }}" class="btn btn--primary">
                 Empezar ahora
             </a>
         </div>
@@ -262,7 +291,7 @@
 
         <div class="catalog-grid">
             @foreach ($related as $other)
-                <x-doc-card :document="$other" :price="$pricing->formatCop($pricing->quote($other, $documentPlan)->amount)" />
+                <x-doc-card :document="$other" :price="$other->priceLabel()" />
             @endforeach
         </div>
     </div>
@@ -273,7 +302,7 @@
     title="Deja de posponer el trámite"
     text="Lo preparamos y te lo ponemos en el correo. Precio fijo, plazo comprometido y garantía de corrección por escrito."
     :primary-label="'Pedir ' . \Illuminate\Support\Str::lower($document->short_name ?: $document->name)"
-    :primary-href="route('checkout.configure', [$documentPlan->key->value, $document->slug])"
+    :primary-href="route('checkout.configure', $document->slug)"
     secondary-label="Ver todos los trámites"
     :secondary-href="route('documents.index')" />
 @endsection

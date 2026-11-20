@@ -6,6 +6,7 @@ namespace App\Domain\Lawyers\Models;
 
 use App\Domain\Catalog\Enums\PracticeArea;
 use App\Domain\Content\Models\Post;
+use App\Domain\Lawyers\Enums\LawyerKind;
 use App\Domain\Lawyers\Enums\LawyerStatus;
 use App\Domain\LegalCases\Enums\CaseStatus;
 use App\Domain\LegalCases\Models\CaseOffer;
@@ -28,12 +29,20 @@ class Lawyer extends Model
     {
         return [
             'status' => LawyerStatus::class,
+            'kind' => LawyerKind::class,
             'practice_areas' => 'array',
             'specialties' => 'array',
             'accepts_cases' => 'boolean',
             'is_author' => 'boolean',
             'notify_email' => 'boolean',
             'notify_whatsapp' => 'boolean',
+            'services' => 'array',
+            'languages' => 'array',
+            'offers_virtual' => 'boolean',
+            'offers_free_first_call' => 'boolean',
+            'is_published' => 'boolean',
+            'is_featured' => 'boolean',
+            'public_rating' => 'decimal:1',
             'rating' => 'decimal:1',
         ];
     }
@@ -64,6 +73,40 @@ class Lawyer extends Model
         return $this->hasMany(Post::class, 'author_lawyer_id');
     }
 
+    public function isFirm(): bool
+    {
+        return $this->kind === LawyerKind::Firm;
+    }
+
+    /**
+     * Cómo se le llama en el sitio.
+     *
+     * Decirle «abogado» a una firma de veinte personas suena a error, y
+     * llamarle «firma» a alguien que ejerce solo, a inflado.
+     */
+    public function kindLabel(): string
+    {
+        return ($this->kind ?? LawyerKind::Individual)->publicLabel();
+    }
+
+    /** El usuario del panel con el que este abogado entra a ver lo suyo. */
+    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class);
+    }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(\App\Domain\Subscriptions\Models\LawyerSubscription::class);
+    }
+
+    public function subscription(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(\App\Domain\Subscriptions\Models\LawyerSubscription::class)
+            ->active()
+            ->latestOfMany();
+    }
+
     // -------------------------------------------------- Scopes
 
     public function scopeActive(Builder $query): Builder
@@ -87,6 +130,20 @@ class Lawyer extends Model
         return $query->where('is_author', true);
     }
 
+    /** Perfiles que se muestran en el directorio público. */
+    public function scopePublished(Builder $query): Builder
+    {
+        return $query->active()->where('is_published', true);
+    }
+
+    /** Orden del directorio: destacados primero, luego por prioridad de plan. */
+    public function scopeDirectoryOrder(Builder $query): Builder
+    {
+        return $query->orderByDesc('is_featured')
+            ->orderByDesc('public_rating')
+            ->orderByDesc('cases_resolved');
+    }
+
     // -------------------------------------------------- Atributos derivados
 
     public function activeCasesCount(): int
@@ -108,6 +165,22 @@ class Lawyer extends Model
             ->filter()
             ->values()
             ->all();
+    }
+
+    public function profileUrl(): string
+    {
+        return route('lawyers.show', $this->slug);
+    }
+
+    public function displayName(): string
+    {
+        return $this->firm_name ?: $this->name;
+    }
+
+    /** ¿El plan vigente le concede este beneficio? */
+    public function can(string $feature): bool
+    {
+        return (bool) $this->subscription?->allows($feature);
     }
 
     public function initials(): string

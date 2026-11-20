@@ -14,13 +14,23 @@
                     <span class="pill pill--brand">{{ $lawyerCount }} abogados en la red</span>
                 </div>
 
-                <h1>Tu caso complejo, en manos de <span class="accent">un abogado que lo acepta</span></h1>
+                @if ($fromDocument)
+                    <h1>{{ $fromDocument->name }}: <span class="hl hl--blue">lo hace un abogado</span></h1>
 
-                <p class="hero__lead">
-                    Cuéntanos qué está pasando. Enviamos tu caso a los abogados especializados en esa
-                    área al mismo tiempo y <strong>el primero que lo acepta se queda con él</strong>.
-                    Te escribimos con su nombre, su especialidad y su experiencia.
-                </p>
+                    <p class="hero__lead">
+                        Este trámite no se arma solo. Depende de tus hechos concretos, y un formato
+                        automático produciría algo que no te sirve. Cuéntanos qué pasó y un abogado
+                        especializado lo toma y te cotiza, <strong>sin costo y sin compromiso</strong>.
+                    </p>
+                @else
+                    <h1>Tu caso complejo, en manos de <span class="hl hl--blue">un abogado que lo acepta</span></h1>
+
+                    <p class="hero__lead">
+                        Cuéntanos qué está pasando. Enviamos tu caso a los abogados especializados en esa
+                        área al mismo tiempo y <strong>el primero que lo acepta se queda con él</strong>.
+                        Te escribimos con su nombre, su especialidad y su experiencia.
+                    </p>
+                @endif
 
                 <div class="hero__proof">
                     <div class="hero__proof-item">
@@ -105,7 +115,7 @@
             <div class="field">
                 <label for="title">Resume tu caso en una frase <span class="req" aria-hidden="true">*</span></label>
                 <input type="text" id="title" name="title" class="input" required minlength="10" maxlength="160"
-                       value="{{ old('title') }}"
+                       value="{{ old('title', $fromDocument?->name) }}"
                        placeholder="Ejemplo: sucesión de mi padre con cuatro herederos y un inmueble en disputa"
                        aria-invalid="{{ $errors->has('title') ? 'true' : 'false' }}">
                 <x-field-error name="title" />

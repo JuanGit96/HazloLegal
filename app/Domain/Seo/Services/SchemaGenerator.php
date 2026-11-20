@@ -120,10 +120,10 @@ final class SchemaGenerator
             'audience' => ['@type' => 'Audience', 'geographicArea' => ['@type' => 'Country', 'name' => 'Colombia']],
         ];
 
-        if ($quote && $quote->amount !== null) {
+        if ($quote) {
             $schema['offers'] = [
                 '@type' => 'Offer',
-                'price' => (string) $quote->amount,
+                'price' => (string) $quote->total,
                 'priceCurrency' => 'COP',
                 'availability' => 'https://schema.org/InStock',
                 'url' => $document->url(),

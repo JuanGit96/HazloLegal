@@ -13,6 +13,7 @@ enum CaseStatus: string implements HasColor, HasIcon, HasLabel
 {
     case New = 'new';
     case Dispatched = 'dispatched';
+    case Shortlisted = 'shortlisted';
     case Assigned = 'assigned';
     case Closed = 'closed';
     case Expired = 'expired';
@@ -22,6 +23,7 @@ enum CaseStatus: string implements HasColor, HasIcon, HasLabel
     {
         return match ($this) {
             self::New => 'Recibido',
+            self::Shortlisted => 'Esperando que el cliente elija',
             self::Dispatched => 'Enviado a abogados',
             self::Assigned => 'Abogado asignado',
             self::Closed => 'Cerrado',
@@ -35,6 +37,7 @@ enum CaseStatus: string implements HasColor, HasIcon, HasLabel
         return match ($this) {
             self::New => 'gray',
             self::Dispatched => 'warning',
+            self::Shortlisted => 'info',
             self::Assigned => 'success',
             self::Closed => 'info',
             self::Expired => 'danger',
@@ -47,6 +50,7 @@ enum CaseStatus: string implements HasColor, HasIcon, HasLabel
         return match ($this) {
             self::New => Heroicon::OutlinedInbox,
             self::Dispatched => Heroicon::OutlinedMegaphone,
+            self::Shortlisted => Heroicon::OutlinedUserGroup,
             self::Assigned => Heroicon::OutlinedCheckBadge,
             self::Closed => Heroicon::OutlinedTrophy,
             self::Expired => Heroicon::OutlinedClock,
@@ -56,6 +60,6 @@ enum CaseStatus: string implements HasColor, HasIcon, HasLabel
 
     public function isOpen(): bool
     {
-        return in_array($this, [self::New, self::Dispatched], true);
+        return in_array($this, [self::New, self::Dispatched, self::Shortlisted], true);
     }
 }

@@ -46,10 +46,20 @@ class LegalDocumentsTable
                     ->badge()
                     ->sortable(),
 
-                TextColumn::make('price_modifier')
-                    ->label('Ajuste')
+                TextColumn::make('base_price')
+                    ->label('Precio base')
                     ->money('COP')
-                    ->placeholder('Sin ajuste')
+                    ->placeholder('Gratis')
+                    ->sortable()
+                    ->description(fn (LegalDocument $record) => $record->self_service_enabled
+                        ? null
+                        : 'solo con abogado'),
+
+                TextColumn::make('addons_count')
+                    ->label('Adicionales')
+                    ->counts('addons')
+                    ->badge()
+                    ->color('gray')
                     ->toggleable(),
 
                 TextColumn::make('orders_count')
@@ -68,6 +78,23 @@ class LegalDocumentsTable
                 IconColumn::make('supports_signature')
                     ->label('Firma')
                     ->boolean()
+                    ->toggleable(),
+
+                IconColumn::make('is_free')
+                    ->label('Gratis')
+                    ->boolean()
+                    ->sortable(),
+
+                // Un trámite de pago sin plantilla no puede entregar nada.
+                IconColumn::make('template_body')
+                    ->label('Plantilla')
+                    ->boolean()
+                    ->state(fn (LegalDocument $record) => filled($record->template_body))
+                    ->trueColor('success')
+                    ->falseColor('warning')
+                    ->tooltip(fn (LegalDocument $record) => filled($record->template_body)
+                        ? null
+                        : 'Sin plantilla propia: se usa el respaldo genérico.')
                     ->toggleable(),
 
                 IconColumn::make('is_featured')

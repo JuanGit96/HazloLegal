@@ -28,6 +28,7 @@ class SitemapController
             'Disallow: /casos/oferta/',
             'Disallow: /caso-complejo/recibido/',
             'Disallow: /admin',
+            'Disallow: /portal',
             '',
             'Sitemap: '.route('sitemap'),
         ];

@@ -11,7 +11,7 @@ class LawyerPortal extends RoadmapPage
 {
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBriefcase;
 
-    protected static ?string $navigationLabel = 'Portal del abogado';
+    protected static ?string $navigationLabel = 'Portal del abogado (fase 2)';
 
     protected static ?int $navigationSort = 7;
 
@@ -19,12 +19,12 @@ class LawyerPortal extends RoadmapPage
 
     public function summary(): string
     {
-        return 'Un área propia donde cada abogado de la red ve sus casos, sube documentos, registra horas y consulta lo que se le liquida.';
+        return 'Lo que le falta al portal que ya existe en /portal: subir el documento terminado, registrar horas y consultar la liquidación de honorarios.';
     }
 
     public function why(): string
     {
-        return 'Hoy el abogado solo interactúa por correo. Cuando la red pase de seis a treinta abogados, coordinar por correo deja de funcionar y se vuelve el cuello de botella del negocio.';
+        return 'El portal ya resuelve lo que sostiene la suscripción: el abogado ve sus casos, sus contactos y sus resultados. Lo que falta es la parte operativa del trabajo en sí, que hoy se coordina por correo y deja de escalar cuando la red pase de seis a treinta abogados.';
     }
 
     public function priority(): string
@@ -40,28 +40,31 @@ class LawyerPortal extends RoadmapPage
     public function scope(): array
     {
         return [
-            'Panel propio (segundo panel de Filament) con acceso solo a lo suyo.',
             'Bandeja de **casos invitados**, con aceptar y rechazar desde la interfaz además del correo.',
-            'Mis casos activos, con estado y fechas comprometidas.',
-            'Subida del documento terminado y envío a auditoría.',
+            'Subida del documento terminado y envío a revisión.',
             'Registro de horas y actuaciones por caso.',
             '**Liquidación de honorarios**: qué se le debe, qué ya se le pagó.',
             'Configuración de disponibilidad: pausar invitaciones durante vacaciones.',
-            'Historial de desempeño: tasa de aceptación, tiempo de respuesta, calificación del cliente.',
+            'Marcar un contacto como contactado o descartado, para que el siguiente abogado no repita la llamada.',
+            'Pago de la suscripción desde el propio portal, sin escribirle al equipo.',
         ];
     }
 
     public function alreadyInPlace(): array
     {
         return [
-            'CRUD completo de abogados con áreas, cupo y estado.',
-            'Modelo de invitaciones (`case_offers`) con token, estado y tiempos de respuesta.',
-            'Aceptación y rechazo por enlace de correo, ya funcionando.',
+            '**Portal propio en `/portal`**, panel aparte del de administración.',
+            'Mis casos: solo los que ganó, con los datos del cliente que ningún otro abogado ve.',
+            'Contactos de sus áreas que autorizaron ser contactados, con registro de cada apertura.',
+            'Perfil público editable por él mismo, sin tocar la tarjeta profesional.',
+            'Su suscripción con lo que incluye y lo que no.',
+            'Resumen con visitas al perfil, clics de contacto y casos tomados.',
+            'Aceptación y rechazo de casos por enlace de correo.',
         ];
     }
 
     public function dependencies(): array
     {
-        return ['Módulo de equipo y permisos, para separar los roles de admin y abogado.'];
+        return ['Pasarela de pagos, para cobrar la suscripción sin intervención manual.'];
     }
 }

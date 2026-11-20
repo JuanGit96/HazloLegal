@@ -1,0 +1,147 @@
+#!/usr/bin/env bash
+
+## Description: Publica el sitio y la bandeja de correo por ngrok y muestra los accesos
+## Usage: compartir [--stop]
+## Example: "ddev compartir" | "ddev compartir --stop"
+
+## ddev-silent-no-warn
+
+set -euo pipefail
+
+PROJECT="${DDEV_PROJECT:-hazlolegal}"
+CONTAINER="ddev-${PROJECT}-web"
+API="http://127.0.0.1:4040/api/tunnels"
+LOG="/tmp/ngrok-${PROJECT}.log"
+
+rojo()  { printf '\033[31m%s\033[0m\n' "$1"; }
+verde() { printf '\033[32m%s\033[0m\n' "$1"; }
+gris()  { printf '\033[90m%s\033[0m\n' "$1"; }
+
+# -------------------------------------------------- parar
+if [ "${1:-}" = "--stop" ]; then
+    pkill -f "ngrok http" 2>/dev/null && verde "Túneles cerrados." || gris "No había túneles abiertos."
+    exit 0
+fi
+
+# -------------------------------------------------- requisitos
+command -v ngrok >/dev/null || { rojo "ngrok no está instalado. Instálalo con: brew install ngrok"; exit 1; }
+
+if ! ngrok config check >/dev/null 2>&1; then
+    rojo "ngrok no tiene authtoken configurado."
+    gris "Consigue uno en https://dashboard.ngrok.com y ejecuta:"
+    gris "  ngrok config add-authtoken <TU_TOKEN>"
+    exit 1
+fi
+
+# -------------------------------------------------- el proyecto tiene que estar arriba
+if ! docker inspect -f '{{.State.Running}}' "$CONTAINER" 2>/dev/null | grep -q true; then
+    gris "El proyecto no está corriendo. Levantándolo…"
+    ddev start -y >/dev/null
+fi
+
+# Los puertos que Docker publica cambian en cada arranque: hay que leerlos.
+WEB_PORT="$(docker port "$CONTAINER" 80/tcp 2>/dev/null | head -1 | cut -d: -f2)"
+MAIL_PORT="$(docker port "$CONTAINER" 8025/tcp 2>/dev/null | head -1 | cut -d: -f2)"
+
+[ -n "$WEB_PORT" ] || { rojo "No pude encontrar el puerto del sitio en $CONTAINER."; exit 1; }
+
+# -------------------------------------------------- contraseña estable de la bandeja
+# Se guarda en .env para que no cambie entre reinicios y no haya que volver a
+# avisarle a quien ya tiene el enlace. .env no va al repositorio.
+ENV_FILE="${DDEV_APPROOT:-$PWD}/.env"
+PASS="$(grep -E '^HL_SHARE_PASSWORD=' "$ENV_FILE" 2>/dev/null | cut -d= -f2- | tr -d '"' || true)"
+
+if [ -z "$PASS" ]; then
+    PASS="$(LC_ALL=C tr -dc 'a-z0-9' </dev/urandom | head -c 10)"
+    printf '\n# Contraseña de la bandeja de correo compartida por ngrok (ddev compartir)\nHL_SHARE_PASSWORD=%s\n' "$PASS" >> "$ENV_FILE"
+    gris "Generé una contraseña para la bandeja y la guardé en .env"
+fi
+
+ADMIN_USER="$(grep -E '^HL_DEMO_ADMIN_EMAIL=' "$ENV_FILE" 2>/dev/null | cut -d= -f2- | tr -d '"' || true)"
+ADMIN_PASS="$(grep -E '^HL_DEMO_ADMIN_PASSWORD=' "$ENV_FILE" 2>/dev/null | cut -d= -f2- | tr -d '"' || true)"
+[ -n "$ADMIN_USER" ] || ADMIN_USER="admin@hazlolegal.co"
+[ -n "$ADMIN_PASS" ] || ADMIN_PASS="(la que configuraste)"
+
+# -------------------------------------------------- túneles
+pkill -f "ngrok http" 2>/dev/null || true
+sleep 1
+
+nohup ngrok http "$WEB_PORT" --host-header=rewrite --log=stdout >"$LOG" 2>&1 &
+
+# Devuelve la URL pública del túnel pedido, o vacío si aún no existe.
+# Nunca falla: mientras ngrok arranca, curl da error y con `set -e` eso
+# tumbaría el script en mitad de la espera.
+url_de() {
+    local salida=""
+    salida="$(curl -s --max-time 2 "$API" 2>/dev/null | python3 -c "
+import json, sys
+buscado = sys.argv[1]
+try:
+    tuneles = json.load(sys.stdin).get('tunnels', [])
+except Exception:
+    sys.exit()
+for t in tuneles:
+    es_mailpit = t.get('name') == 'mailpit'
+    if (buscado == 'mailpit') == es_mailpit:
+        print(t['public_url'])
+        break
+" "$1" 2>/dev/null)" || salida=""
+    printf '%s' "$salida"
+    return 0
+}
+
+# Esperar al TÚNEL, no solo a que responda la API: el agente abre su API
+# local antes de haber registrado el túnel, y preguntar antes devuelve vacío.
+WEB_URL=""
+for _ in $(seq 1 40); do
+    WEB_URL="$(url_de web)"
+    [ -n "$WEB_URL" ] && break
+    sleep 0.5
+done
+
+[ -n "$WEB_URL" ] || { rojo "ngrok no llegó a abrir el túnel. Mira el log: $LOG"; exit 1; }
+
+# El segundo túnel se añade por la API del agente: el plan gratuito permite
+# un solo proceso, pero sí varios túneles dentro de él.
+MAIL_URL=""
+if [ -n "$MAIL_PORT" ]; then
+    curl -s -X POST "$API" -H 'Content-Type: application/json' \
+        -d "{\"name\":\"mailpit\",\"proto\":\"http\",\"addr\":\"${MAIL_PORT}\",\"host_header\":\"rewrite\",\"basic_auth\":[\"socio:${PASS}\"]}" \
+        >/dev/null 2>&1 || true
+
+    for _ in $(seq 1 20); do
+        MAIL_URL="$(url_de mailpit)"
+        [ -n "$MAIL_URL" ] && break
+        sleep 0.5
+    done
+
+    [ -n "$MAIL_URL" ] || gris "No pude publicar la bandeja de correo; el sitio sí quedó arriba."
+fi
+
+# -------------------------------------------------- salida para copiar y pegar
+# Sin columnas alineadas a propósito: printf rellena contando bytes y los
+# acentos ocupan dos, así que cualquier tabulación saldría torcida.
+echo
+verde "Listo. Accesos para compartir:"
+echo
+echo "  Sitio"
+echo "  ${WEB_URL}"
+echo
+echo "  Panel de administración"
+echo "  ${WEB_URL}/admin"
+echo "    usuario: ${ADMIN_USER}"
+echo "    clave:   ${ADMIN_PASS}"
+
+if [ -n "$MAIL_URL" ]; then
+    echo
+    echo "  Bandeja de correo"
+    echo "  ${MAIL_URL}"
+    echo "    usuario: socio"
+    echo "    clave:   ${PASS}"
+fi
+
+echo
+gris "  Las URLs cambian en cada arranque (plan gratuito de ngrok)."
+gris "  Cerrar:  ddev compartir --stop"
+gris "  Tráfico: http://127.0.0.1:4040"
+echo

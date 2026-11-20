@@ -36,6 +36,23 @@
         </header>
 
         {{-- E-E-A-T: la autoría verificable es la señal más fuerte en contenido legal. --}}
+        @unless ($post->author)
+            {{-- Firmado por la casa. Se dice igual quién responde por el
+                 texto: un artículo sin autor visible no inspira confianza, y
+                 en contenido legal la confianza es la conversión. --}}
+            <div class="author-box" style="margin-bottom: var(--s10);">
+                <div class="author-box__avatar" aria-hidden="true">HL</div>
+                <div>
+                    <h3>Escrito por el equipo de {{ config('hazlolegal.brand.name') }}</h3>
+                    <p>Equipo jurídico y editorial</p>
+                    <p class="author-box__cred">
+                        Nuestros abogados escriben y mantienen los formatos del catálogo.
+                        Este artículo es informativo y no sustituye una asesoría particular.
+                    </p>
+                </div>
+            </div>
+        @endunless
+
         @if ($post->author)
             <div class="author-box" style="margin-bottom: var(--s10);">
                 <div class="author-box__avatar" aria-hidden="true">{{ $post->author->initials() }}</div>
