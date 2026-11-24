@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Domain\Catalog\Models\LegalDocument;
+use App\Domain\Content\Models\Post;
 use Database\Seeders\BlogSeeder;
 use Database\Seeders\FaqSeeder;
 use Database\Seeders\LawyerSeeder;
@@ -232,5 +233,51 @@ class PublicSeoTest extends TestCase
             ->assertOk()
             ->assertSee('name="accepts_marketing"', escape: false)
             ->assertSee('name="shareable_with_lawyers"', escape: false);
+    }
+
+    public function test_un_articulo_dice_que_el_tramite_es_gratis_en_vez_de_esconderlo(): void
+    {
+        // Quien acaba de leer la guía está decidiendo si vale el clic.
+        // «Ver precio y plazo» le hace pensar que cuesta; si es gratis, se
+        // dice ahí mismo.
+        $post = Post::query()
+            ->with('relatedDocument')
+            ->get()
+            ->first(fn (Post $p) => $p->relatedDocument?->isFreeTier());
+
+        $this->assertNotNull($post, 'Debería haber al menos un artículo que lleve a un trámite gratuito.');
+
+        $this->get(route('blog.show', $post->slug))
+            ->assertOk()
+            ->assertSeeText('¡Es gratis! Hacerlo ahora')
+            ->assertDontSeeText('Ver precio y plazo')
+            // Un trámite que se arma solo no lo escribe un abogado para cada
+            // cliente, así que tampoco se insinúa.
+            ->assertDontSeeText('¿Prefieres que lo haga un abogado?');
+    }
+
+    public function test_un_articulo_de_un_tramite_pago_sigue_mostrando_precio_y_plazo(): void
+    {
+        $post = Post::query()
+            ->with('relatedDocument')
+            ->get()
+            ->first(fn (Post $p) => $p->relatedDocument !== null && ! $p->relatedDocument->isFreeTier());
+
+        $this->assertNotNull($post);
+
+        $this->get(route('blog.show', $post->slug))
+            ->assertOk()
+            ->assertSeeText('Ver precio y plazo');
+    }
+
+    public function test_el_caso_complejo_promete_que_elige_el_cliente(): void
+    {
+        // El reparto cambió: los abogados se postulan y elige el cliente.
+        // Prometer una carrera que ya no existe es prometer otro servicio.
+        $this->get(route('cases.create'))
+            ->assertOk()
+            ->assertSeeText('eliges tú')
+            ->assertDontSeeText('el primero que lo acepta se queda con él')
+            ->assertDontSeeText('El primero que acepta lo toma');
     }
 }

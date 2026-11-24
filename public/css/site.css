@@ -795,6 +795,11 @@ hr { border: 0; border-top: 1px solid var(--border); margin: var(--s10) 0; }
 .prose th, .prose td { padding: var(--s3) var(--s4); border: 1px solid var(--border); text-align: left; }
 .prose th { background: var(--slate-50); font-weight: 700; }
 .prose code { padding: .15em .4em; background: var(--slate-100); border-radius: var(--r-sm); font-family: var(--font-mono); font-size: .9em; }
+
+/* Una tabla de cuatro columnas no cabe en un telefono: se desplaza ella en
+   vez de romper el ancho de la pagina. */
+.table-scroll { overflow-x: auto; margin: var(--s6) 0; -webkit-overflow-scrolling: touch; }
+.table-scroll table { min-width: 34rem; margin: 0; }
 .prose figure { margin: var(--s8) 0; }
 .prose figcaption { margin-top: var(--s2); font-size: var(--t-xs); color: var(--text-subtle); text-align: center; }
 
@@ -1649,4 +1654,101 @@ a.lawyer-card { text-decoration: none; color: inherit; }
 @media (max-width: 640px) {
     .pick__box { padding: var(--s5); }
     .pick__avatar { width: 44px; height: 44px; font-size: var(--t-sm); }
+}
+
+/* -------------------------------------------------- Aviso de cookies
+   Va abajo y no tapa la pagina: un modal a pantalla completa en la primera
+   visita es la forma mas rapida de que alguien se vaya, y ademas presiona a
+   aceptar, que es justo lo que invalida la autorizacion. Los dos botones
+   pesan lo mismo a proposito. */
+.cookie-bar {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 950;
+    background: var(--bg-raised);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -8px 30px rgb(15 23 42 / .10);
+    padding: var(--s5) 0;
+    padding-bottom: max(var(--s5), env(safe-area-inset-bottom));
+}
+
+.cookie-bar__inner {
+    width: 100%;
+    max-width: 1180px;
+    margin-inline: auto;
+    padding-inline: var(--s5);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s5) var(--s8);
+}
+
+.cookie-bar__text { flex: 1 1 22rem; min-width: 0; }
+
+.cookie-bar__title {
+    margin: 0 0 var(--s2);
+    font-family: var(--font-display);
+    font-size: var(--t-base);
+    font-weight: 800;
+    letter-spacing: -.01em;
+    color: var(--ink);
+}
+
+.cookie-bar__text p {
+    margin: 0;
+    font-size: var(--t-sm);
+    line-height: 1.6;
+    color: var(--text-muted);
+}
+
+.cookie-bar__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s3) var(--s4);
+}
+
+.cookie-bar__actions form { margin: 0; }
+
+.cookie-bar__link {
+    font-size: var(--t-xs);
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+@media (max-width: 720px) {
+    .cookie-bar__actions { width: 100%; }
+    .cookie-bar__actions form { flex: 1 1 10rem; }
+    .cookie-bar__actions .btn { width: 100%; }
+    .cookie-bar__link { flex-basis: 100%; }
+}
+
+/* El boton flotante de WhatsApp vive en la misma esquina. Subirlo con una
+   cifra fija no sirve: el aviso crece al envolver los botones en pantallas
+   estrechas y volveria a taparlo. Mientras el aviso este puesto se esconde,
+   que ademas deja una sola decision en pantalla; vuelve en cuanto el
+   visitante contesta, que es un clic. */
+body:has(#aviso-cookies) .wa-float { display: none; }
+
+/* -------------------------------------------------- Caja de promocion
+   La condicion de entrada a la suscripcion. Va arriba del precio y con la
+   fecha de lo que viene despues: un «gratis» sin fecha de fin es la receta
+   de la queja, y ademas es publicidad enganosa. */
+.promo-box {
+    margin-top: var(--s5);
+    padding: var(--s5);
+    background: var(--orange-50);
+    border: 1px solid var(--orange-100);
+    border-radius: var(--r-md);
+}
+
+.promo-box__headline {
+    display: block;
+    margin-top: var(--s3);
+    font-family: var(--font-display);
+    font-size: var(--t-lg);
+    font-weight: 800;
+    letter-spacing: -.015em;
+    color: var(--ink);
 }

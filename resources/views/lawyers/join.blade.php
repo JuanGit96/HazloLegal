@@ -76,7 +76,8 @@
                 <span class="tile__arrow" aria-hidden="true">↗</span>
                 <div class="tile__icon" aria-hidden="true">🔔</div>
                 <h3>Casos de tu área, al correo</h3>
-                <p>Cuando entra un caso complejo de tu especialidad te avisamos. El primero que lo acepta se lo queda.</p>
+                <p>Cuando entra un caso complejo de tu especialidad te avisamos. Te postulas con una nota
+                   corta y el cliente elige entre los interesados.</p>
             </div>
 
             <div class="tile">
@@ -106,10 +107,43 @@
 {{-- ============================ PLANES ============================ --}}
 <section class="section section--sunken" id="planes">
     <div class="container">
+        @php
+            // La oferta del plan destacado manda en el titular; si no hay
+            // destacado, la del primero. Pintar aquí una condición que
+            // después no se cumple es lo que convierte una promoción en una
+            // queja.
+            $principal = $offers[$plans->firstWhere('is_highlighted')?->id ?? $plans->first()?->id] ?? null;
+        @endphp
+
         <div class="section-head">
-            <span class="eyebrow">Planes</span>
-            <h2>Dos meses gratis para probarlo</h2>
-            <p>Sin tarjeta para empezar. Si no te trae clientes, no sigues. Así de simple.</p>
+            <span class="eyebrow">{{ $principal?->promo?->isInvitation() ? 'Tu invitación' : 'Planes' }}</span>
+
+            @if ($principal?->freeMonths > 0)
+                <h2>
+                    {{ $principal->freeMonths }} {{ $principal->freeMonths === 1 ? 'mes' : 'meses' }}
+                    <span class="hl hl--orange">sin costo</span>
+                </h2>
+                <p>
+                    Registras tu tarjeta al activar el plan y no se cobra nada hasta el
+                    {{ $principal->firstChargeAt?->translatedFormat('j \d\e F \d\e Y') }}, cuando empieza el
+                    precio normal de {{ $principal->formattedRecurringPrice() }} al mes. Cancelas antes y no
+                    pagas nada.
+                </p>
+            @elseif ($principal?->discountPercentage > 0)
+                <h2>
+                    Precio de lanzamiento:
+                    <span class="hl hl--orange">{{ $principal->discountPercentage }} % menos</span>
+                </h2>
+                <p>
+                    Los primeros {{ $principal->discountMonths }} meses cuestan
+                    {{ $principal->formattedPromoPrice() }} al mes en vez de
+                    {{ $principal->formattedListPrice() }}. Después rige el precio de lista, te avisamos
+                    antes, y cancelas cuando quieras sin permanencia.
+                </p>
+            @else
+                <h2>Planes claros, sin permanencia</h2>
+                <p>Si no te trae clientes, no sigues. Así de simple.</p>
+            @endif
         </div>
 
         <div class="pricing-grid reveal">
@@ -122,16 +156,29 @@
                         <p class="plan__tagline">{{ $plan->tagline }}</p>
                     </div>
 
+                    @php $oferta = $offers[$plan->id] ?? null; @endphp
+
                     <div class="plan__price">
-                        {{ $cop($plan->price_monthly) }}
+                        @if ($oferta?->discountPercentage > 0)
+                            <s class="text-muted" style="font-size: var(--t-base); font-weight: 500;">{{ $cop($plan->price_monthly) }}</s>
+                            {{ $oferta->formattedPromoPrice() }}
+                        @else
+                            {{ $cop($plan->price_monthly) }}
+                        @endif
                         <small>/ mes</small>
                     </div>
 
                     <p class="plan__anchor">
-                        @if ($plan->free_trial_months > 0)
+                        @if ($oferta?->freeMonths > 0)
                             <strong style="color: var(--success);">
-                                {{ $plan->free_trial_months }} {{ \Illuminate\Support\Str::plural('mes', $plan->free_trial_months) }} gratis
-                            </strong> ·
+                                {{ $oferta->freeMonths }} {{ $oferta->freeMonths === 1 ? 'mes' : 'meses' }} sin costo
+                            </strong>,
+                            después {{ $oferta->formattedRecurringPrice() }} al mes ·
+                        @elseif ($oferta?->discountPercentage > 0)
+                            <strong style="color: var(--success);">
+                                {{ $oferta->discountMonths }} {{ $oferta->discountMonths === 1 ? 'mes' : 'meses' }}
+                                a este precio
+                            </strong>, después {{ $oferta->formattedListPrice() }} ·
                         @endif
                         @if ($plan->price_annual)
                             o {{ $cop($plan->price_annual) }} al año
@@ -298,13 +345,25 @@
                 <label for="lawyer_plan_id">Plan que te interesa <span class="req">*</span></label>
                 <select id="lawyer_plan_id" name="lawyer_plan_id" class="select" required>
                     @foreach ($plans as $plan)
+                        @php $oferta = $offers[$plan->id] ?? null; @endphp
                         <option value="{{ $plan->id }}" @selected((int) old('lawyer_plan_id') === $plan->id)>
                             {{ $plan->name }} — {{ $cop($plan->price_monthly) }}/mes
-                            @if ($plan->free_trial_months) ({{ $plan->free_trial_months }} meses gratis) @endif
+                            @if ($oferta?->freeMonths > 0)
+                                ({{ $oferta->freeMonths }} meses sin costo)
+                            @elseif ($oferta?->discountPercentage > 0)
+                                ({{ $oferta->formattedPromoPrice() }}/mes los primeros {{ $oferta->discountMonths }})
+                            @endif
                         </option>
                     @endforeach
                 </select>
             </div>
+
+            @if ($invitationCode)
+                {{-- El código viaja con el formulario: entre registrarse y
+                     pagar pasa la verificación de la tarjeta profesional, que
+                     es a mano, y la condición tiene que sobrevivir a eso. --}}
+                <input type="hidden" name="invitation_code" value="{{ $invitationCode }}">
+            @endif
 
             <label class="checkbox">
                 <input type="checkbox" name="accepts_terms" value="1" required @checked(old('accepts_terms'))>

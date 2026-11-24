@@ -48,7 +48,7 @@ class MySubscription extends Page
 
         return collect([
             ['includes_profile_page', 'Perfil público en el directorio', 'Tu ficha con especialidad, ciudad y biografía, indexable en Google.'],
-            ['includes_case_alerts', 'Avisos de casos nuevos', 'Te escribimos cuando llega un caso de tu área. El primero que acepta se lo queda.'],
+            ['includes_case_alerts', 'Avisos de casos nuevos', 'Te escribimos cuando llega un caso de tu área. Te postulas y el cliente elige.'],
             ['includes_pdf_placement', 'Tu nombre en los instructivos', 'El PDF que el cliente imprime y lleva a la ventanilla lleva tus datos.'],
             ['includes_lead_data', 'Acceso a contactos', 'Personas de tus áreas que autorizaron que un abogado las contacte.'],
             ['includes_featured', 'Destacado en el directorio', 'Apareces antes que los demás en tu área.'],

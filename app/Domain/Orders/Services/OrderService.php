@@ -178,6 +178,14 @@ final class OrderService
             return $order;
         }
 
+        // La incompatibilidad se comprueba aquí y no solo en la vista: el
+        // enlace de «pasar a entrega inmediata» se puede reenviar, y sumar
+        // express a un pedido que escribe un abogado sería cobrar por una
+        // prisa que no vamos a cumplir.
+        if ($this->addonClashes($order, $addon)) {
+            return $order;
+        }
+
         $price = $addon->priceFor($order->document);
 
         DB::transaction(function () use ($order, $addon, $price) {
@@ -198,6 +206,37 @@ final class OrderService
         });
 
         return $order->refresh()->load(['document', 'addons']);
+    }
+
+    /** ¿Se le puede sumar este adicional al pedido tal como está hoy? */
+    public function canAddAddon(Order $order, string $key): bool
+    {
+        $order->loadMissing(['document.availableAddons', 'addons']);
+
+        if ($order->hasAddon($key)) {
+            return false;
+        }
+
+        $addon = $order->document->availableAddons->firstWhere('key', $key);
+
+        return $addon instanceof ServiceAddon && ! $this->addonClashes($order, $addon);
+    }
+
+    /**
+     * Choca con una familia que el pedido ya lleva.
+     *
+     * Las líneas del pedido guardan la clave, no la familia, así que se
+     * resuelven contra el catálogo del trámite —que ya viene cargado— en vez
+     * de pedir la relación línea a línea.
+     */
+    private function addonClashes(Order $order, ServiceAddon $addon): bool
+    {
+        $puestas = $order->addons
+            ->map(fn ($linea) => $order->document->availableAddons->firstWhere('key', $linea->key))
+            ->filter()
+            ->values();
+
+        return in_array($addon->kind->value, PricingService::blockedKinds($puestas), true);
     }
 
     /**

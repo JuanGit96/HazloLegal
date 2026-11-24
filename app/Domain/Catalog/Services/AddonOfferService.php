@@ -48,14 +48,20 @@ final class AddonOfferService
                 fn (ServiceAddon $a, ServiceAddon $b) => $a->priceFor($document) <=> $b->priceFor($document),
             ])
             // Lo que se pinta como marcado es lo que de verdad se va a
-            // cobrar: si pidió abogado y express, el express no va.
-            ->pipe(function (Collection $addons) use ($document, $selected) {
-                $cobrables = \App\Domain\Catalog\Services\PricingService::withoutIncompatible(
-                    $addons->filter(fn (ServiceAddon $a) => $selected->contains($a->key))->values()
-                )->pluck('key');
+            // cobrar: si pidió abogado y express, el express no va. Y lo que
+            // choca con eso queda marcado como bloqueado, para que no se
+            // vuelva a ofrecer más adelante.
+            ->pipe(function (Collection $addons) use ($selected) {
+                $elegidos = $addons->filter(fn (ServiceAddon $a) => $selected->contains($a->key))->values();
+                $cobradas = PricingService::withoutIncompatible($elegidos);
+                $cobrables = $cobradas->pluck('key');
+                $bloqueadas = PricingService::blockedKinds($cobradas);
 
-                return $addons->map(fn (ServiceAddon $addon) => tap($addon, function (ServiceAddon $a) use ($cobrables) {
-                    $a->setAttribute('hl_selected', $cobrables->contains($a->key));
+                return $addons->map(fn (ServiceAddon $addon) => tap($addon, function (ServiceAddon $a) use ($cobrables, $bloqueadas) {
+                    $marcado = $cobrables->contains($a->key);
+
+                    $a->setAttribute('hl_selected', $marcado);
+                    $a->setAttribute('hl_blocked', ! $marcado && in_array($a->kind->value, $bloqueadas, true));
                 }));
             })
             ->map(fn (ServiceAddon $addon) => new AddonOffer(
@@ -66,6 +72,7 @@ final class AddonOfferService
                 isPreselected: (bool) $addon->pivot?->is_preselected,
                 isSelected: (bool) $addon->getAttribute('hl_selected'),
                 reason: $this->reasonFor($addon, $document),
+                isBlocked: (bool) $addon->getAttribute('hl_blocked'),
             ))
             ->values();
     }
@@ -102,7 +109,7 @@ final class AddonOfferService
     public function nextBestOffer(LegalDocument $document, iterable $selectedKeys = []): ?AddonOffer
     {
         return $this->offersFor($document, $selectedKeys)
-            ->reject(fn (AddonOffer $offer) => $offer->isSelected)
+            ->reject(fn (AddonOffer $offer) => $offer->isSelected || $offer->isBlocked)
             ->sortByDesc(fn (AddonOffer $offer) => $offer->isRecommended ? 1 : 0)
             ->first();
     }
@@ -125,7 +132,7 @@ final class AddonOfferService
     public function missingOut(LegalDocument $document, iterable $selectedKeys = []): Collection
     {
         return $this->offersFor($document, $selectedKeys)
-            ->reject(fn (AddonOffer $offer) => $offer->isSelected)
+            ->reject(fn (AddonOffer $offer) => $offer->isSelected || $offer->isBlocked)
             ->filter(fn (AddonOffer $offer) => $offer->isRecommended)
             ->values();
     }

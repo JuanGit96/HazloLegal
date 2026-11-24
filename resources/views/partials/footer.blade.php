@@ -61,6 +61,7 @@
                     <a href="{{ route('pages.contact') }}">Contacto</a>
                     <a href="{{ route('pages.terms') }}">Términos y condiciones</a>
                     <a href="{{ route('pages.privacy') }}">Tratamiento de datos</a>
+                    <a href="{{ route('pages.cookies') }}">Política de cookies</a>
                     <a href="{{ route('pages.signature') }}">Validez de la firma electrónica</a>
                     <a href="{{ route('pages.data-deletion') }}">Eliminar mis datos</a>
                 </div>
@@ -92,6 +93,9 @@
             <div class="site-footer__legal">
                 <a href="{{ route('pages.terms') }}">Términos</a>
                 <a href="{{ route('pages.privacy') }}">Privacidad</a>
+                {{-- El enlace a las preferencias va en el pie de cada página:
+                     revocar tiene que ser tan fácil como fue autorizar. --}}
+                <a href="{{ route('pages.cookies') }}#preferencias">Cookies</a>
                 <a href="{{ route('sitemap') }}">Sitemap</a>
             </div>
         </div>

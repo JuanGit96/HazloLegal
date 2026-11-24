@@ -73,27 +73,66 @@ final class PricingService
     }
 
     /**
-     * Quita las combinaciones que no se pueden cumplir.
+     * Parejas de familias que no pueden convivir en un mismo pedido.
      *
      * Si un abogado escribe el documento sobre los hechos del cliente, no
      * puede estar listo «ahora mismo»: cobrar por entrega inmediata encima
-     * sería cobrar por algo que no va a pasar. Manda el abogado, porque es
-     * lo que el cliente valora más y lo que cuesta más.
+     * sería cobrar por algo que no va a pasar.
+     *
+     * El primero de cada pareja es el que manda cuando llegan los dos, y es
+     * el abogado, porque es lo que el cliente valora más y lo que cuesta
+     * más.
+     *
+     * @var list<array{string, string}>
+     */
+    private const INCOMPATIBLES = [
+        ['review', 'delivery'],
+    ];
+
+    /**
+     * Quita las combinaciones que no se pueden cumplir.
      *
      * @param  Collection<int, ServiceAddon>  $selected
      * @return Collection<int, ServiceAddon>
      */
     public static function withoutIncompatible(Collection $selected): Collection
     {
-        $conAbogado = $selected->contains(fn (ServiceAddon $a) => $a->kind->value === 'review');
-
-        if (! $conAbogado) {
-            return $selected;
+        foreach (self::INCOMPATIBLES as [$manda, $cede]) {
+            if ($selected->contains(fn (ServiceAddon $a) => $a->kind->value === $manda)) {
+                $selected = $selected->reject(fn (ServiceAddon $a) => $a->kind->value === $cede);
+            }
         }
 
-        return $selected
-            ->reject(fn (ServiceAddon $a) => $a->kind->value === 'delivery')
-            ->values();
+        return $selected->values();
+    }
+
+    /**
+     * Las familias que ya no se pueden ofrecer, dado lo que el pedido lleva.
+     *
+     * A diferencia de `withoutIncompatible`, aquí la relación es simétrica:
+     * para cobrar manda el abogado, pero para *ofrecer* da igual cuál llegó
+     * primero. Quien ya pagó entrega inmediata no debe ver «lo escribe un
+     * abogado» —tendría que renunciar a la prisa que acaba de pagar— ni al
+     * contrario. Ofrecer algo que vamos a tener que anular después no es una
+     * venta, es una queja.
+     *
+     * @param  Collection<int, ServiceAddon>  $selected
+     * @return list<string>
+     */
+    public static function blockedKinds(Collection $selected): array
+    {
+        $puestas = $selected->map(fn (ServiceAddon $a) => $a->kind->value)->all();
+        $bloqueadas = [];
+
+        foreach (self::INCOMPATIBLES as $pareja) {
+            foreach ($pareja as $familia) {
+                if (in_array($familia, $puestas, true)) {
+                    $bloqueadas = [...$bloqueadas, ...array_diff($pareja, [$familia])];
+                }
+            }
+        }
+
+        return array_values(array_unique($bloqueadas));
     }
 
     /**

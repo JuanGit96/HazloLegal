@@ -192,6 +192,83 @@ class CheckoutFlowTest extends TestCase
         $this->assertSame(49_900 + 90_100, (int) $order->amount);
     }
 
+    public function test_la_pagina_de_entrega_no_ofrece_lo_que_choca_con_lo_ya_comprado(): void
+    {
+        Mail::fake();
+
+        $document = LegalDocument::query()->where('slug', 'acuerdo-de-confidencialidad-nda')->firstOrFail();
+
+        // Con abogado contratado, la entrega inmediata no se puede cumplir:
+        // ofrecerla después sería vender algo que vamos a tener que anular.
+        $this->post(route('checkout.store', $document->slug), $this->datosDelCliente([
+            'customer_email' => 'conabogado@example.com',
+            'addons' => ['acompanamiento'],
+        ]));
+
+        $order = Order::query()->where('customer_email', 'conabogado@example.com')->firstOrFail();
+        $order->forceFill(['paid_at' => now(), 'status' => OrderStatus::InReview, 'promised_at' => now()->addDay()])->save();
+
+        $respuesta = $this->get($order->trackingUrl());
+
+        $respuesta->assertOk()
+            ->assertDontSeeText('Pasar a entrega inmediata')
+            ->assertDontSeeText('Entrega inmediata');
+
+        $this->assertTrue($order->refresh()->hasLawyerWork());
+    }
+
+    public function test_a_quien_pago_la_prisa_no_se_le_ofrece_el_abogado(): void
+    {
+        Mail::fake();
+
+        $document = LegalDocument::query()->where('slug', 'acuerdo-de-confidencialidad-nda')->firstOrFail();
+
+        $this->post(route('checkout.store', $document->slug), $this->datosDelCliente([
+            'customer_email' => 'conprisa@example.com',
+            'addons' => ['express'],
+        ]));
+
+        $order = Order::query()->where('customer_email', 'conprisa@example.com')->firstOrFail();
+        $order->forceFill(['paid_at' => now(), 'status' => OrderStatus::InReview])->save();
+
+        // El acompañamiento obligaría a renunciar a la prisa que acaba de
+        // pagar; la oferta siguiente tiene que ser otra.
+        $siguiente = app(\App\Domain\Catalog\Services\AddonOfferService::class)
+            ->nextBestOffer($order->document, $order->addons->pluck('key'));
+
+        $this->assertNotNull($siguiente);
+        $this->assertNotSame('review', $siguiente->addon->kind->value);
+    }
+
+    public function test_el_servidor_rechaza_sumar_un_adicional_incompatible(): void
+    {
+        Mail::fake();
+
+        $document = LegalDocument::query()->where('slug', 'acuerdo-de-confidencialidad-nda')->firstOrFail();
+
+        $this->post(route('checkout.store', $document->slug), $this->datosDelCliente([
+            'customer_email' => 'reenviado@example.com',
+            'addons' => ['acompanamiento'],
+        ]));
+
+        $order = Order::query()->where('customer_email', 'reenviado@example.com')->firstOrFail();
+        $order->forceFill(['paid_at' => now(), 'status' => OrderStatus::InReview])->save();
+
+        $antes = (int) $order->amount;
+
+        // Esconder el botón no basta: el enlace se puede reenviar, y entonces
+        // habría que devolver un dinero que no debimos cobrar.
+        $this->post(route('checkout.add-addon', $order->reference), [
+            'addon' => 'express',
+            't' => $order->access_token,
+        ])->assertRedirect();
+
+        $order->refresh()->load('addons');
+
+        $this->assertFalse($order->isExpress());
+        $this->assertSame($antes, (int) $order->amount);
+    }
+
     public function test_el_acompanamiento_marca_el_pedido_como_atendido_por_abogado(): void
     {
         Mail::fake();

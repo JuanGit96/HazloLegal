@@ -53,7 +53,9 @@
                     Te llega al correo y puedes volver a esta página cuando quieras.
                 </p>
 
-                @if (! $order->isExpress())
+                {{-- Con abogado detrás no se ofrece la entrega inmediata: tiene
+                     que leer los hechos antes de escribir. --}}
+                @if (! $order->isExpress() && ! $order->hasLawyerWork())
                     <form action="{{ route('checkout.add-addon', $order->reference) }}" method="post" class="upsell__form">
                         @csrf
                         <input type="hidden" name="addon" value="express">

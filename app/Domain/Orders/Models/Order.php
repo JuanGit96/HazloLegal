@@ -126,6 +126,35 @@ class Order extends Model
         return $this->hasAddon('express');
     }
 
+    /**
+     * ¿Lleva una familia de adicionales? Para decidir qué ya no se ofrece.
+     *
+     * Las líneas del pedido guardan la clave y el precio con los que se
+     * cobró, no la familia: eso congela el precio aunque el catálogo cambie,
+     * pero obliga a resolver la familia contra el catálogo del trámite.
+     */
+    public function hasAddonKind(string $kind): bool
+    {
+        $this->loadMissing(['addons', 'document.availableAddons']);
+
+        $catalogo = $this->document?->availableAddons;
+
+        return $catalogo !== null && $this->addons->contains(
+            fn ($linea) => $catalogo->firstWhere('key', $linea->key)?->kind->value === $kind
+        );
+    }
+
+    /**
+     * Un abogado escribe este documento.
+     *
+     * Mientras eso esté contratado, la entrega inmediata no se puede ofrecer:
+     * el abogado necesita leer los hechos.
+     */
+    public function hasLawyerWork(): bool
+    {
+        return $this->hasAddonKind('review');
+    }
+
     public function isFree(): bool
     {
         return (int) $this->amount === 0;

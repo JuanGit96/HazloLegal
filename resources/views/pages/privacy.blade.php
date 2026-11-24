@@ -98,8 +98,15 @@
 
             <h2>11. Cookies</h2>
             <p>
-                Usamos las cookies estrictamente necesarias para el funcionamiento del sitio y la sesión.
-                No instalamos cookies de publicidad de terceros sin consentimiento previo.
+                Las cookies necesarias para la sesión y la seguridad del sitio se usan siempre, porque
+                sin ellas el servicio no funciona. Las de analítica y publicidad <strong>no se cargan
+                hasta que el usuario las autoriza</strong>, y la autorización se puede revocar en
+                cualquier momento.
+            </p>
+            <p>
+                El detalle de cada cookie &mdash;nombre, finalidad, duración y quién la instala&mdash;
+                y el panel para autorizarlas o revocarlas están en la
+                <a href="{{ route('pages.cookies') }}">política de cookies</a>.
             </p>
 
             <h2>12. Vigencia</h2>

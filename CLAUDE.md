@@ -98,6 +98,9 @@ Nunca escribir `<title>` ni JSON-LD a mano en una plantilla.
 - Que los datos del cliente **no** se filtren a quien no ganó el caso.
 - Los datos estructurados de cada tipo de página.
 - Que todos los listados y fichas del panel cargan.
+- Que lo opcional de cookies no corre sin permiso, y que revocar deja rastro.
+- Las dos entradas a la suscripción (invitación y precio de lanzamiento) y que
+  la tarjeta se valida en las dos.
 
 Si tocas el reparto de casos, los precios o el SEO, añade el test antes.
 
@@ -121,5 +124,15 @@ de la empresa:
   las plantillas gratis en la home le planta la idea a quien no la traía. Ese
   contenido va en el blog, donde llega quien ya la está buscando.
 - Los datos de demostración van marcados como tales en el seeder.
+- **Nunca ofrecer un adicional incompatible con lo que el pedido ya lleva.**
+  Las parejas están en `PricingService::INCOMPATIBLES`; `blockedKinds()` dice
+  qué ya no se puede proponer, y el servidor lo rechaza además de esconderlo.
+- **Ninguna etiqueta de medición se carga sin autorización previa.** Van en
+  `partials/analytics.blade.php`, detrás de `CookieConsentService`. Rechazar
+  cuesta un clic igual que aceptar, y cada decisión deja fila en
+  `cookie_consents`, que es la prueba que exige el Decreto 1377 de 2013.
+- **Toda promoción dice con fecha qué se cobra después.** Los meses gratis y
+  los descuentos viven en `subscription_promos`, no en el plan, y la pantalla
+  muestra siempre las dos cifras: lo de hoy y lo de después.
 
 `PublicSeoTest` tiene tests que fallan si alguna de estas reglas se rompe.

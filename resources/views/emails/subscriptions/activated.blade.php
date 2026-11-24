@@ -38,7 +38,7 @@
             <strong style="color:#2563EB;">2.</strong> Revisa que tus áreas estén bien: deciden qué casos te llegan.
         </td></tr>
         <tr><td style="padding:0; font-size:15px; line-height:24px; color:#334155; font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-            <strong style="color:#2563EB;">3.</strong> Cuando llegue un caso de tu área, responde rápido: el primero que acepta se lo queda.
+            <strong style="color:#2563EB;">3.</strong> Cuando llegue un caso de tu área, postúlate pronto y escribe bien tu nota: el cliente elige entre los interesados.
         </td></tr>
     </table>
 @endsection

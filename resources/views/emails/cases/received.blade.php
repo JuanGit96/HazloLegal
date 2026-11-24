@@ -2,7 +2,7 @@
 
 @section('subject', "Recibimos tu caso {$case->reference}")
 @section('accent', '#2563EB')
-@section('preheader', "Tu caso ya está con los abogados especializados en {$case->practice_area->getLabel()}.")
+@section('preheader', "Tu caso ya está con los abogados especializados en {$case->practice_area->getLabel()}. Tú eliges.")
 
 @section('content')
     <h1 class="hl-h1" style="margin:0 0 12px 0; font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:26px; line-height:33px; font-weight:800; letter-spacing:-.5px; color:#0F172A;">
@@ -12,8 +12,8 @@
     <p style="margin:0 0 22px 0;">
         Ya lo enviamos a los abogados de nuestra red especializados en
         <strong>{{ \Illuminate\Support\Str::lower($case->practice_area->getLabel()) }}</strong>.
-        El primero que lo acepte se queda con él, y en ese momento te escribimos con su nombre,
-        su especialidad y su experiencia.
+        Los que quieran tomarlo se postulan, y en cuanto haya al menos uno te escribimos con
+        un enlace para que compares sus perfiles y elijas tú.
     </p>
 
     <x-email.note tone="info" icon="🔖">
@@ -39,14 +39,14 @@
         </tr>
         <tr>
             <td style="padding:0 0 14px 0; font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:15px; line-height:24px; color:#334155;">
-                <strong style="color:#2563EB;">2.</strong> El primero que lo acepte se lo queda, y te avisamos
-                por correo con su perfil completo. Plazo máximo: <strong>{{ $ttlHours }} horas</strong>.
+                <strong style="color:#2563EB;">2.</strong> Te avisamos por correo en cuanto alguno se
+                postule, con su perfil completo, y eliges tú. Plazo máximo: <strong>{{ $ttlHours }} horas</strong>.
             </td>
         </tr>
         <tr>
             <td style="padding:0; font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:15px; line-height:24px; color:#334155;">
-                <strong style="color:#2563EB;">3.</strong> El abogado te contacta, evalúa el caso y te propone
-                honorarios claros. Sin compromiso hasta que tú aceptes.
+                <strong style="color:#2563EB;">3.</strong> El abogado que elijas te contacta, evalúa el caso
+                y te propone honorarios claros. Sin compromiso hasta que tú aceptes.
             </td>
         </tr>
     </table>

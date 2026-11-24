@@ -90,7 +90,7 @@
 <x-cta-band
     eyebrow="¿Eres abogado?"
     title="Aparece donde la gente ya está buscando"
-    text="Miles de personas generan documentos legales aquí cada mes. Algunos necesitan un abogado justo después. Dos meses gratis para probarlo."
+    text="Miles de personas generan documentos legales aquí cada mes. Algunos necesitan un abogado justo después. Entra con el precio de lanzamiento."
     primary-label="Ver planes para abogados"
     :primary-href="route('lawyers.join')" />
 @endsection

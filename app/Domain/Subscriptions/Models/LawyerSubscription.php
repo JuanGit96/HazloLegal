@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace App\Domain\Subscriptions\Models;
 
 use App\Domain\Lawyers\Models\Lawyer;
+use App\Domain\Payments\Enums\PaymentStatus;
+use App\Domain\Payments\Models\PaymentTransaction;
 use App\Domain\Subscriptions\Enums\BillingPeriod;
 use App\Domain\Subscriptions\Enums\SubscriptionStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class LawyerSubscription extends Model
 {
@@ -24,6 +27,9 @@ class LawyerSubscription extends Model
             'status' => SubscriptionStatus::class,
             'billing_period' => BillingPeriod::class,
             'trial_ends_at' => 'datetime',
+            'discount_ends_at' => 'datetime',
+            'card_validated_at' => 'datetime',
+            'recurring_authorized_at' => 'datetime',
             'started_at' => 'datetime',
             'renews_at' => 'datetime',
             'cancelled_at' => 'datetime',
@@ -39,6 +45,33 @@ class LawyerSubscription extends Model
     public function plan(): BelongsTo
     {
         return $this->belongsTo(LawyerPlan::class, 'lawyer_plan_id');
+    }
+
+    public function promo(): BelongsTo
+    {
+        return $this->belongsTo(SubscriptionPromo::class, 'subscription_promo_id');
+    }
+
+    public function transactions(): MorphMany
+    {
+        return $this->morphMany(PaymentTransaction::class, 'payable');
+    }
+
+    /**
+     * Hay un cobro lanzado y sin resolver.
+     *
+     * Wompi resuelve asíncrono: la transacción nace en PENDING y la confirma
+     * el webhook. Entre una cosa y otra, `renews_at` sigue en el pasado, así
+     * que sin esta comprobación el cobro diario volvería a cobrar mañana lo
+     * mismo. Cobrar dos veces se arregla devolviendo dinero y perdiendo al
+     * abogado.
+     */
+    public function hasChargeInFlight(): bool
+    {
+        return $this->transactions()
+            ->where('status', PaymentStatus::Pending)
+            ->where('created_at', '>=', now()->subDays(3))
+            ->exists();
     }
 
     public function scopeActive(Builder $query): Builder
@@ -66,6 +99,40 @@ class LawyerSubscription extends Model
         }
 
         return max(0, (int) now()->diffInDays($this->trial_ends_at, false));
+    }
+
+    public function hasStoredCard(): bool
+    {
+        return filled($this->payment_source_id) && $this->recurring_authorized_at !== null;
+    }
+
+    /** «VISA ·· 4242», para que el abogado reconozca qué tarjeta registró. */
+    public function cardLabel(): ?string
+    {
+        return $this->card_last_four
+            ? trim(($this->card_brand ?: 'Tarjeta').' ·· '.$this->card_last_four)
+            : null;
+    }
+
+    public function isInDiscountWindow(): bool
+    {
+        return (int) $this->discount_percentage > 0
+            && $this->discount_ends_at !== null
+            && $this->discount_ends_at->isFuture();
+    }
+
+    /**
+     * Cuánto toca cobrar en la próxima renovación.
+     *
+     * Mientras dure la ventana de descuento, el precio pactado; después, el
+     * de lista del plan. Se calcula y no se guarda porque el precio de lista
+     * puede cambiar, y lo que se prometió fue el descuento, no la cifra.
+     */
+    public function nextChargeAmount(): int
+    {
+        $lista = $this->plan?->priceFor($this->billing_period ?? BillingPeriod::Monthly) ?? (int) $this->price;
+
+        return $this->isInDiscountWindow() ? (int) $this->price : $lista;
     }
 
     /** Permiso efectivo: el plan lo concede y la suscripción está vigente. */

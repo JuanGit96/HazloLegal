@@ -21,6 +21,8 @@ class DatabaseSeeder extends Seeder
             PricingSeeder::class,
             ProductSeeder::class,
             LawyerPlanSeeder::class,
+            // Después de los planes: una promoción puede estar atada a uno.
+            SubscriptionPromoSeeder::class,
             CalculatorSeeder::class,
             FaqSeeder::class,
             TestimonialSeeder::class,

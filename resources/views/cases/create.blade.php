@@ -23,19 +23,20 @@
                         especializado lo toma y te cotiza, <strong>sin costo y sin compromiso</strong>.
                     </p>
                 @else
-                    <h1>Tu caso complejo, en manos de <span class="hl hl--blue">un abogado que lo acepta</span></h1>
+                    <h1>Tu caso complejo, en manos del <span class="hl hl--blue">abogado que tú elijas</span></h1>
 
                     <p class="hero__lead">
                         Cuéntanos qué está pasando. Enviamos tu caso a los abogados especializados en esa
-                        área al mismo tiempo y <strong>el primero que lo acepta se queda con él</strong>.
-                        Te escribimos con su nombre, su especialidad y su experiencia.
+                        área al mismo tiempo, los que quieran tomarlo se postulan y
+                        <strong>eliges tú</strong> entre ellos, viendo el nombre, la especialidad y la
+                        experiencia de cada uno.
                     </p>
                 @endif
 
                 <div class="hero__proof">
                     <div class="hero__proof-item">
                         <strong>&lt; 48 h</strong>
-                        <span>para asignarte abogado</span>
+                        <span>para que elijas abogado</span>
                     </div>
                     <div class="hero__proof-item">
                         <strong>$0</strong>
@@ -64,8 +65,9 @@
                         </div>
                         <div class="step">
                             <div class="step__num" aria-hidden="true">3</div>
-                            <h3>El primero que acepta lo toma</h3>
-                            <p>Y te llega su perfil completo por correo: especialidad, años de ejercicio y ciudad.</p>
+                            <h3>Eliges entre los que se postulan</h3>
+                            <p>Te llega su perfil por correo: especialidad, años de ejercicio y ciudad. Decides tú,
+                               y hasta entonces ninguno tiene tus datos de contacto.</p>
                         </div>
                     </div>
                 </div>
@@ -193,7 +195,7 @@
                            value="{{ old('client_email') }}" autocomplete="email"
                            aria-describedby="client_email_hint"
                            aria-invalid="{{ $errors->has('client_email') ? 'true' : 'false' }}">
-                    <span class="field__hint" id="client_email_hint">Aquí te avisamos qué abogado tomó tu caso.</span>
+                    <span class="field__hint" id="client_email_hint">Aquí te avisamos cuando haya abogados para elegir.</span>
                     <x-field-error name="client_email" />
                 </div>
             </div>

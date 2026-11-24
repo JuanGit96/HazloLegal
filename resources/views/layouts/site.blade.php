@@ -15,6 +15,8 @@
     <link rel="icon" href="{{ asset('img/favicon.svg') }}" type="image/svg+xml">
     <link rel="apple-touch-icon" href="{{ asset('img/favicon.svg') }}">
 
+    @include('partials.analytics')
+
     @stack('head')
 </head>
 <body>
@@ -37,6 +39,7 @@
 
     @include('partials.footer')
     @include('partials.whatsapp-float')
+    @include('partials.cookie-banner')
 
     <script src="@asset('js/site.js')" defer></script>
     @stack('scripts')

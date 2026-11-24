@@ -27,7 +27,10 @@ class LawyerPlanSeeder extends Seeder
                 'description' => 'Tu perfil público en el directorio, con tus áreas y tu ciudad.',
                 'price_monthly' => 50_000,
                 'price_annual' => 500_000,
-                'free_trial_months' => 2,
+                // Los meses gratis ya no viven aquí: los decide la
+                // promoción con la que entra el abogado, que es la que se le
+                // muestra con fecha y precio de después.
+                'free_trial_months' => 0,
                 'features' => [
                     'Página de perfil propia, indexable en Google',
                     'Apareces en las búsquedas por especialidad y ciudad',
@@ -52,7 +55,10 @@ class LawyerPlanSeeder extends Seeder
                 'description' => 'Todo lo del Directorio, más presencia en los instructivos que circulan y acceso a los leads que autorizaron contacto.',
                 'price_monthly' => 150_000,
                 'price_annual' => 1_500_000,
-                'free_trial_months' => 2,
+                // Los meses gratis ya no viven aquí: los decide la
+                // promoción con la que entra el abogado, que es la que se le
+                // muestra con fecha y precio de después.
+                'free_trial_months' => 0,
                 'features' => [
                     'Todo lo del plan Directorio',
                     'Tu firma en los instructivos PDF de tu área',

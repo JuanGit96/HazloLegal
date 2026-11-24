@@ -55,6 +55,8 @@ class AdminPanelTest extends TestCase
             'adicionales' => ['filament.admin.resources.service-addons.index'],
             'planes de abogado' => ['filament.admin.resources.lawyer-plans.index'],
             'suscripciones' => ['filament.admin.resources.lawyer-subscriptions.index'],
+            'promociones' => ['filament.admin.resources.subscription-promos.index'],
+            'consentimiento de cookies' => ['filament.admin.resources.cookie-consents.index'],
             'calculadoras' => ['filament.admin.resources.calculators.index'],
             'abogados' => ['filament.admin.resources.lawyers.index'],
             'artículos' => ['filament.admin.resources.posts.index'],

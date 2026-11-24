@@ -88,6 +88,63 @@ return [
         'meta_pixel_id' => env('HL_META_PIXEL'),
     ],
 
+    /*
+    |----------------------------------------------------------------------
+    | Cookies
+    |----------------------------------------------------------------------
+    | El catálogo que se publica en la política. Informar «usamos cookies» no
+    | cumple nada: la Ley 1581 exige decir qué dato se trata y para qué, así
+    | que cada cookie va con su finalidad, su duración y quién la pone.
+    |
+    | Si cambia lo que hacemos con ellas, se sube la versión y se vuelve a
+    | preguntar: una autorización dada sobre otro texto no cubre el nuevo.
+    */
+    'cookies' => [
+
+        'version' => '2026-11',
+        'lifetime_days' => 365,
+
+        'catalog' => [
+            [
+                // El nombre real lo resuelve CookieConsentService: aquí todavía
+                // no está cargado config/session.php.
+                'name' => '{session}',
+                'category' => 'necessary',
+                'purpose' => 'Mantiene tu sesión mientras armas un trámite, para que no pierdas lo que escribiste al cambiar de página.',
+                'duration' => '2 horas',
+                'provider' => 'HazloLegal',
+            ],
+            [
+                'name' => 'XSRF-TOKEN',
+                'category' => 'necessary',
+                'purpose' => 'Protege los formularios: impide que otra página envíe datos en tu nombre.',
+                'duration' => '2 horas',
+                'provider' => 'HazloLegal',
+            ],
+            [
+                'name' => 'hl_cookies',
+                'category' => 'necessary',
+                'purpose' => 'Guarda tu decisión sobre estas mismas cookies, para no volver a preguntártelo en cada visita.',
+                'duration' => '1 año',
+                'provider' => 'HazloLegal',
+            ],
+            [
+                'name' => '_ga, _ga_*',
+                'category' => 'analytics',
+                'purpose' => 'Cuenta visitas y mide en qué paso se abandona un trámite, de forma agregada, para corregirlo.',
+                'duration' => 'Hasta 2 años',
+                'provider' => 'Google Analytics (Google LLC, Estados Unidos)',
+            ],
+            [
+                'name' => '_fbp',
+                'category' => 'marketing',
+                'purpose' => 'Mide si un anuncio trajo a alguien y evita repetirle el mismo aviso. Hoy no está activa.',
+                'duration' => '3 meses',
+                'provider' => 'Meta Platforms, Inc. (Estados Unidos)',
+            ],
+        ],
+    ],
+
     'trust' => [
         'documents_delivered' => (int) env('HL_STAT_DOCS', 1840),
         'avg_delivery_hours' => 19,

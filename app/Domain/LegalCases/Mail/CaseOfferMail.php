@@ -11,7 +11,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 
-/** El correo donde se corre la carrera: el primero que acepta se lleva el caso. */
+/** El correo con el que un abogado se postula a un caso. Elige el cliente. */
 class CaseOfferMail extends Mailable
 {
     public function __construct(

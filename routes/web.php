@@ -3,8 +3,9 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Web\BlogController;
-use App\Http\Controllers\Web\ContactController;
 use App\Http\Controllers\Web\CheckoutController;
+use App\Http\Controllers\Web\ContactController;
+use App\Http\Controllers\Web\CookieConsentController;
 use App\Http\Controllers\Web\DocumentController;
 use App\Http\Controllers\Web\HomeController;
 use App\Http\Controllers\Web\LegalCaseController;
@@ -68,6 +69,11 @@ Route::get('/mis-tramites/{email}', [App\Http\Controllers\Web\CustomerAreaContro
 Route::get('/portal/suscripcion/pagar', [App\Http\Controllers\Web\SubscriptionCheckoutController::class, 'show'])
     ->middleware(['web', 'auth'])
     ->name('subscription.checkout');
+// El número de la tarjeta no llega aquí: el navegador lo cambia por un token
+// contra Wompi y esto solo recibe el token.
+Route::post('/portal/suscripcion/tarjeta', [App\Http\Controllers\Web\SubscriptionCheckoutController::class, 'registerCard'])
+    ->middleware(['web', 'auth', 'throttle:10,1'])
+    ->name('subscription.card');
 
 // -------------------------------------------------- Pasarela de pagos
 // El webhook queda fuera de la protección CSRF porque lo llama Wompi, no un
@@ -128,6 +134,13 @@ Route::get('/terminos-y-condiciones', [PageController::class, 'terms'])->name('p
 Route::get('/tratamiento-de-datos-personales', [PageController::class, 'privacy'])->name('pages.privacy');
 Route::get('/validez-de-la-firma-electronica', [PageController::class, 'signature'])->name('pages.signature');
 
+// La política de cookies es también el panel de preferencias: el visitante
+// cambia o revoca su decisión en la misma página donde se le explica qué
+// hace cada cookie, y sin JavaScript.
+Route::get('/politica-de-cookies', [CookieConsentController::class, 'policy'])->name('pages.cookies');
+Route::post('/politica-de-cookies', [CookieConsentController::class, 'store'])
+    ->middleware('throttle:30,1')->name('cookies.store');
+
 Route::get('/contacto', [ContactController::class, 'create'])->name('pages.contact');
 Route::post('/contacto', [ContactController::class, 'store'])
     ->middleware('throttle:10,1')->name('pages.contact.store');
@@ -163,6 +176,10 @@ Route::post('/gratis/calculadoras/{calculator:slug}', [App\Http\Controllers\Web\
 */
 Route::get('/abogados', [App\Http\Controllers\Web\LawyerDirectoryController::class, 'index'])->name('lawyers.index');
 Route::get('/abogados/registro', [App\Http\Controllers\Web\LawyerLandingController::class, 'index'])->name('lawyers.join');
+// El enlace que se le pasa a un abogado invitado. Va antes de la ficha
+// pública para que «invitacion» no se confunda con el slug de un abogado.
+Route::get('/abogados/invitacion/{code}', [App\Http\Controllers\Web\LawyerLandingController::class, 'invitation'])
+    ->middleware('throttle:30,1')->name('lawyers.invitation');
 Route::post('/abogados/registro', [App\Http\Controllers\Web\LawyerLandingController::class, 'store'])
     ->middleware('throttle:10,1')->name('lawyers.join.store');
 Route::get('/abogados/{lawyer:slug}', [App\Http\Controllers\Web\LawyerDirectoryController::class, 'show'])->name('lawyers.show');

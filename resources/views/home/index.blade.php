@@ -683,7 +683,7 @@
                             <span class="guarantee-list__check" aria-hidden="true">✓</span>
                             <span>
                                 <strong style="color:#fff;">Aviso cuando alguien pide acompañamiento</strong>
-                                En tu área y tu ciudad. El primero que acepta se queda el caso.
+                                En tu área y tu ciudad. Te postulas y el cliente elige entre los interesados.
                             </span>
                         </li>
                         <li>

@@ -116,15 +116,43 @@
             </div>
         @endif
 
-        {{-- Conversión contextual al servicio del cluster. --}}
+        {{-- Conversión contextual al servicio del cluster.
+
+             Si el trámite es gratis se dice en el botón y no se esconde
+             detrás de «ver precio»: quien acaba de leer la guía está
+             decidiendo si vale la pena el clic, y «gratis» es la respuesta.
+             Tampoco se le ofrece un abogado, porque un trámite que se arma
+             solo no lo escribe ninguno. --}}
         @if ($post->relatedDocument)
-            <div class="card card--pad-lg mt-10" style="border-color: var(--brand); background: var(--blue-50);">
-                <span class="eyebrow">¿Prefieres que lo haga un abogado?</span>
-                <h2 style="font-size: var(--t-lg); margin-top: var(--s3);">{{ $post->relatedDocument->name }}</h2>
-                <p class="text-sm text-muted">{{ $post->relatedDocument->summary }}</p>
+            @php
+                $relacionado = $post->relatedDocument;
+                $esGratis = $relacionado->isFreeTier();
+            @endphp
+
+            <div class="card card--pad-lg mt-10"
+                 style="border-color: var({{ $esGratis ? '--action' : '--brand' }}); background: var({{ $esGratis ? '--orange-50' : '--blue-50' }});">
+                <span class="eyebrow">
+                    {{ $esGratis ? 'No tienes que pagar por esto' : '¿Prefieres que lo haga un abogado?' }}
+                </span>
+                <h2 style="font-size: var(--t-lg); margin-top: var(--s3);">
+                    {{ $relacionado->name }}
+                    @if ($esGratis)<span class="hl hl--orange">es gratis</span>@endif
+                </h2>
+                <p class="text-sm text-muted">{{ $relacionado->summary }}</p>
+
+                @if ($esGratis)
+                    <p class="text-sm" style="margin-bottom: var(--s5);">
+                        Lo armas en línea sobre el formato que escribieron nuestros abogados y lo
+                        recibes en PDF, listo para firmar y radicar. Solo te pedimos tus datos para
+                        poder enviártelo.
+                    </p>
+                @endif
+
                 <div class="btn-row">
-                    <a href="{{ $post->relatedDocument->url() }}" class="btn btn--primary">Ver precio y plazo</a>
-                    <a href="{{ $wa->forDocument($post->relatedDocument->name) }}" class="btn btn--outline" target="_blank" rel="noopener">
+                    <a href="{{ $relacionado->url() }}" class="btn btn--{{ $esGratis ? 'action' : 'primary' }}">
+                        {{ $esGratis ? '¡Es gratis! Hacerlo ahora' : 'Ver precio y plazo' }}
+                    </a>
+                    <a href="{{ $wa->forDocument($relacionado->name) }}" class="btn btn--outline" target="_blank" rel="noopener">
                         Preguntar por WhatsApp
                     </a>
                 </div>

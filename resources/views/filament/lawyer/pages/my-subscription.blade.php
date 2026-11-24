@@ -49,9 +49,56 @@
 
             @if ($subscription->trialDaysLeft() !== null)
                 <p class="mt-4 text-sm text-primary-600">
-                    Te quedan {{ $subscription->trialDaysLeft() }} días de prueba gratis.
+                    Te quedan {{ $subscription->trialDaysLeft() }} días sin costo. El
+                    {{ $subscription->trial_ends_at?->translatedFormat('j \d\e F') }} se cobra
+                    ${{ number_format($subscription->nextChargeAmount(), 0, ',', '.') }}
+                    @if ($subscription->hasStoredCard())
+                        en tu {{ $subscription->cardLabel() }}.
+                    @else
+                        y todavía no tienes una tarjeta registrada.
+                    @endif
                 </p>
             @endif
+
+            {{-- La tarjeta y el próximo cobro, siempre a la vista. Un cargo
+                 que el abogado no esperaba es una disputa con el banco, y eso
+                 cuesta más que el mes que se cobró. --}}
+            <dl class="mt-4 grid gap-4 sm:grid-cols-2 text-sm">
+                <div>
+                    <dt class="text-gray-500">Tarjeta registrada</dt>
+                    <dd class="font-semibold">
+                        @if ($subscription->hasStoredCard())
+                            {{ $subscription->cardLabel() }}
+                            <span class="block text-xs font-normal text-gray-500">
+                                Autorizaste el cobro automático el
+                                {{ $subscription->recurring_authorized_at?->translatedFormat('j \d\e F \d\e Y') }}.
+                            </span>
+                        @else
+                            Ninguna
+                            <span class="block text-xs font-normal text-gray-500">
+                                Sin tarjeta hay que renovar a mano cada periodo.
+                            </span>
+                        @endif
+                    </dd>
+                </div>
+                <div>
+                    <dt class="text-gray-500">Próximo cobro</dt>
+                    <dd class="font-semibold">
+                        ${{ number_format($subscription->nextChargeAmount(), 0, ',', '.') }}
+                        @if ($subscription->isInDiscountWindow())
+                            <span class="block text-xs font-normal text-gray-500">
+                                Precio promocional hasta el
+                                {{ $subscription->discount_ends_at?->translatedFormat('j \d\e F \d\e Y') }};
+                                después, ${{ number_format($subscription->plan?->priceFor($subscription->billing_period) ?? 0, 0, ',', '.') }}.
+                            </span>
+                        @elseif ($subscription->promo_code)
+                            <span class="block text-xs font-normal text-gray-500">
+                                Entraste con la invitación {{ $subscription->promo_code }}.
+                            </span>
+                        @endif
+                    </dd>
+                </div>
+            </dl>
 
             @php
                 $debeRenovar = in_array($subscription->status?->value, ['past_due', 'cancelled'], true)

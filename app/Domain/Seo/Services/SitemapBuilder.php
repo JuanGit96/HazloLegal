@@ -43,6 +43,7 @@ final class SitemapBuilder
             $this->url(route('lawyers.join'), '0.6', 'monthly'),
             $this->url(route('pages.terms'), '0.3', 'yearly'),
             $this->url(route('pages.privacy'), '0.3', 'yearly'),
+            $this->url(route('pages.cookies'), '0.3', 'yearly'),
             $this->url(route('pages.signature'), '0.5', 'yearly'),
             $this->url(route('pages.contact'), '0.6', 'monthly'),
             $this->url(route('pages.data-deletion'), '0.3', 'yearly'),

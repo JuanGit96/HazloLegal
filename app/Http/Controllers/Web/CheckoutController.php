@@ -211,6 +211,13 @@ class CheckoutController
             'addon' => ['required', 'string', 'max:40'],
         ]);
 
+        // Decirle «listo» a quien pidió algo que no se puede cumplir sería
+        // peor que negarlo: se iría creyendo que lo tiene.
+        if (! $this->orders->canAddAddon($order, $validated['addon'])) {
+            return redirect()->to($order->trackingUrl())
+                ->with('status', 'Ese adicional no se puede sumar a este pedido. Si quieres cambiarlo, escríbenos y lo ajustamos.');
+        }
+
         $order = $this->orders->addAddon($order, $validated['addon']);
 
         if ($order->paid_at === null) {

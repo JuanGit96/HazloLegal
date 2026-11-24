@@ -17,6 +17,8 @@ final readonly class AddonOffer
         public bool $isPreselected,
         public bool $isSelected,
         public ?string $reason = null,
+        /** Incompatible con algo que el pedido ya lleva: no se puede ofrecer. */
+        public bool $isBlocked = false,
     ) {}
 
     public function key(): string

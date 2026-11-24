@@ -7,6 +7,7 @@ namespace App\Domain\Payments\Services;
 use App\Domain\Payments\Enums\PaymentStatus;
 use App\Domain\Payments\Models\PaymentTransaction;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -158,6 +159,163 @@ final class WompiGateway
         }
 
         return $response->json('data');
+    }
+
+    /**
+     * Los tokens de aceptación que Wompi exige para guardar una tarjeta.
+     *
+     * Son dos y distintos: el reglamento del servicio y la autorización de
+     * tratamiento de datos. Los dos vienen firmados y con vencimiento, así
+     * que se piden poco antes de usarlos y se guardan solo unos minutos.
+     *
+     * @return array{acceptance: string, permalink: string, personal_data: ?string, personal_data_permalink: ?string}|null
+     */
+    public function acceptanceTokens(): ?array
+    {
+        $key = (string) config('wompi.public_key');
+
+        if ($key === '') {
+            return null;
+        }
+
+        return Cache::remember("wompi.acceptance.{$key}", now()->addMinutes(5), function () use ($key): ?array {
+            try {
+                $response = Http::timeout(15)->get($this->apiUrl()."/merchants/{$key}");
+            } catch (\Throwable $e) {
+                Log::error('No se pudieron pedir los tokens de aceptación a Wompi', ['error' => $e->getMessage()]);
+
+                return null;
+            }
+
+            if (! $response->successful()) {
+                Log::error('Wompi rechazó la consulta del comercio', [
+                    'status' => $response->status(),
+                    'body' => $response->json('error.reason') ?? $response->body(),
+                ]);
+
+                return null;
+            }
+
+            $acceptance = $response->json('data.presigned_acceptance');
+
+            if (! is_array($acceptance) || ! filled($acceptance['acceptance_token'] ?? null)) {
+                return null;
+            }
+
+            return [
+                'acceptance' => (string) $acceptance['acceptance_token'],
+                'permalink' => (string) ($acceptance['permalink'] ?? ''),
+                'personal_data' => $response->json('data.presigned_personal_data_auth.acceptance_token'),
+                'personal_data_permalink' => $response->json('data.presigned_personal_data_auth.permalink'),
+            ];
+        });
+    }
+
+    /**
+     * Registra una tarjeta como fuente de pago, que es lo que la valida.
+     *
+     * El número de la tarjeta nunca pasa por aquí: el navegador lo cambia por
+     * un token contra Wompi con la llave pública, y lo que viaja a este
+     * servidor es ese token.
+     *
+     * Lo que esto comprueba es que la tarjeta existe, que no está vencida y
+     * que la red la admite. **No** garantiza que el banco vaya a aprobar un
+     * cobro futuro: eso solo lo demuestra un cobro, y Wompi no permite
+     * autorizar por cero pesos. Se dice tal cual en la página, para no
+     * prometer una certeza que no tenemos.
+     *
+     * @return array{id: string, brand: ?string, last_four: ?string}|null
+     */
+    public function registerCard(string $cardToken, string $email, string $acceptanceToken, ?string $personalDataToken = null): ?array
+    {
+        $payload = array_filter([
+            'type' => 'CARD',
+            'token' => $cardToken,
+            'customer_email' => $email,
+            'acceptance_token' => $acceptanceToken,
+            'accept_personal_auth' => $personalDataToken,
+        ], fn ($value) => $value !== null);
+
+        try {
+            $response = Http::withToken((string) config('wompi.private_key'))
+                ->timeout(20)
+                ->post($this->apiUrl().'/payment_sources', $payload);
+        } catch (\Throwable $e) {
+            Log::error('No se pudo registrar la tarjeta en Wompi', ['error' => $e->getMessage()]);
+
+            return null;
+        }
+
+        if (! $response->successful() || $response->json('data.status') !== 'AVAILABLE') {
+            Log::warning('Wompi no aceptó la tarjeta', [
+                'status' => $response->status(),
+                'reason' => $response->json('error.reason') ?? $response->json('error.messages') ?? $response->body(),
+            ]);
+
+            return null;
+        }
+
+        return [
+            'id' => (string) $response->json('data.id'),
+            'brand' => $response->json('data.public_data.brand') ?? $response->json('data.public_data.type'),
+            'last_four' => $response->json('data.public_data.last_four'),
+        ];
+    }
+
+    /**
+     * Cobra contra una tarjeta ya registrada.
+     *
+     * Devuelve el identificador de la transacción en Wompi. El resultado llega
+     * asíncrono —la transacción nace en PENDING— así que quien llame a esto
+     * no debe dar nada por aprobado: lo confirma el webhook.
+     */
+    public function chargeStoredCard(PaymentTransaction $transaction, string $paymentSourceId, int $installments = 1): ?string
+    {
+        $tokens = $this->acceptanceTokens();
+
+        if ($tokens === null) {
+            return null;
+        }
+
+        try {
+            $response = Http::withToken((string) config('wompi.private_key'))
+                ->timeout(25)
+                ->post($this->apiUrl().'/transactions', [
+                    'amount_in_cents' => (int) $transaction->amount_in_cents,
+                    'currency' => $transaction->currency,
+                    'customer_email' => (string) $transaction->customer_email,
+                    'reference' => $transaction->reference,
+                    'payment_source_id' => (int) $paymentSourceId,
+                    'acceptance_token' => $tokens['acceptance'],
+                    'signature' => $this->integritySignature($transaction),
+                    'payment_method' => ['installments' => max(1, $installments)],
+                ]);
+        } catch (\Throwable $e) {
+            Log::error('No se pudo cobrar la tarjeta guardada', [
+                'reference' => $transaction->reference,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+
+        if (! $response->successful()) {
+            Log::error('Wompi rechazó el cobro recurrente', [
+                'reference' => $transaction->reference,
+                'status' => $response->status(),
+                'body' => $response->json('error.reason') ?? $response->body(),
+            ]);
+
+            return null;
+        }
+
+        $id = $response->json('data.id');
+
+        if ($id !== null) {
+            $transaction->update(['gateway_transaction_id' => (string) $id]);
+        }
+
+        return $id === null ? null : (string) $id;
     }
 
     public function apiUrl(): string

@@ -18,12 +18,12 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * Los casos que este abogado ganó en la carrera.
+ * Los casos que este abogado se quedó.
  *
  * El filtro no es una conveniencia de la interfaz: es la regla del producto.
- * Un caso se le asigna al primero que lo acepta, y los datos de contacto del
- * cliente solo existen para él. Por eso la consulta se acota aquí, en el
- * origen, y no en un menú ni en una vista.
+ * Un caso se le asigna al abogado que el cliente elige, y los datos de
+ * contacto del cliente solo existen para él. Por eso la consulta se acota
+ * aquí, en el origen, y no en un menú ni en una vista.
  */
 class MyCaseResource extends Resource
 {
@@ -104,7 +104,7 @@ class MyCaseResource extends Resource
                 \Filament\Actions\ViewAction::make()->label('Abrir'),
             ])
             ->emptyStateHeading('Todavía no tienes casos')
-            ->emptyStateDescription('Cuando llegue un caso de tu área te avisamos por correo. El primero que acepta se lo queda.');
+            ->emptyStateDescription('Cuando llegue un caso de tu área te avisamos por correo. Te postulas y el cliente elige entre los interesados.');
     }
 
     public static function getPages(): array

@@ -14,7 +14,7 @@ use App\Domain\LegalCases\Models\LegalCase;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
-/** Reparte un caso a varios abogados a la vez. Gana el primero que acepta. */
+/** Ofrece un caso a varios abogados a la vez. Los interesados se postulan; elige el cliente. */
 final class CaseDispatchService
 {
     public function __construct(private readonly LawyerDirectory $directory) {}
