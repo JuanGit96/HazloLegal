@@ -110,9 +110,19 @@ return [
     |
     */
 
+    /*
+     * Con qué correo salen los nuestros.
+     *
+     * No es el de contacto (contacto@, en config/hazlolegal.php): quien
+     * responde a un correo automático escribe al «responder a», y el
+     * remitente queda libre para los rebotes. El valor por defecto es el
+     * real y no un ejemplo, porque un despliegue sin .env completo mandando
+     * desde «hello@example.com» no lo nota nadie hasta que un cliente
+     * contesta al vacío.
+     */
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
+        'address' => env('MAIL_FROM_ADDRESS', 'hola@hazlolegal.co'),
+        'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'HazloLegal')),
     ],
 
 ];

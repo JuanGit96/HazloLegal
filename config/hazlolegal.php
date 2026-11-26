@@ -24,7 +24,13 @@ return [
         // Número en formato internacional sin "+" ni espacios (para wa.me).
         'whatsapp' => env('HL_WHATSAPP', '573001234567'),
         'whatsapp_display' => env('HL_WHATSAPP_DISPLAY', '+57 300 123 4567'),
-        'email' => env('HL_EMAIL', 'hola@hazlolegal.co'),
+        // El correo que se publica y al que la gente nos escribe. No es el
+        // mismo con el que nosotros enviamos (ese es MAIL_FROM_ADDRESS,
+        // hola@): separarlos deja la bandeja de entrada limpia de rebotes y
+        // de respuestas automáticas.
+        'email' => env('HL_EMAIL', 'contacto@hazlolegal.co'),
+        // Los casos complejos tienen bandeja propia porque los contesta
+        // quien coordina la red de abogados, no quien atiende el sitio.
         'cases_email' => env('HL_CASES_EMAIL', 'casos@hazlolegal.co'),
         'phone' => env('HL_PHONE', '+57 601 123 4567'),
         'address' => env('HL_ADDRESS', 'Calle 100 # 19-61, Oficina 802'),

@@ -7,9 +7,13 @@ namespace App\Http\Controllers\Web;
 use App\Domain\Lawyers\Models\Lawyer;
 use App\Domain\Lawyers\Services\CurrentLawyer;
 use App\Domain\Payments\Services\WompiGateway;
+use App\Domain\Subscriptions\Data\CardVerification;
 use App\Domain\Subscriptions\Data\SubscriptionQuote;
 use App\Domain\Subscriptions\Enums\BillingPeriod;
+use App\Domain\Subscriptions\Enums\CardCheck;
 use App\Domain\Subscriptions\Models\LawyerPlan;
+use App\Domain\Subscriptions\Models\LawyerSubscription;
+use App\Domain\Subscriptions\Services\CardVerifier;
 use App\Domain\Subscriptions\Services\SubscriptionPromoService;
 use App\Domain\Subscriptions\Services\SubscriptionService;
 use Illuminate\Contracts\View\View;
@@ -35,6 +39,7 @@ class SubscriptionCheckoutController
         private readonly CurrentLawyer $current,
         private readonly SubscriptionService $subscriptions,
         private readonly SubscriptionPromoService $promos,
+        private readonly CardVerifier $verifier,
         private readonly WompiGateway $wompi,
     ) {}
 
@@ -53,11 +58,11 @@ class SubscriptionCheckoutController
         $quote = $this->quoteFor($request, $plan, $period, $lawyer);
         $subscription = $this->subscriptions->start($lawyer, $plan, $period, $quote);
 
-        // El cobro de hoy solo se abre si hay algo que cobrar hoy.
-        $transaction = $this->wompi->isEnabled() && $quote->dueToday > 0
-            ? $this->wompi->open($subscription, $quote->dueToday, (string) $lawyer->email, 'SUB')
-            : null;
-
+        // Aquí no se ofrece Nequi, PSE ni transferencia, y no es por pereza:
+        // ninguno deja nada con qué cobrar el periodo siguiente. Un abogado
+        // que paga por PSE simplemente dejaría de renovar sin enterarse, y
+        // nosotros perseguiríamos a mano cada mes. La suscripción es con
+        // tarjeta —débito o crédito— o no es.
         return view('subscriptions.checkout', [
             'lawyer' => $lawyer,
             'plan' => $plan,
@@ -66,10 +71,7 @@ class SubscriptionCheckoutController
             'subscription' => $subscription,
             'wompi' => $this->wompi,
             'acceptance' => $this->wompi->isEnabled() ? $this->wompi->acceptanceTokens() : null,
-            'transaction' => $transaction,
-            'checkoutFields' => $transaction
-                ? $this->wompi->checkoutFields($transaction, route('wompi.return', $transaction->reference))
-                : [],
+            'verifier' => $this->verifier,
             'plans' => LawyerPlan::query()->active()->get(),
         ]);
     }
@@ -126,30 +128,83 @@ class SubscriptionCheckoutController
 
         // Con meses gratis no se cobra nada hoy; con precio de lanzamiento, el
         // primer periodo se cobra contra la tarjeta que acaba de registrar.
-        if ($quote->dueToday === 0) {
-            $this->subscriptions->beginPromoPeriod($subscription, $quote);
+        return $quote->dueToday === 0
+            ? $this->startFreePeriod($subscription)
+            : $this->chargeFirstPeriod($subscription, $quote, (string) $lawyer->email);
+    }
 
-            return redirect()->to(url('/portal'))->with(
-                'status',
-                'Listo. Tu plan arranca hoy y el primer cobro es el '
-                    .$subscription->refresh()->trial_ends_at?->translatedFormat('j \d\e F \d\e Y')
-                    .'. Puedes cancelar antes sin costo.',
-            );
+    /**
+     * Arranca los meses de invitación, pero solo con la tarjeta comprobada.
+     *
+     * Aquí no hay cobro que pruebe nada, así que se cobra el mínimo y se
+     * anula. Sin eso, una tarjeta falsa pasaría el alta y nos enteraríamos
+     * tres meses después, cuando el abogado ya lleva un trimestre publicado.
+     */
+    private function startFreePeriod(LawyerSubscription $subscription): RedirectResponse
+    {
+        $verificacion = $this->verifier->verify($subscription);
+
+        if ($verificacion->outcome === CardCheck::Declined || $verificacion->outcome === CardCheck::Failed) {
+            $this->subscriptions->forgetCard($subscription);
+
+            return back()->with('paymentError', $verificacion->message());
         }
 
-        $transaction = $this->wompi->open($subscription, $quote->dueToday, (string) $lawyer->email, 'SUB');
-        $charged = $this->wompi->chargeStoredCard($transaction, (string) $subscription->payment_source_id);
+        if ($verificacion->outcome === CardCheck::Pending) {
+            // El webhook lo cierra. No se arranca el plan todavía: publicar
+            // el perfil de alguien cuya tarjeta no sabemos si sirve es
+            // exactamente lo que esto venía a evitar.
+            return redirect()->to(url('/portal'))->with('status', $verificacion->message());
+        }
 
-        if ($charged === null) {
-            return back()->with('paymentError', 'La tarjeta quedó registrada, pero el cobro no se pudo iniciar. Escríbenos y lo resolvemos sin que pierdas la promoción.');
+        // Anular, dar la tarjeta por buena y arrancar los meses lo hizo ya el
+        // procesador de pagos, que es el mismo que atiende al webhook.
+        $aviso = $verificacion->pendingRefund
+            ? ' Hicimos un cobro de '.$this->verifier->formattedAmount()
+                .' para comprobarla y no se pudo anular al instante; te lo devolvemos y te escribimos.'
+            : ' El cobro de '.$this->verifier->formattedAmount()
+                .' con el que la comprobamos ya quedó anulado; si alcanza a aparecer en tu extracto, se cae solo.';
+
+        return redirect()->to(url('/portal'))->with(
+            'status',
+            'Listo. Tu plan arranca hoy y el primer cobro es el '
+                .$subscription->refresh()->trial_ends_at?->translatedFormat('j \d\e F \d\e Y')
+                .'. Puedes cancelar antes sin costo.'.$aviso,
+        );
+    }
+
+    /** El primer periodo con precio de lanzamiento: ese cobro ya es la prueba. */
+    private function chargeFirstPeriod(LawyerSubscription $subscription, SubscriptionQuote $quote, string $email): RedirectResponse
+    {
+        $transaction = $this->wompi->open($subscription, $quote->dueToday, $email, 'SUB');
+
+        if ($this->wompi->chargeStoredCard($transaction, (string) $subscription->payment_source_id) === null) {
+            $this->subscriptions->forgetCard($subscription);
+
+            return back()->with('paymentError', 'No pudimos iniciar el cobro con esa tarjeta. Revísala o prueba con otra; no te hemos cobrado nada.');
+        }
+
+        // Se espera un momento al banco para poder contestarle en esta misma
+        // pantalla. Si tarda, lo cierra el webhook.
+        $desenlace = $this->verifier->awaitOutcome($transaction);
+
+        if ($desenlace === CardCheck::Declined) {
+            $this->subscriptions->forgetCard($subscription);
+
+            return back()->with(
+                'paymentError',
+                (new CardVerification($desenlace, $transaction, $transaction->refresh()->status_message))->message(),
+            );
         }
 
         $quote->promo?->redeem();
 
         return redirect()->to(url('/portal'))->with(
             'status',
-            'Registramos tu tarjeta y el cobro de '.$quote->formattedDueToday()
-                .' está en proceso. Te avisamos por correo en cuanto el banco lo confirme.',
+            $desenlace === CardCheck::Approved
+                ? 'Listo: cobramos '.$quote->formattedDueToday().' y tu plan ya está activo.'
+                : 'Registramos tu tarjeta y el cobro de '.$quote->formattedDueToday()
+                    .' está en proceso. Te avisamos por correo en cuanto el banco lo confirme.',
         );
     }
 

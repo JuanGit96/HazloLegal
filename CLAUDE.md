@@ -48,6 +48,12 @@ La API cambió respecto de v3 y v4. Lo que se usa aquí:
   revienta en tiempo de ejecución, no al compilar.
 - `App\Models\User` implementa `FilamentUser`. Sin eso, en producción el panel
   devuelve 403 a todo el mundo.
+- **Nada de utilidades de Tailwind en las vistas propias del panel.** Filament
+  se sirve con su CSS ya compilado y ese archivo solo trae sus clases `fi-`;
+  una utilidad suelta no existe en ninguna hoja y el bloque sale sin formato.
+  Lo propio va con prefijo `hl-` en `public/css/panel.css`, que se enlaza con
+  un render hook y usa las variables que Filament publica en `:root`.
+  `PanelStylesTest` falla si vuelve a colarse una.
 
 ## Sitio público
 
@@ -99,8 +105,12 @@ Nunca escribir `<title>` ni JSON-LD a mano en una plantilla.
 - Los datos estructurados de cada tipo de página.
 - Que todos los listados y fichas del panel cargan.
 - Que lo opcional de cookies no corre sin permiso, y que revocar deja rastro.
+- Que bajarse de plan no quita nada el mismo día, que entra en la renovación
+  y que a quien se va no se le cobra.
+- Que las vistas propias del panel no usan clases que nadie compila.
 - Las dos entradas a la suscripción (invitación y precio de lanzamiento) y que
-  la tarjeta se valida en las dos.
+  la tarjeta se comprueba con un cobro real en las dos, incluido el caso en
+  que el banco la rechaza o tarda en contestar.
 
 Si tocas el reparto de casos, los precios o el SEO, añade el test antes.
 
@@ -134,5 +144,26 @@ de la empresa:
 - **Toda promoción dice con fecha qué se cobra después.** Los meses gratis y
   los descuentos viven en `subscription_promos`, no en el plan, y la pantalla
   muestra siempre las dos cifras: lo de hoy y lo de después.
+- **La suscripción del abogado es solo con tarjeta.** Nequi, PSE y
+  transferencia no dejan nada con qué cobrar el periodo siguiente, y una
+  suscripción que hay que perseguir a mano cada mes no es una suscripción.
+- **Subir de plan entra hoy; bajar y cancelar entran en la renovación.** El
+  periodo está pagado: quitarle antes lo que compró es cobrarle por algo que
+  no se entrega. Lo pedido se guarda (`scheduled_plan_id`, `ends_at`) y lo
+  ejecuta el comando diario el día que toca.
+- **El plan más barato solo se ofrece en la salida.** Un botón de «bajarme de
+  plan» en la pantalla de la cuenta le planta la idea a quien no la traía. En
+  `CancelSubscription` ya decidió irse, y ahí la opción barata recupera plata
+  en vez de regalarla. Antes de confirmar se le enseñan sus propias cifras y
+  qué deja de tener, nunca argumentos.
+- **Las guías de un abogado no se bajan del sitio cuando se va.** Lo que
+  escribió sigue publicado y con su firma; lo que desaparece es la ficha del
+  directorio y el enlace a ella desde el artículo (`offersBlogPlacement()`).
+  Se dice así en la pantalla de salida y en el correo.
+- **Una tarjeta no se da por buena hasta que un cobro real la apruebe.**
+  Wompi devuelve «disponible» para tarjetas que el banco después rechaza, así
+  que cuando hoy no hay nada que cobrar se cobra el mínimo ($1.500) y se
+  anula: `CardVerifier`. El cobro se anuncia **antes** de hacerlo, y
+  `card_validated_at` solo lo escribe `confirmCard()`.
 
 `PublicSeoTest` tiene tests que fallan si alguna de estas reglas se rompe.

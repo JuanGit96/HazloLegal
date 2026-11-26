@@ -75,6 +75,28 @@ class CookieConsentTest extends TestCase
             ->assertSee('googletagmanager.com', false);
     }
 
+    public function test_contestar_por_fetch_no_obliga_a_recargar(): void
+    {
+        // Recargar a quien está leyendo un artículo o llenando un trámite es
+        // peor que el propio aviso.
+        $this->postJson(route('cookies.store'), ['decision' => 'all'])
+            ->assertOk()
+            ->assertJson(['ok' => true])
+            ->assertJsonStructure(['ok', 'message']);
+
+        $this->assertSame('all', CookieConsent::query()->sole()->decision);
+    }
+
+    public function test_sin_javascript_el_aviso_sigue_funcionando(): void
+    {
+        // El formulario es un POST normal: si la respuesta dejara de ser una
+        // redirección, quien tenga JavaScript desactivado se quedaría
+        // mirando un JSON.
+        $this->post(route('cookies.store'), ['decision' => 'necessary', 'redirect' => '/documentos'])
+            ->assertRedirect('/documentos')
+            ->assertSessionHas('status');
+    }
+
     public function test_rechazar_queda_registrado_y_no_carga_nada_opcional(): void
     {
         config(['hazlolegal.seo.ga_measurement_id' => 'G-PRUEBA123']);

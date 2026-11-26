@@ -9,6 +9,7 @@ use App\Domain\Shared\Concerns\RoundsPrices;
 use App\Domain\Subscriptions\Data\SubscriptionQuote;
 use App\Domain\Subscriptions\Enums\BillingPeriod;
 use App\Domain\Subscriptions\Models\LawyerPlan;
+use App\Domain\Subscriptions\Models\LawyerSubscription;
 use App\Domain\Subscriptions\Models\SubscriptionPromo;
 
 /**
@@ -66,6 +67,26 @@ final class SubscriptionPromoService
             ->get()
             ->first(fn (SubscriptionPromo $promo) => $promo->isRedeemable()
                 && ($plan === null || $promo->appliesTo($plan)));
+    }
+
+    /**
+     * La condición que ya tiene pactada una suscripción.
+     *
+     * Hace falta fuera de la petición web —el webhook cierra el alta cuando
+     * el banco tarda en responder— y ahí no hay sesión ni código en la URL:
+     * la condición se reconstruye de lo que la suscripción tiene guardado.
+     */
+    public function quoteFor(LawyerSubscription $subscription): ?SubscriptionQuote
+    {
+        $subscription->loadMissing(['plan', 'promo']);
+
+        return $subscription->plan instanceof LawyerPlan
+            ? $this->quote(
+                $subscription->plan,
+                $subscription->billing_period ?? BillingPeriod::Monthly,
+                $subscription->promo,
+            )
+            : null;
     }
 
     /**

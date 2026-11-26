@@ -7,6 +7,7 @@ namespace App\Console\Commands;
 use App\Domain\Payments\Services\WompiGateway;
 use App\Domain\Subscriptions\Enums\SubscriptionStatus;
 use App\Domain\Subscriptions\Models\LawyerSubscription;
+use App\Domain\Subscriptions\Services\SubscriptionService;
 use Illuminate\Console\Command;
 
 /**
@@ -14,6 +15,12 @@ use Illuminate\Console\Command;
  *
  * Esto es lo que le da sentido a pedir la tarjeta al principio: sin un cobro
  * automático, los meses gratis serían meses gratis y nada más.
+ *
+ * Antes de cobrar aplica lo que el abogado pidió semanas atrás: a quien
+ * se va no se le cobra, y a quien se bajó de plan se le cobra el plan
+ * nuevo. Por eso la lista de vencidas se arma sin filtrar por tarjeta:
+ * una cancelación programada tiene que ejecutarse aunque no haya nada
+ * que cobrar.
  *
  * Solo cobra lo que tiene autorización expresa (`recurring_authorized_at`).
  * Quien pagó por Nequi o PSE no deja tarjeta: a ese se le escribe, no se le
@@ -26,7 +33,7 @@ class SubscriptionsCharge extends Command
 
     protected $description = 'Cobra las renovaciones vencidas contra la tarjeta registrada de cada abogado';
 
-    public function handle(WompiGateway $wompi): int
+    public function handle(WompiGateway $wompi, SubscriptionService $subscriptions): int
     {
         if (! $wompi->isEnabled()) {
             $this->error('La pasarela está desactivada: revisa la configuración de Wompi.');
@@ -35,10 +42,8 @@ class SubscriptionsCharge extends Command
         }
 
         $vencidas = LawyerSubscription::query()
-            ->with(['lawyer', 'plan', 'promo'])
+            ->with(['lawyer', 'plan', 'scheduledPlan', 'promo'])
             ->whereIn('status', [SubscriptionStatus::Trialing, SubscriptionStatus::Active, SubscriptionStatus::PastDue])
-            ->whereNotNull('payment_source_id')
-            ->whereNotNull('recurring_authorized_at')
             ->whereNotNull('renews_at')
             ->where('renews_at', '<=', now())
             ->get();
@@ -51,19 +56,44 @@ class SubscriptionsCharge extends Command
 
         $seco = (bool) $this->option('dry-run');
         $cobradas = 0;
+        $cerradas = 0;
 
         foreach ($vencidas as $subscription) {
+            $nombre = mb_strimwidth((string) $subscription->lawyer?->name, 0, 34, '…');
+
+            if ($seco) {
+                $this->line(sprintf('%-34s %s', $nombre, $this->loQueVaAPasar($subscription)));
+
+                continue;
+            }
+
+            // Lo pedido se ejecuta antes de mirar la tarjeta: cobrarle el
+            // plan viejo a quien se bajó, o cobrarle a quien se va, es la
+            // clase de error que termina en una disputa con el banco.
+            if ($subscriptions->applyScheduled($subscription)) {
+                $this->line(sprintf('%-34s %s', $nombre, 'se va hoy, como pidió. No se cobra.'));
+                $cerradas++;
+
+                continue;
+            }
+
             $monto = $subscription->nextChargeAmount();
             $correo = (string) $subscription->lawyer?->email;
 
             $this->line(sprintf(
                 '%-34s %-14s %s',
-                mb_strimwidth((string) $subscription->lawyer?->name, 0, 34, '…'),
+                $nombre,
                 '$'.number_format($monto, 0, ',', '.'),
                 $subscription->cardLabel() ?? '—',
             ));
 
-            if ($seco || $monto <= 0 || $correo === '') {
+            if ($monto <= 0 || $correo === '') {
+                continue;
+            }
+
+            if (blank($subscription->payment_source_id) || $subscription->recurring_authorized_at === null) {
+                $this->line('  Sin tarjeta autorizada: a este se le escribe, no se le cobra.');
+
                 continue;
             }
 
@@ -90,9 +120,29 @@ class SubscriptionsCharge extends Command
 
         $this->newLine();
         $this->info($seco
-            ? $vencidas->count().' renovación(es) vencida(s). No se cobró nada.'
-            : $cobradas.' cobro(s) iniciado(s). El resultado lo confirma el webhook.');
+            ? $vencidas->count().' renovación(es) vencida(s). No se cobró ni se cambió nada.'
+            : $cobradas.' cobro(s) iniciado(s) y '.$cerradas.' cierre(s). El resultado lo confirma el webhook.');
 
         return self::SUCCESS;
+    }
+
+    /** Qué haría hoy con esta suscripción, para el `--dry-run`. */
+    private function loQueVaAPasar(LawyerSubscription $subscription): string
+    {
+        if ($subscription->ends_at !== null && ! $subscription->ends_at->isFuture()) {
+            return 'se cierra: pidió irse.';
+        }
+
+        $monto = '$'.number_format($subscription->nextChargeAmount(), 0, ',', '.');
+
+        if ($subscription->scheduledPlan !== null) {
+            return 'baja a '.$subscription->scheduledPlan->name.' y se le cobra ese plan.';
+        }
+
+        if (blank($subscription->payment_source_id) || $subscription->recurring_authorized_at === null) {
+            return $monto.' — sin tarjeta autorizada, no se cobra.';
+        }
+
+        return $monto.' a '.($subscription->cardLabel() ?? 'su tarjeta');
     }
 }

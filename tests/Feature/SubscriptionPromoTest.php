@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Domain\Lawyers\Models\Lawyer;
+use App\Domain\Payments\Enums\PaymentStatus;
 use App\Domain\Payments\Models\PaymentTransaction;
+use App\Domain\Payments\Services\PaymentProcessor;
 use App\Domain\Subscriptions\Enums\BillingPeriod;
 use App\Domain\Subscriptions\Enums\SubscriptionStatus;
 use App\Domain\Subscriptions\Models\LawyerPlan;
@@ -47,6 +49,8 @@ class SubscriptionPromoTest extends TestCase
             'wompi.public_key' => 'pub_test_llave',
             'wompi.private_key' => 'prv_test_llave',
             'wompi.integrity_secret' => 'test_integrity_secret',
+            // Sin esperas: el doble contesta a la primera.
+            'wompi.settle_wait_ms' => 0,
         ]);
 
         Cache::flush();
@@ -65,8 +69,16 @@ class SubscriptionPromoTest extends TestCase
         $this->actingAs($user);
     }
 
-    /** Wompi responde lo que responde de verdad: comprobado contra el sandbox. */
-    private function fingirWompi(bool $tarjetaValida = true): void
+    private const TX = '12264626-1795465102-18981';
+
+    /**
+     * Wompi responde lo que responde de verdad: comprobado contra el sandbox.
+     *
+     * `$banco` es lo que contesta el emisor cuando se consulta el cobro, que
+     * es el único paso que distingue una tarjeta buena de una que la
+     * pasarela aceptó como «disponible» y el banco rechaza.
+     */
+    private function fingirWompi(bool $tarjetaValida = true, string $banco = 'APPROVED', bool $anula = true): void
     {
         Http::fake([
             '*/merchants/*' => Http::response([
@@ -92,10 +104,35 @@ class SubscriptionPromoTest extends TestCase
                 : Http::response([
                     'error' => ['type' => 'INPUT_VALIDATION_ERROR', 'messages' => ['number' => ['Tarjeta inválida.']]],
                 ], 422),
+
+            // El orden importa: el patrón más específico primero.
+            '*/transactions/*/void' => $anula
+                ? Http::response(['data' => ['status' => 'APPROVED', 'transaction' => ['id' => self::TX, 'status' => 'VOIDED']]])
+                : Http::response(['data' => ['type' => 'unprocessable', 'reason' => 'Sólo las transacciones aprobadas pueden ser potencialmente anuladas.']]),
+
+            // Cierre, no respuesta hecha: la referencia y el monto de la
+            // transacción todavía no existen cuando se arma el doble.
+            '*/transactions/*' => fn () => Http::response(['data' => $this->desenlace($banco)]),
+
             '*/transactions' => Http::response([
-                'data' => ['id' => '12264626-1795465102-18981', 'status' => 'PENDING'],
+                'data' => ['id' => self::TX, 'status' => 'PENDING'],
             ]),
         ]);
+    }
+
+    /** Lo que devuelve la consulta del cobro, con el monto que se abrió. */
+    private function desenlace(string $banco): array
+    {
+        return [
+            'id' => self::TX,
+            'status' => $banco,
+            'status_message' => $banco === 'DECLINED' ? 'La transacción fue rechazada' : null,
+            'payment_method_type' => 'CARD',
+            // Sin referencia ni monto, el procesador no puede comprobar que
+            // los datos son de esta transacción; se rellenan al vuelo.
+            'reference' => PaymentTransaction::query()->latest('id')->value('reference'),
+            'amount_in_cents' => PaymentTransaction::query()->latest('id')->value('amount_in_cents'),
+        ];
     }
 
     // -------------------------------------------------- El cálculo
@@ -229,7 +266,7 @@ class SubscriptionPromoTest extends TestCase
             ->assertSee('https://wompi.com/reglamento.pdf', escape: false);
     }
 
-    public function test_con_meses_gratis_se_valida_la_tarjeta_y_no_se_cobra_nada(): void
+    public function test_con_meses_gratis_se_comprueba_la_tarjeta_con_un_cobro_que_se_anula(): void
     {
         $this->fingirWompi();
         $this->lawyer->forceFill(['invitation_code' => 'FUNDADORES'])->saveQuietly();
@@ -249,11 +286,106 @@ class SubscriptionPromoTest extends TestCase
         $this->assertSame('422145', $subscription->payment_source_id);
         $this->assertSame('VISA ·· 4242', $subscription->cardLabel());
         $this->assertNotNull($subscription->card_validated_at);
-        $this->assertNotNull($subscription->recurring_authorized_at);
         $this->assertTrue($subscription->trial_ends_at->isFuture());
 
-        // Nada que cobrar hoy: ni una transacción abierta.
-        $this->assertSame(0, PaymentTransaction::query()->count());
+        // El único movimiento es la comprobación, y queda anulada: hoy no se
+        // le cobró nada al abogado.
+        $verificacion = PaymentTransaction::query()->sole();
+
+        $this->assertTrue($verificacion->isVerification());
+        $this->assertSame(1_500_00, (int) $verificacion->amount_in_cents);
+        $this->assertSame(PaymentStatus::Voided, $verificacion->status);
+        $this->assertNotNull($verificacion->voided_at);
+        $this->assertNull($verificacion->paid_at);
+    }
+
+    public function test_una_tarjeta_que_el_banco_rechaza_no_arranca_los_meses_gratis(): void
+    {
+        // Esta es la que importa: la pasarela la acepta como fuente de pago
+        // («AVAILABLE») y solo el cobro revela que no sirve. Sin la
+        // comprobación nos enteraríamos tres meses después.
+        $this->fingirWompi(banco: 'DECLINED');
+        $this->lawyer->forceFill(['invitation_code' => 'FUNDADORES'])->saveQuietly();
+        $this->entrarComo($this->lawyer->refresh());
+
+        $this->from(route('subscription.checkout', ['plan' => $this->plan->id]))
+            ->post(route('subscription.card'), [
+                'card_token' => 'tok_test_ejemplo',
+                'plan' => $this->plan->id,
+                'invitacion' => 'FUNDADORES',
+                'accepts_recurring' => '1',
+            ])
+            ->assertRedirect(route('subscription.checkout', ['plan' => $this->plan->id]))
+            ->assertSessionHas('paymentError');
+
+        $subscription = LawyerSubscription::query()->where('lawyer_id', $this->lawyer->id)->sole();
+
+        $this->assertSame(SubscriptionStatus::PastDue, $subscription->status);
+        $this->assertNull($subscription->trial_ends_at);
+        // La tarjeta rechazada no se guarda: el cobro diario la intentaría
+        // cada mañana y acumularía rechazos.
+        $this->assertNull($subscription->payment_source_id);
+        $this->assertFalse($subscription->hasStoredCard());
+    }
+
+    public function test_si_el_banco_tarda_el_plan_no_arranca_hasta_que_responda(): void
+    {
+        $this->fingirWompi(banco: 'PENDING');
+        $this->lawyer->forceFill(['invitation_code' => 'FUNDADORES'])->saveQuietly();
+        $this->entrarComo($this->lawyer->refresh());
+
+        $this->post(route('subscription.card'), [
+            'card_token' => 'tok_test_ejemplo',
+            'plan' => $this->plan->id,
+            'invitacion' => 'FUNDADORES',
+            'accepts_recurring' => '1',
+        ])->assertRedirect(url('/portal'))->assertSessionHas('status');
+
+        $subscription = LawyerSubscription::query()->where('lawyer_id', $this->lawyer->id)->sole();
+
+        // Publicar el perfil de alguien cuya tarjeta no sabemos si sirve es
+        // justo lo que esto venía a evitar.
+        $this->assertNull($subscription->trial_ends_at);
+        $this->assertNull($subscription->card_validated_at);
+        $this->assertSame(SubscriptionStatus::PastDue, $subscription->status);
+    }
+
+    public function test_la_verificacion_no_activa_la_suscripcion_como_si_fuera_un_pago(): void
+    {
+        $this->fingirWompi(banco: 'PENDING');
+        $this->lawyer->forceFill(['invitation_code' => 'FUNDADORES'])->saveQuietly();
+        $this->entrarComo($this->lawyer->refresh());
+
+        $this->post(route('subscription.card'), [
+            'card_token' => 'tok_test_ejemplo',
+            'plan' => $this->plan->id,
+            'invitacion' => 'FUNDADORES',
+            'accepts_recurring' => '1',
+        ]);
+
+        $verificacion = PaymentTransaction::query()->sole();
+        $subscription = LawyerSubscription::query()->sole();
+
+        // Llega el webhook tarde, con el cobro aprobado. No es un pago: hay
+        // que anularlo y arrancar los meses, no cobrar un periodo.
+        app(PaymentProcessor::class)->apply($verificacion, [
+            'id' => self::TX,
+            'status' => 'APPROVED',
+            'reference' => $verificacion->reference,
+            'amount_in_cents' => $verificacion->amount_in_cents,
+            'payment_method_type' => 'CARD',
+        ]);
+
+        $subscription->refresh();
+
+        $this->assertSame(SubscriptionStatus::Trialing, $subscription->status);
+        $this->assertNotNull($subscription->trial_ends_at);
+        $this->assertNotNull($subscription->card_validated_at);
+
+        // Y la renovación sigue siendo el final de los meses gratis, no un
+        // mes a partir de hoy: esto no fue el pago de un periodo.
+        $this->assertTrue($subscription->renews_at->isSameDay($subscription->trial_ends_at));
+        $this->assertSame(PaymentStatus::Voided, $verificacion->refresh()->status);
     }
 
     public function test_con_precio_de_lanzamiento_se_cobra_el_descuento_contra_la_tarjeta(): void
@@ -271,15 +403,68 @@ class SubscriptionPromoTest extends TestCase
         $subscription = LawyerSubscription::query()->where('lawyer_id', $this->lawyer->id)->sole();
         $transaction = PaymentTransaction::query()->sole();
 
-        $this->assertTrue($subscription->hasStoredCard());
         $this->assertSame(50, (int) $subscription->discount_percentage);
 
-        // Se cobra el precio con descuento, no el de lista.
+        // Aquí el cobro real es la comprobación: no hace falta otro de
+        // $1.500 encima.
+        $this->assertFalse($transaction->isVerification());
         $this->assertLessThan($this->plan->price_monthly * 100, (int) $transaction->amount_in_cents);
-        $this->assertSame('12264626-1795465102-18981', $transaction->gateway_transaction_id);
+        $this->assertSame(self::TX, $transaction->gateway_transaction_id);
 
-        // Y no se da por pagado: eso lo confirma el webhook.
+        // Aprobado por el banco: la tarjeta queda dada por buena y el plan
+        // activo, sin esperar al webhook.
+        $this->assertTrue($subscription->hasStoredCard());
+        $this->assertSame(SubscriptionStatus::Active, $subscription->status);
+    }
+
+    public function test_si_el_banco_rechaza_el_primer_cobro_no_queda_tarjeta_guardada(): void
+    {
+        $this->fingirWompi(banco: 'DECLINED');
+        $this->entrarComo($this->lawyer);
+
+        $this->from(route('subscription.checkout', ['plan' => $this->plan->id]))
+            ->post(route('subscription.card'), [
+                'card_token' => 'tok_test_ejemplo',
+                'plan' => $this->plan->id,
+                'accepts_recurring' => '1',
+            ])
+            ->assertRedirect(route('subscription.checkout', ['plan' => $this->plan->id]))
+            ->assertSessionHas('paymentError');
+
+        $subscription = LawyerSubscription::query()->sole();
+
+        $this->assertNull($subscription->payment_source_id);
         $this->assertNotSame(SubscriptionStatus::Active, $subscription->status);
+    }
+
+    public function test_la_suscripcion_no_ofrece_medios_sin_tarjeta_guardada(): void
+    {
+        $this->fingirWompi();
+        $this->entrarComo($this->lawyer);
+
+        // Nequi y PSE no dejan nada con qué cobrar el periodo siguiente: un
+        // abogado que pagara así dejaría de renovar sin enterarse. Se
+        // nombran en el texto para explicar por qué no están, pero no hay
+        // forma de salir a pagar con ellos.
+        $this->get(route('subscription.checkout', ['plan' => $this->plan->id]))
+            ->assertOk()
+            ->assertSeeText('Débito o crédito')
+            ->assertDontSee('checkout.wompi.co', escape: false)
+            ->assertDontSeeText('por otro medio')
+            ->assertDontSeeText('Prefiero pagar con Nequi');
+    }
+
+    public function test_el_cobro_de_verificacion_se_anuncia_antes_de_hacerlo(): void
+    {
+        $this->fingirWompi();
+        $this->lawyer->forceFill(['invitation_code' => 'FUNDADORES'])->saveQuietly();
+        $this->entrarComo($this->lawyer->refresh());
+
+        // Un cargo que nadie avisó acaba en una disputa con el banco.
+        $this->get(route('subscription.checkout', ['plan' => $this->plan->id, 'invitacion' => 'FUNDADORES']))
+            ->assertOk()
+            ->assertSeeText('$1.500')
+            ->assertSeeText('lo anularemos enseguida');
     }
 
     public function test_una_tarjeta_que_la_pasarela_rechaza_no_arranca_la_suscripcion(): void

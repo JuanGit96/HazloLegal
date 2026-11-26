@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Documents\Services;
 
+use App\Domain\Analytics\Enums\MetricKind;
+use App\Domain\Analytics\Services\MetricRecorder;
+use App\Domain\Catalog\Services\ClauseComposer;
 use App\Domain\Orders\Models\Order;
 use App\Domain\Settings\Services\SettingsService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -62,6 +66,11 @@ final class InstructionsPdfBuilder
         if ($lawyers->isNotEmpty()) {
             $order->update(['featured_lawyer_id' => $lawyers->first()->id]);
             $lawyers->first()->forceFill(['last_placement_at' => now()])->saveQuietly();
+
+            // Ese PDF se imprime y se lleva a una ventanilla: es la
+            // colocación más difícil de explicar y la más fácil de olvidar
+            // si no se cuenta.
+            app(MetricRecorder::class)->record($lawyers->first(), MetricKind::PdfPlacement);
         }
 
         return $path;
@@ -79,7 +88,7 @@ final class InstructionsPdfBuilder
         $seleccion = (array) ($order->answers['casillas'] ?? []);
 
         if ($seleccion !== []) {
-            $compuesto = app(\App\Domain\Catalog\Services\ClauseComposer::class)
+            $compuesto = app(ClauseComposer::class)
                 ->compose($order->document, $seleccion);
 
             return $compuesto['plazo_dias'] ?? null;
@@ -97,7 +106,7 @@ final class InstructionsPdfBuilder
      * cuentan las entidades. Decir «quince días» a secas hace que la gente
      * cuente de corrido y reclame antes de tiempo.
      */
-    private function deadlineDate(Order $order): ?\Carbon\CarbonInterface
+    private function deadlineDate(Order $order): ?CarbonInterface
     {
         $dias = $this->deadlineDays($order);
 

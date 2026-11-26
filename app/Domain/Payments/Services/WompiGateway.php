@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Payments\Services;
 
+use App\Domain\Payments\Enums\PaymentPurpose;
 use App\Domain\Payments\Enums\PaymentStatus;
 use App\Domain\Payments\Models\PaymentTransaction;
 use Illuminate\Database\Eloquent\Model;
@@ -46,8 +47,13 @@ final class WompiGateway
      * @param  Model  $payable  Pedido o suscripción
      * @param  int  $amount  En pesos enteros
      */
-    public function open(Model $payable, int $amount, string $email, string $prefix = 'HL'): PaymentTransaction
-    {
+    public function open(
+        Model $payable,
+        int $amount,
+        string $email,
+        string $prefix = 'HL',
+        PaymentPurpose $purpose = PaymentPurpose::Payment,
+    ): PaymentTransaction {
         // Wompi rechaza dos transacciones con la misma referencia, así que el
         // sufijo permite reintentar un pago fallido sin inventar otro pedido.
         $reference = $prefix.'-'.$payable->getKey().'-'.strtoupper(Str::random(6));
@@ -56,6 +62,7 @@ final class WompiGateway
             'payable_type' => $payable->getMorphClass(),
             'payable_id' => $payable->getKey(),
             'gateway' => 'wompi',
+            'purpose' => $purpose,
             'reference' => $reference,
             'amount_in_cents' => $amount * 100,
             'currency' => config('wompi.currency'),
@@ -316,6 +323,63 @@ final class WompiGateway
         }
 
         return $id === null ? null : (string) $id;
+    }
+
+    /**
+     * Anula una transacción aprobada.
+     *
+     * Solo sirve mientras la transacción está aprobada y sin liquidar, así
+     * que el cobro de verificación se anula en el mismo segundo. Pasado ese
+     * momento Wompi responde «sólo las transacciones aprobadas pueden ser
+     * potencialmente anuladas» y ya no hay vuelta atrás por aquí: habría que
+     * pedir un reembolso, que tarda días.
+     */
+    public function voidTransaction(PaymentTransaction $transaction): bool
+    {
+        if (blank($transaction->gateway_transaction_id)) {
+            return false;
+        }
+
+        try {
+            // El cuerpo va explícito: `post()` sin datos manda `[]`, que es
+            // un arreglo JSON, y Wompi lo rechaza con «el cuerpo del
+            // mensaje no es un objeto JSON válido». Cuesta una tarde
+            // averiguarlo.
+            $response = Http::withToken((string) config('wompi.private_key'))
+                ->withBody('{}', 'application/json')
+                ->timeout(20)
+                ->post($this->apiUrl().'/transactions/'.$transaction->gateway_transaction_id.'/void');
+        } catch (\Throwable $e) {
+            Log::error('No se pudo anular la transacción en Wompi', [
+                'reference' => $transaction->reference,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+
+        // Wompi responde 201 también cuando se niega a anular, y el motivo
+        // viene en el cuerpo: hay que mirarlo, no el código.
+        $anulada = $response->successful()
+            && strtoupper((string) $response->json('data.status')) === 'APPROVED'
+            && $response->json('data.transaction') !== null;
+
+        if (! $anulada) {
+            Log::error('Wompi no anuló la transacción', [
+                'reference' => $transaction->reference,
+                'motivo' => $response->json('data.reason') ?? $response->body(),
+            ]);
+
+            return false;
+        }
+
+        $transaction->update([
+            'status' => PaymentStatus::Voided,
+            'voided_at' => now(),
+            'paid_at' => null,
+        ]);
+
+        return true;
     }
 
     public function apiUrl(): string

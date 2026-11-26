@@ -16,6 +16,47 @@ class ContactFormsTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_lo_que_publicamos_es_el_correo_de_contacto_y_no_el_remitente(): void
+    {
+        // Son dos direcciones con oficios distintos: a contacto@ escribe la
+        // gente, y hola@ es con el que salen los nuestros. Publicar el
+        // remitente llenaría esa bandeja de respuestas a correos
+        // automáticos y de rebotes.
+        $this->assertSame('contacto@hazlolegal.co', config('hazlolegal.contact.email'));
+        $this->assertSame('hola@hazlolegal.co', config('mail.from.address'));
+
+        foreach (['pages.cookies', 'pages.privacy', 'pages.terms', 'pages.contact', 'pages.about'] as $ruta) {
+            $this->get(route($ruta))
+                ->assertOk()
+                ->assertSeeText('contacto@hazlolegal.co')
+                ->assertDontSeeText('hola@hazlolegal.co');
+        }
+    }
+
+    public function test_el_correo_que_recibe_el_cliente_sale_del_remitente_y_responde_al_de_contacto(): void
+    {
+        Mail::fake();
+
+        $this->post(route('pages.contact.store'), [
+            'name' => 'Andrés Gómez',
+            'email' => 'andres@example.com',
+            'phone' => '3009876543',
+            'subject' => 'Pregunta',
+            'message' => 'Quisiera saber si ustedes hacen contratos de obra labor.',
+            'accepts_privacy' => '1',
+        ]);
+
+        Mail::assertSent(ContactAcknowledgementMail::class, function (ContactAcknowledgementMail $mail) {
+            $envelope = $mail->envelope();
+
+            // Quien responda a un correo nuestro tiene que llegar a la
+            // bandeja que alguien lee, no al buzón de envío.
+            return collect($envelope->replyTo)->contains(
+                fn ($address) => $address->address === 'contacto@hazlolegal.co'
+            );
+        });
+    }
+
     public function test_el_formulario_de_contacto_deja_registro_y_manda_los_dos_correos(): void
     {
         Mail::fake();

@@ -126,15 +126,29 @@
             {{ $quote->startsFree() ? 'Registra tu tarjeta para empezar' : 'Paga con tarjeta' }}
         </h2>
         <p class="text-sm text-muted">
-            @if ($quote->startsFree())
-                Hoy no te cobramos nada. La necesitamos para confirmar que es válida y para
-                cobrar la renovación cuando se acaben los meses gratis, y puedes cancelar
-                antes sin costo.
-            @else
-                Queda registrada para la renovación, así no tienes que volver a escribirla
-                cada periodo.
-            @endif
+            Débito o crédito. La suscripción solo acepta tarjeta porque es lo único que
+            permite cobrar la renovación sola; con Nequi o PSE tendrías que acordarte tú
+            cada periodo.
         </p>
+
+        @if ($quote->startsFree())
+            {{-- El cobro de verificación se anuncia antes de hacerlo. Un cargo
+                 que nadie avisó acaba en una disputa con el banco, y eso
+                 cuesta mucho más que el mes que se iba a cobrar. --}}
+            <div class="alert alert--info" style="margin: var(--s5) 0;">
+                <span class="alert__icon" aria-hidden="true">💳</span>
+                <div>
+                    <strong>Haremos un cobro de {{ $verifier->formattedAmount() }} y lo anularemos enseguida.</strong>
+                    <p style="margin-top: var(--s1);">
+                        Es la única forma de saber que tu tarjeta funciona de verdad: sin esto
+                        nos enteraríamos dentro de {{ $quote->freeMonths }} meses, cuando toque
+                        el primer cobro. No te quedamos debiendo nada. Si alcanza a aparecer en
+                        tu extracto, se cae solo; en débito algunos bancos tardan un par de días
+                        en devolverlo.
+                    </p>
+                </div>
+            </div>
+        @endif
 
         @if ($subscription->hasStoredCard())
             <div class="alert alert--success" style="margin: var(--s5) 0;">
@@ -185,6 +199,8 @@
                 <span>
                     Autorizo a {{ config('hazlolegal.brand.legal_name') }} a cobrar en esta tarjeta
                     @if ($quote->startsFree())
+                        <strong>{{ $verifier->formattedAmount() }} ahora para comprobarla, que se anula
+                        enseguida</strong>, y
                         <strong>{{ $quote->formattedRecurringPrice() }} cada {{ $quote->periodLabel() }} a partir del
                         {{ $quote->firstChargeAt?->translatedFormat('j \d\e F \d\e Y') }}</strong>,
                     @else
@@ -205,20 +221,21 @@
 
             <button type="submit" class="btn btn--primary btn--block btn--lg" id="btn-tarjeta">
                 {{ $quote->startsFree()
-                    ? 'Validar tarjeta y empezar'
+                    ? 'Comprobar mi tarjeta y empezar'
                     : 'Pagar '.$quote->formattedDueToday().' y activar' }}
             </button>
         </form>
 
         <p class="text-xs text-muted" style="margin-top: var(--s4);">
-            Validamos la tarjeta contra la red para descartar un número mal escrito o una tarjeta
-            vencida. Esa validación no es una promesa de que el banco apruebe cada cobro futuro:
-            si alguno falla te avisamos antes de suspender nada.
+            Comprobamos la tarjeta con un cobro real contra tu banco, que es lo que descarta un
+            número inventado, una tarjeta sin cupo o un débito no habilitado para compras en
+            línea. Que hoy la apruebe no garantiza que apruebe todos los cobros futuros: si
+            alguno falla te escribimos antes de suspender nada.
         </p>
 
         <div class="pay-badges">
             <span>🔒 Cifrado de punta a punta</span>
-            <span>💳 Visa y Mastercard</span>
+            <span>💳 Débito y crédito</span>
             <span>🚫 No guardamos tu número</span>
         </div>
 
@@ -242,13 +259,8 @@
                     <strong>Necesitas JavaScript para registrar la tarjeta.</strong>
                     <p style="margin-top: var(--s1);">
                         Es a propósito: así los datos de tu tarjeta van de tu navegador a la pasarela
-                        sin pasar por nuestros servidores. Si lo tienes desactivado,
-                        @if ($transaction)
-                            usa el botón de pago de abajo
-                        @else
-                            escríbenos a {{ config('hazlolegal.contact.email') }}
-                        @endif
-                        y lo resolvemos.
+                        sin pasar por nuestros servidores. Si lo tienes desactivado, escríbenos a
+                        {{ config('hazlolegal.contact.email') }} y te activamos el plan a mano.
                     </p>
                 </div>
             </div>
@@ -256,28 +268,10 @@
     </div>
 @endif
 
-{{-- ---------------- Otros medios de pago ----------------
-     Nequi y PSE no dejan tarjeta guardada, así que se dice: hay que renovar
-     a mano cada periodo. --}}
-@if ($transaction)
-    <div class="card card--pad-lg mt-6">
-        <h2 style="font-size: var(--t-base);">Prefiero pagar con Nequi, PSE o transferencia</h2>
-        <p class="text-sm text-muted">
-            También funciona, pero con estos medios no queda tarjeta registrada: te
-            escribiremos para que renueves a mano al final de cada periodo.
-        </p>
-
-        <form action="{{ $wompi->checkoutUrl() }}" method="GET" style="margin-top: var(--s5);">
-            @foreach ($checkoutFields as $name => $value)
-                <input type="hidden" name="{{ $name }}" value="{{ $value }}">
-            @endforeach
-
-            <button type="submit" class="btn btn--outline btn--block">
-                Pagar {{ $quote->formattedDueToday() }} por otro medio
-            </button>
-        </form>
-    </div>
-@elseif (! $acceptance)
+{{-- Nequi, PSE y transferencia no aparecen a propósito: ninguno deja nada
+     con qué cobrar el periodo siguiente, y una suscripción que hay que
+     perseguir a mano cada mes no es una suscripción. --}}
+@if (! $acceptance)
     <div class="card card--pad-lg mt-6">
         <div class="alert alert--info">
             <span class="alert__icon" aria-hidden="true">ℹ️</span>

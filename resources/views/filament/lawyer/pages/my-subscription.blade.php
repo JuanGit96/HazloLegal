@@ -5,11 +5,11 @@
         <x-filament::section>
             <x-slot name="heading">Todavía no tienes un plan</x-slot>
 
-            <p class="text-sm text-gray-600 dark:text-gray-400">
+            <p class="hl-text">
                 Tu cuenta existe, pero sin plan no apareces en el directorio ni recibes casos.
             </p>
 
-            <div class="mt-4 flex flex-wrap gap-3">
+            <div class="hl-row hl-mt">
                 @foreach (\App\Domain\Subscriptions\Models\LawyerPlan::query()->active()->orderBy('sort_order')->get() as $plan)
                     <x-filament::button
                         tag="a"
@@ -25,30 +25,45 @@
             <x-slot name="heading">{{ $subscription->plan?->name }}</x-slot>
             <x-slot name="description">{{ $subscription->plan?->tagline }}</x-slot>
 
-            <dl class="grid gap-4 sm:grid-cols-3 text-sm">
+            <dl class="hl-facts">
                 <div>
-                    <dt class="text-gray-500">Estado</dt>
-                    <dd class="font-semibold">{{ $subscription->status?->getLabel() }}</dd>
+                    <dt>Estado</dt>
+                    <dd>{{ $subscription->status?->getLabel() }}</dd>
                 </div>
                 <div>
-                    <dt class="text-gray-500">Pagas</dt>
-                    <dd class="font-semibold">
+                    <dt>Pagas</dt>
+                    <dd>
                         ${{ number_format($subscription->price, 0, ',', '.') }}
                         · {{ $subscription->billing_period?->getLabel() }}
                     </dd>
                 </div>
                 <div>
-                    <dt class="text-gray-500">
-                        {{ $subscription->trial_ends_at ? 'Termina la prueba' : 'Renueva' }}
-                    </dt>
-                    <dd class="font-semibold">
+                    <dt>{{ $subscription->trial_ends_at ? 'Termina la prueba' : 'Renueva' }}</dt>
+                    <dd>
                         {{ ($subscription->trial_ends_at ?? $subscription->renews_at)?->translatedFormat('j \d\e F \d\e Y') ?? '—' }}
                     </dd>
                 </div>
             </dl>
 
+            {{-- Si ya pidió un cambio, eso manda sobre todo lo demás de
+                 esta pantalla: lo primero que tiene que ver es qué pasa y
+                 cuándo. --}}
+            @if ($subscription->isEnding())
+                <p class="hl-text hl-text--warn hl-mt">
+                    <strong>Tu plan termina el {{ $subscription->ends_at?->translatedFormat('j \d\e F \d\e Y') }}.</strong>
+                    Hasta ese día conservas todo. No te vamos a cobrar de nuevo.
+                    <a href="{{ \App\Filament\Lawyer\Pages\CancelSubscription::getUrl() }}" class="hl-link">Seguir con mi plan</a>.
+                </p>
+            @elseif ($subscription->hasScheduledPlan())
+                <p class="hl-text hl-text--accent hl-mt">
+                    <strong>El {{ $subscription->renews_at?->translatedFormat('j \d\e F \d\e Y') }} pasas al plan {{ $subscription->scheduledPlan?->name }}.</strong>
+                    Hasta ese día sigues con todo lo de {{ $subscription->plan?->name }}.
+                    <a href="{{ \App\Filament\Lawyer\Pages\CancelSubscription::getUrl() }}" class="hl-link">Deshacer</a>.
+                </p>
+            @endif
+
             @if ($subscription->trialDaysLeft() !== null)
-                <p class="mt-4 text-sm text-primary-600">
+                <p class="hl-text hl-text--accent hl-mt">
                     Te quedan {{ $subscription->trialDaysLeft() }} días sin costo. El
                     {{ $subscription->trial_ends_at?->translatedFormat('j \d\e F') }} se cobra
                     ${{ number_format($subscription->nextChargeAmount(), 0, ',', '.') }}
@@ -63,54 +78,72 @@
             {{-- La tarjeta y el próximo cobro, siempre a la vista. Un cargo
                  que el abogado no esperaba es una disputa con el banco, y eso
                  cuesta más que el mes que se cobró. --}}
-            <dl class="mt-4 grid gap-4 sm:grid-cols-2 text-sm">
+            <dl class="hl-facts hl-mt">
                 <div>
-                    <dt class="text-gray-500">Tarjeta registrada</dt>
-                    <dd class="font-semibold">
+                    <dt>Tarjeta registrada</dt>
+                    <dd>
                         @if ($subscription->hasStoredCard())
                             {{ $subscription->cardLabel() }}
-                            <span class="block text-xs font-normal text-gray-500">
-                                Autorizaste el cobro automático el
+                            <span class="hl-note">
+                                Comprobada y autorizada el
                                 {{ $subscription->recurring_authorized_at?->translatedFormat('j \d\e F \d\e Y') }}.
+                            </span>
+                        @elseif (filled($subscription->payment_source_id))
+                            {{ $subscription->cardLabel() ?: 'Tu tarjeta' }}
+                            <span class="hl-note">
+                                Estamos esperando la respuesta de tu banco. Te escribimos en cuanto
+                                conteste; hasta entonces el plan no arranca.
                             </span>
                         @else
                             Ninguna
-                            <span class="block text-xs font-normal text-gray-500">
-                                Sin tarjeta hay que renovar a mano cada periodo.
+                            <span class="hl-note">
+                                Sin tarjeta comprobada no podemos cobrar la renovación.
                             </span>
                         @endif
                     </dd>
                 </div>
                 <div>
-                    <dt class="text-gray-500">Próximo cobro</dt>
-                    <dd class="font-semibold">
-                        ${{ number_format($subscription->nextChargeAmount(), 0, ',', '.') }}
-                        @if ($subscription->isInDiscountWindow())
-                            <span class="block text-xs font-normal text-gray-500">
-                                Precio promocional hasta el
-                                {{ $subscription->discount_ends_at?->translatedFormat('j \d\e F \d\e Y') }};
-                                después, ${{ number_format($subscription->plan?->priceFor($subscription->billing_period) ?? 0, 0, ',', '.') }}.
+                    <dt>Próximo cobro</dt>
+                    <dd>
+                        {{-- Cuando el cobro pasa por la pasarela, aquí va la
+                             cifra que la pasarela va a cobrar. Si la pantalla
+                             dice una y dos clics después aparece otra, lo que
+                             se pierde es la confianza, aunque cambie a favor
+                             del abogado. --}}
+                        @if ($oferta = $this->mustCheckout() ? $this->offerFor($subscription->plan) : null)
+                            {{ $oferta->formattedDueToday() }}
+                            <span class="hl-price-was">{{ $oferta->formattedListPrice() }}</span>
+                            <span class="hl-note">
+                                {{ $oferta->headline() }}. Después,
+                                {{ $oferta->formattedRecurringPrice() }} por {{ $oferta->periodLabel() }}@if ($oferta->fullPriceFrom), desde el {{ $oferta->fullPriceFrom->translatedFormat('j \d\e F \d\e Y') }}@endif.
                             </span>
-                        @elseif ($subscription->promo_code)
-                            <span class="block text-xs font-normal text-gray-500">
-                                Entraste con la invitación {{ $subscription->promo_code }}.
-                            </span>
+                        @else
+                            ${{ number_format($subscription->nextChargeAmount(), 0, ',', '.') }}
+                            @if ($subscription->isInDiscountWindow())
+                                <span class="hl-note">
+                                    Precio promocional hasta el
+                                    {{ $subscription->discount_ends_at?->translatedFormat('j \d\e F \d\e Y') }};
+                                    después, ${{ number_format($subscription->plan?->priceFor($subscription->billing_period) ?? 0, 0, ',', '.') }}.
+                                </span>
+                            @elseif ($subscription->promo_code)
+                                <span class="hl-note">
+                                    Entraste con la invitación {{ $subscription->promo_code }}.
+                                </span>
+                            @endif
                         @endif
                     </dd>
                 </div>
             </dl>
 
-            @php
-                $debeRenovar = in_array($subscription->status?->value, ['past_due', 'cancelled'], true)
-                    || $subscription->renews_at?->diffInDays(now()) <= 7
-                    || $subscription->trialDaysLeft() !== null;
-            @endphp
-
-            @if ($debeRenovar && $subscription->plan)
-                <div class="mt-6">
+            {{-- El botón solo cuando hace falta la mano del abogado. Con
+                 tarjeta comprobada y la suscripción al día, el cobro sale
+                 solo; un botón de «renovar» ahí haría pensar que hay algo
+                 pendiente que no existe. --}}
+            @if ($this->mustCheckout())
+                <div class="hl-row hl-mt-lg">
                     <x-filament::button
                         tag="a"
-                        href="{{ route('subscription.checkout', ['plan' => $subscription->plan->id, 'periodo' => $subscription->billing_period?->value]) }}"
+                        href="{{ route('subscription.checkout', ['plan' => $subscription->plan->id, 'periodo' => $this->period()->value]) }}"
                         icon="heroicon-o-credit-card">
                         {{ $subscription->status?->value === 'past_due' ? 'Activar mi plan' : 'Renovar mi plan' }}
                     </x-filament::button>
@@ -121,21 +154,18 @@
         <x-filament::section>
             <x-slot name="heading">Qué incluye tu plan</x-slot>
 
-            <ul class="divide-y divide-gray-100 dark:divide-white/5">
+            <ul class="hl-list">
                 @foreach ($this->features() as $feature)
-                    <li class="flex items-start gap-3 py-3">
-                        <span @class([
-                            'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold',
-                            'bg-success-100 text-success-700' => $feature['included'],
-                            'bg-gray-100 text-gray-400 dark:bg-white/5' => ! $feature['included'],
-                        ])>{{ $feature['included'] ? '✓' : '—' }}</span>
+                    <li>
+                        <span @class(['hl-check', 'is-on' => $feature['included'], 'is-off' => ! $feature['included']])>
+                            {{ $feature['included'] ? '✓' : '—' }}
+                        </span>
 
                         <span>
-                            <span @class([
-                                'block font-medium',
-                                'text-gray-400 line-through' => ! $feature['included'],
-                            ])>{{ $feature['title'] }}</span>
-                            <span class="block text-sm text-gray-500">{{ $feature['description'] }}</span>
+                            <span @class(['hl-feature-title', 'is-off' => ! $feature['included']])>
+                                {{ $feature['title'] }}
+                            </span>
+                            <span class="hl-feature-desc">{{ $feature['description'] }}</span>
                         </span>
                     </li>
                 @endforeach
@@ -146,29 +176,49 @@
             <x-filament::section>
                 <x-slot name="heading">Si necesitas más</x-slot>
 
-                <div class="grid gap-4 sm:grid-cols-2">
+                <div class="hl-grid hl-grid--2">
                     @foreach ($this->upgrades() as $plan)
-                        <div class="rounded-xl ring-1 ring-gray-950/5 dark:ring-white/10 p-4">
-                            <p class="font-semibold">{{ $plan->name }}</p>
-                            <p class="text-sm text-gray-500">{{ $plan->tagline }}</p>
-                            <p class="mt-2 font-bold text-primary-600">
-                                ${{ number_format($plan->price_monthly, 0, ',', '.') }} / mes
-                            </p>
+                        @php $oferta = $this->offerFor($plan); @endphp
+                        <div class="hl-card">
+                            <p class="hl-card-title">{{ $plan->name }}</p>
+                            <p class="hl-card-desc">{{ $plan->tagline }}</p>
+
+                            @if ($oferta)
+                                <p class="hl-price">
+                                    {{ $oferta->formattedDueToday() }}
+                                    <span class="hl-price-was">{{ $oferta->formattedListPrice() }}</span>
+                                </p>
+                                <p class="hl-note">
+                                    {{ $oferta->headline() }}. Después,
+                                    {{ $oferta->formattedRecurringPrice() }} por {{ $oferta->periodLabel() }}@if ($oferta->fullPriceFrom), desde el {{ $oferta->fullPriceFrom->translatedFormat('j \d\e F \d\e Y') }}@endif.
+                                </p>
+                            @else
+                                <p class="hl-price">
+                                    ${{ number_format($plan->priceFor($this->period()), 0, ',', '.') }} / {{ $this->periodLabel() }}
+                                </p>
+                            @endif
                         </div>
                     @endforeach
                 </div>
 
-                <div class="mt-4 flex flex-wrap gap-3">
+                <div class="hl-row hl-mt">
                     @foreach ($this->upgrades() as $plan)
                         <x-filament::button
                             tag="a"
                             color="gray"
-                            href="{{ route('subscription.checkout', ['plan' => $plan->id, 'periodo' => 'monthly']) }}">
+                            href="{{ route('subscription.checkout', ['plan' => $plan->id, 'periodo' => $this->period()->value]) }}">
                             Cambiarme a {{ $plan->name }}
                         </x-filament::button>
                     @endforeach
                 </div>
             </x-filament::section>
         @endif
+        {{-- La salida va al final y sin botón. Quien la busca la encuentra;
+             a quien no la buscaba, ofrecerle un plan más barato en la
+             pantalla de su cuenta solo le planta la idea. --}}
+        <p class="hl-text hl-quiet">
+            ¿Necesitas cambiar de plan o cancelar?
+            <a href="{{ \App\Filament\Lawyer\Pages\CancelSubscription::getUrl() }}" class="hl-link">Mira tus opciones</a>.
+        </p>
     @endif
 </x-filament-panels::page>

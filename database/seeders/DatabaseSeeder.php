@@ -29,6 +29,9 @@ class DatabaseSeeder extends Seeder
             BlogSeeder::class,
             DemoActivitySeeder::class,
             DemoSubscriptionSeeder::class,
+            // Cifras inventadas para poder mirar el portal del abogado antes
+            // de que haya tráfico real. No se ejecuta en producción.
+            DemoMetricsSeeder::class,
         ]);
     }
 }

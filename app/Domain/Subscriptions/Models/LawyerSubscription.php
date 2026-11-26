@@ -9,6 +9,7 @@ use App\Domain\Payments\Enums\PaymentStatus;
 use App\Domain\Payments\Models\PaymentTransaction;
 use App\Domain\Subscriptions\Enums\BillingPeriod;
 use App\Domain\Subscriptions\Enums\SubscriptionStatus;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -32,6 +33,7 @@ class LawyerSubscription extends Model
             'recurring_authorized_at' => 'datetime',
             'started_at' => 'datetime',
             'renews_at' => 'datetime',
+            'ends_at' => 'datetime',
             'cancelled_at' => 'datetime',
             'featured_until' => 'datetime',
         ];
@@ -45,6 +47,12 @@ class LawyerSubscription extends Model
     public function plan(): BelongsTo
     {
         return $this->belongsTo(LawyerPlan::class, 'lawyer_plan_id');
+    }
+
+    /** El plan al que se baja en la próxima renovación, si pidió bajarse. */
+    public function scheduledPlan(): BelongsTo
+    {
+        return $this->belongsTo(LawyerPlan::class, 'scheduled_plan_id');
     }
 
     public function promo(): BelongsTo
@@ -112,6 +120,29 @@ class LawyerSubscription extends Model
         return $this->card_last_four
             ? trim(($this->card_brand ?: 'Tarjeta').' ·· '.$this->card_last_four)
             : null;
+    }
+
+    /** ¿Pidió bajarse de plan y todavía no le toca? */
+    public function hasScheduledPlan(): bool
+    {
+        return $this->scheduled_plan_id !== null;
+    }
+
+    /** ¿Pidió irse, y lo pagado le dura hasta una fecha? */
+    public function isEnding(): bool
+    {
+        return $this->ends_at !== null && $this->status !== SubscriptionStatus::Cancelled;
+    }
+
+    /**
+     * El día en que el cambio pedido entra a regir.
+     *
+     * Es el de la renovación y no el de hoy: el periodo está pagado y
+     * quitarlo antes sería cobrar por algo que no se entregó.
+     */
+    public function changesOn(): ?CarbonInterface
+    {
+        return $this->ends_at ?? $this->renews_at;
     }
 
     public function isInDiscountWindow(): bool

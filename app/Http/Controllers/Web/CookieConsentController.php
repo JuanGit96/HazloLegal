@@ -8,6 +8,7 @@ use App\Domain\Seo\Services\SeoManager;
 use App\Domain\Shared\Enums\CookieCategory;
 use App\Domain\Shared\Services\CookieConsentService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -45,7 +46,7 @@ class CookieConsentController
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $validated = $request->validate([
             'decision' => ['required', 'in:all,necessary,custom'],
@@ -67,20 +68,29 @@ class CookieConsentController
 
         $this->consent->remember($analytics, $marketing, $source);
 
+        $mensaje = $this->message($analytics, $marketing);
+
+        // Con JavaScript el aviso se quita solo y la página no se recarga:
+        // recargar a quien está leyendo un artículo o llenando un trámite es
+        // peor que el aviso. Sin JavaScript sigue el camino de siempre.
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json(['ok' => true, 'message' => $mensaje]);
+        }
+
         // Se vuelve a donde estaba. El destino se valida contra las rutas
         // propias: un «redirect» que acepte cualquier URL es una puerta
         // abierta para mandar visitantes a otro sitio desde un enlace nuestro.
         return redirect()->to($this->safeBack($validated['redirect'] ?? null))
-            ->with('status', $this->message($analytics, $marketing));
+            ->with('status', $mensaje);
     }
 
     private function message(bool $analytics, bool $marketing): string
     {
         if (! $analytics && ! $marketing) {
-            return 'Listo: solo usaremos las cookies necesarias para que el sitio funcione.';
+            return 'Listo: solo las necesarias. Puedes cambiarlo cuando quieras.';
         }
 
-        return 'Guardamos tu preferencia de cookies. Puedes cambiarla cuando quieras desde la política de cookies.';
+        return 'Gracias. Puedes cambiar tu decisión cuando quieras desde el pie de página.';
     }
 
     /** Solo se devuelve a una ruta de este sitio. */

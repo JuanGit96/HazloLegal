@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Content\Services;
 
+use App\Domain\Analytics\Enums\MetricKind;
+use App\Domain\Analytics\Services\MetricRecorder;
 use App\Domain\Content\Models\Post;
 use App\Domain\Content\Models\PostCategory;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -11,6 +13,8 @@ use Illuminate\Support\Collection;
 
 final class BlogService
 {
+    public function __construct(private readonly MetricRecorder $metrics) {}
+
     public function paginate(int $perPage = 9, ?PostCategory $category = null): LengthAwarePaginator
     {
         return Post::query()
@@ -42,7 +46,9 @@ final class BlogService
     {
         return Post::query()
             ->published()
-            ->with(['category', 'author', 'relatedDocument'])
+            // La suscripción del autor viene cargada porque la ficha solo se
+            // ofrece al final del artículo mientras el plan la incluya.
+            ->with(['category', 'author.subscription.plan', 'relatedDocument'])
             ->where('slug', $slug)
             ->first();
     }
@@ -71,5 +77,15 @@ final class BlogService
     public function registerView(Post $post): void
     {
         $post->incrementQuietly('views_count');
+
+        $this->metrics->record($post, MetricKind::ArticleView);
+
+        // La lectura también cuenta para quien firma el artículo: el
+        // abogado que escribe es el que sostiene la autoría acreditada, que
+        // es la señal de posicionamiento más cara de conseguir, y tiene que
+        // poder ver qué le devuelve.
+        if ($post->author_lawyer_id !== null) {
+            $this->metrics->record($post->loadMissing('author')->author, MetricKind::ArticleView);
+        }
     }
 }

@@ -6,7 +6,9 @@ namespace Tests\Feature;
 
 use App\Domain\Catalog\Enums\PracticeArea;
 use App\Domain\Lawyers\Models\Lawyer;
+use App\Domain\LegalCases\Enums\CaseOfferStatus;
 use App\Domain\LegalCases\Enums\CaseStatus;
+use App\Domain\LegalCases\Models\CaseOffer;
 use App\Domain\LegalCases\Models\LegalCase;
 use App\Domain\Shared\Models\Lead;
 use App\Domain\Subscriptions\Enums\BillingPeriod;
@@ -61,6 +63,86 @@ class LawyerPortalTest extends TestCase
         $this->actingAs($user);
 
         return $user;
+    }
+
+    public function test_el_resumen_ensena_los_casos_abiertos_y_lo_que_le_ha_dado_el_plan(): void
+    {
+        $this->conPlan($this->lawyer, 'crecimiento');
+        $this->entrarComo($this->lawyer);
+
+        // Un caso de su área, todavía sin asignar: es lo primero que tiene
+        // que ver al entrar, porque es lo único sobre lo que puede actuar.
+        $case = LegalCase::query()->create([
+            'reference' => 'CC-2026-09001',
+            'client_token' => str_repeat('a', 40),
+            'client_name' => 'Rosa Jiménez',
+            'client_email' => 'rosa@example.com',
+            'client_phone' => '3005550000',
+            'practice_area' => $this->lawyer->practice_areas[0] ?? PracticeArea::Family->value,
+            'title' => 'Necesito ayuda con una sucesión que lleva dos años parada',
+            'description' => 'El notario pide un documento que la alcaldía no expide.',
+            'status' => CaseStatus::Dispatched,
+            'expires_at' => now()->addHours(40),
+        ]);
+
+        CaseOffer::query()->create([
+            'legal_case_id' => $case->id,
+            'lawyer_id' => $this->lawyer->id,
+            'status' => CaseOfferStatus::Pending,
+            'sent_at' => now(),
+        ]);
+
+        $this->get(route('filament.lawyer.pages.dashboard'))
+            ->assertOk()
+            ->assertSeeText('Casos esperando tu postulación')
+            ->assertSeeText('sucesión que lleva dos años parada')
+            // Y el bloque que explica qué le ha devuelto la suscripción
+            // aunque este mes no haya ganado ningún caso.
+            ->assertSeeText('Lo que te ha dado tu plan')
+            ->assertSeeText('Instructivos con tu nombre');
+    }
+
+    public function test_el_resumen_no_ensena_casos_de_otra_area_ni_ya_asignados(): void
+    {
+        $this->conPlan($this->lawyer, 'crecimiento');
+        $this->entrarComo($this->lawyer);
+
+        $tomado = LegalCase::query()->create([
+            'reference' => 'CC-2026-09002',
+            'client_token' => str_repeat('b', 40),
+            'client_name' => 'Pedro Lara',
+            'client_email' => 'pedro@example.com',
+            'client_phone' => '3005550001',
+            'practice_area' => $this->lawyer->practice_areas[0] ?? PracticeArea::Family->value,
+            'title' => 'Este caso ya tiene abogado y no debería ofrecerse',
+            'description' => 'Cualquier cosa.',
+            'status' => CaseStatus::Assigned,
+            'assigned_lawyer_id' => $this->otro->id,
+            'expires_at' => now()->addHours(40),
+        ]);
+
+        CaseOffer::query()->create([
+            'legal_case_id' => $tomado->id,
+            'lawyer_id' => $this->lawyer->id,
+            'status' => CaseOfferStatus::Pending,
+            'sent_at' => now(),
+        ]);
+
+        // Ofrecer un caso que ya tiene abogado es hacerle perder el tiempo a
+        // quien pulse.
+        $this->get(route('filament.lawyer.pages.dashboard'))
+            ->assertOk()
+            ->assertDontSeeText('Este caso ya tiene abogado');
+    }
+
+    public function test_los_acompanamientos_asignados_son_solo_los_propios(): void
+    {
+        $this->conPlan($this->lawyer, 'crecimiento');
+        $this->entrarComo($this->lawyer);
+
+        $this->get(route('filament.lawyer.resources.my-accompaniments.index'))
+            ->assertOk()
+            ->assertSeeText('Sin acompañamientos asignados');
     }
 
     public function test_un_abogado_entra_a_su_portal_pero_no_al_de_administracion(): void

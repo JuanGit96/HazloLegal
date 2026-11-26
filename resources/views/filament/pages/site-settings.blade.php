@@ -2,7 +2,7 @@
     <form wire:submit="save">
         {{ $this->form }}
 
-        <div class="mt-6 flex justify-end">
+        <div class="hl-row hl-row--end hl-mt-lg">
             <x-filament::button type="submit" icon="heroicon-o-check">
                 Guardar ajustes
             </x-filament::button>

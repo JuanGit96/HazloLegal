@@ -1,0 +1,755 @@
+/*
+ * Estilos propios de los paneles de Filament.
+ *
+ * Por qué existe este archivo: Filament se sirve con su CSS ya compilado, y
+ * ese CSS solo trae las clases que usan sus propios componentes. Las
+ * utilidades sueltas de Tailwind (`grid`, `text-sm`, `gap-3`…) no están, así
+ * que escribirlas en una vista propia no pinta nada: el bloque sale como
+ * texto plano. La alternativa sería compilar un tema con Vite, pero eso le
+ * mete un build step al despliegue, que aquí es copiar archivos.
+ *
+ * Las clases van con prefijo `hl-` para que nunca choquen con las `fi-` de
+ * Filament. Los colores y espacios salen de las variables que Filament
+ * publica en `:root` en tiempo de ejecución, así que esto sigue solo el
+ * tema del panel: si mañana el primario deja de ser azul, esto cambia con
+ * él. Los valores de respaldo son por si una variable no estuviera.
+ *
+ * El modo oscuro se marca con `.dark` en el <html>, igual que en Filament.
+ */
+
+/* ------------------------------------------------------------ Estructura */
+
+.hl-stack {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--spacing, .25rem) * 6);
+}
+
+.hl-grid {
+    display: grid;
+    gap: calc(var(--spacing, .25rem) * 4);
+}
+
+/* `auto-fill` en vez de puntos de ruptura: las columnas se acomodan solas al
+   ancho real del panel, que cambia cuando el abogado pliega el menú.
+   `auto-fill` y no `auto-fit` porque este último funde las columnas vacías, y
+   entonces una sola tarjeta se estira de lado a lado del panel. */
+.hl-grid--2 {
+    grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+}
+
+.hl-grid--3 {
+    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+}
+
+@media (min-width: 1024px) {
+    .hl-grid--sidebar {
+        grid-template-columns: 2fr 1fr;
+        gap: calc(var(--spacing, .25rem) * 6);
+    }
+}
+
+.hl-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: calc(var(--spacing, .25rem) * 3);
+}
+
+.hl-row--tight {
+    gap: calc(var(--spacing, .25rem) * 2);
+}
+
+.hl-row--end {
+    justify-content: flex-end;
+}
+
+.hl-mt {
+    margin-top: calc(var(--spacing, .25rem) * 4);
+}
+
+.hl-mt-lg {
+    margin-top: calc(var(--spacing, .25rem) * 6);
+}
+
+/* ---------------------------------------------------------------- Textos */
+
+.hl-text {
+    font-size: var(--text-sm, .875rem);
+    line-height: 1.5;
+    color: var(--gray-600, #4b5563);
+}
+
+.dark .hl-text {
+    color: var(--gray-400, #9ca3af);
+}
+
+.hl-text--accent {
+    color: var(--primary-600, #2563eb);
+}
+
+.dark .hl-text--accent {
+    color: var(--primary-400, #60a5fa);
+}
+
+.hl-h3 {
+    font-size: var(--text-base, 1rem);
+    font-weight: var(--font-weight-semibold, 600);
+    color: var(--gray-950, #030712);
+}
+
+.dark .hl-h3 {
+    color: #fff;
+}
+
+/* La aclaración pequeña bajo un dato. Es bloque a propósito: una nota que
+   se enreda con la cifra se lee como parte de la cifra. */
+.hl-note {
+    display: block;
+    margin-top: calc(var(--spacing, .25rem) * 1);
+    font-size: var(--text-xs, .75rem);
+    font-weight: 400;
+    line-height: 1.45;
+    color: var(--gray-500, #6b7280);
+}
+
+.dark .hl-note {
+    color: var(--gray-400, #9ca3af);
+}
+
+/* ------------------------------------------------ Cifras con su etiqueta */
+
+.hl-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+    gap: calc(var(--spacing, .25rem) * 5) calc(var(--spacing, .25rem) * 6);
+    margin: 0;
+}
+
+.hl-stat {
+    display: flex;
+    align-items: flex-start;
+    gap: calc(var(--spacing, .25rem) * 3);
+    min-width: 0;
+}
+
+.hl-stat-mark {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    margin-top: .125rem;
+    border-radius: var(--radius-lg, .5rem);
+    background-color: color-mix(in oklab, var(--primary-500, #3b82f6) 12%, transparent);
+    color: var(--primary-600, #2563eb);
+}
+
+.dark .hl-stat-mark {
+    color: var(--primary-400, #60a5fa);
+}
+
+/* Un cero se dibuja apagado: que la cifra en gris se note distinta de la que
+   sí pasó es la mitad del mensaje. */
+.hl-stat-mark.is-off {
+    background-color: color-mix(in oklab, var(--gray-500, #6b7280) 12%, transparent);
+    color: var(--gray-400, #9ca3af);
+}
+
+.hl-stat-mark .fi-icon,
+.hl-stat-mark svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.hl-stat-body {
+    min-width: 0;
+}
+
+.hl-stat-label {
+    font-size: var(--text-sm, .875rem);
+    color: var(--gray-500, #6b7280);
+}
+
+.dark .hl-stat-label {
+    color: var(--gray-400, #9ca3af);
+}
+
+.hl-stat-value {
+    margin: 0;
+    font-size: var(--text-xl, 1.25rem);
+    font-weight: var(--font-weight-bold, 700);
+    letter-spacing: -.01em;
+    line-height: 1.3;
+    color: var(--gray-950, #030712);
+}
+
+.dark .hl-stat-value {
+    color: #fff;
+}
+
+.hl-stat-hint {
+    margin-top: calc(var(--spacing, .25rem) * 1);
+    font-size: var(--text-xs, .75rem);
+    line-height: 1.45;
+    color: var(--gray-500, #6b7280);
+}
+
+.dark .hl-stat-hint {
+    color: var(--gray-400, #9ca3af);
+}
+
+/* ------------------------------------------------------- Lista de hechos */
+
+/* Mismo paso de columna en todos los bloques de hechos: así la segunda
+   lista cae alineada con la primera en vez de repartirse el ancho entera. */
+.hl-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+    gap: calc(var(--spacing, .25rem) * 4);
+    margin: 0;
+}
+
+.hl-facts dt {
+    font-size: var(--text-sm, .875rem);
+    color: var(--gray-500, #6b7280);
+}
+
+.dark .hl-facts dt {
+    color: var(--gray-400, #9ca3af);
+}
+
+.hl-facts dd {
+    margin: 0;
+    font-size: var(--text-sm, .875rem);
+    font-weight: var(--font-weight-semibold, 600);
+    color: var(--gray-950, #030712);
+}
+
+.dark .hl-facts dd {
+    color: #fff;
+}
+
+/* ------------------------------------------------------ Listas marcadas */
+
+.hl-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.hl-list > li {
+    display: flex;
+    align-items: flex-start;
+    gap: calc(var(--spacing, .25rem) * 3);
+    padding-block: calc(var(--spacing, .25rem) * 3);
+    border-top: 1px solid var(--gray-200, #e5e7eb);
+}
+
+.dark .hl-list > li {
+    border-top-color: rgba(255, 255, 255, .08);
+}
+
+.hl-list > li:first-child {
+    border-top: 0;
+}
+
+.hl-check {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-top: .125rem;
+    border-radius: 9999px;
+    font-size: var(--text-xs, .75rem);
+    font-weight: var(--font-weight-bold, 700);
+    line-height: 1;
+}
+
+.hl-check.is-on {
+    background-color: color-mix(in oklab, var(--success-500, #10b981) 15%, transparent);
+    color: var(--success-700, #047857);
+}
+
+.dark .hl-check.is-on {
+    color: var(--success-400, #34d399);
+}
+
+.hl-check.is-off {
+    background-color: color-mix(in oklab, var(--gray-500, #6b7280) 12%, transparent);
+    color: var(--gray-400, #9ca3af);
+}
+
+.hl-feature-title {
+    display: block;
+    font-weight: 500;
+    color: var(--gray-950, #030712);
+}
+
+.dark .hl-feature-title {
+    color: #fff;
+}
+
+/* Lo que el plan no incluye se tacha en vez de esconderse: saber qué falta
+   es justo lo que lleva a mirar el plan de arriba. */
+.hl-feature-title.is-off {
+    text-decoration: line-through;
+    color: var(--gray-400, #9ca3af);
+}
+
+.dark .hl-feature-title.is-off {
+    color: var(--gray-500, #6b7280);
+}
+
+.hl-feature-desc {
+    display: block;
+    font-size: var(--text-sm, .875rem);
+    line-height: 1.5;
+    color: var(--gray-500, #6b7280);
+}
+
+.dark .hl-feature-desc {
+    color: var(--gray-400, #9ca3af);
+}
+
+.hl-bullets {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--text-sm, .875rem);
+    line-height: 1.6;
+    color: var(--gray-600, #4b5563);
+}
+
+.dark .hl-bullets {
+    color: var(--gray-400, #9ca3af);
+}
+
+.hl-steps,
+.hl-ticks {
+    margin: calc(var(--spacing, .25rem) * 4) 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--spacing, .25rem) * 3);
+}
+
+.hl-ticks {
+    margin-top: calc(var(--spacing, .25rem) * 3);
+    gap: calc(var(--spacing, .25rem) * 2);
+}
+
+.hl-steps > li,
+.hl-ticks > li {
+    display: flex;
+    gap: calc(var(--spacing, .25rem) * 3);
+    font-size: var(--text-sm, .875rem);
+    line-height: 1.55;
+    color: var(--gray-700, #374151);
+}
+
+.dark .hl-steps > li,
+.dark .hl-ticks > li {
+    color: var(--gray-300, #d1d5db);
+}
+
+.hl-ticks > li {
+    gap: calc(var(--spacing, .25rem) * 2);
+}
+
+.hl-step-n {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-top: .125rem;
+    border-radius: 9999px;
+    background-color: color-mix(in oklab, var(--primary-500, #3b82f6) 12%, transparent);
+    color: var(--primary-600, #2563eb);
+    font-size: var(--text-xs, .75rem);
+    font-weight: var(--font-weight-bold, 700);
+    line-height: 1;
+}
+
+.dark .hl-step-n {
+    color: var(--primary-400, #60a5fa);
+}
+
+/* ------------------------------------------------------------- Tarjetas */
+
+.hl-card {
+    display: flex;
+    flex-direction: column;
+    padding: calc(var(--spacing, .25rem) * 4);
+    border-radius: var(--radius-xl, .75rem);
+    box-shadow: inset 0 0 0 1px rgba(3, 7, 18, .06);
+}
+
+/* El botón, pegado abajo: con tarjetas de distinta altura, botones a
+   distinta altura se leen como opciones de distinto peso. */
+.hl-card > .hl-row:last-child {
+    margin-top: auto;
+    padding-top: calc(var(--spacing, .25rem) * 4);
+}
+
+.dark .hl-card {
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1);
+}
+
+.hl-card-title {
+    margin: 0;
+    font-weight: var(--font-weight-semibold, 600);
+    color: var(--gray-950, #030712);
+}
+
+.dark .hl-card-title {
+    color: #fff;
+}
+
+.hl-card-desc {
+    margin: calc(var(--spacing, .25rem) * 1) 0 0;
+    font-size: var(--text-sm, .875rem);
+    color: var(--gray-500, #6b7280);
+}
+
+.dark .hl-card-desc {
+    color: var(--gray-400, #9ca3af);
+}
+
+.hl-price {
+    margin: calc(var(--spacing, .25rem) * 2) 0 0;
+    font-weight: var(--font-weight-bold, 700);
+    color: var(--primary-600, #2563eb);
+}
+
+.dark .hl-price {
+    color: var(--primary-400, #60a5fa);
+}
+
+/* El precio de lista tachado al lado del que se cobra. Las dos cifras
+   juntas o ninguna: un precio rebajado sin el de antes no se puede
+   comprobar, y uno de lista sin la rebaja esconde la promoción. */
+.hl-price-was {
+    margin-inline-start: calc(var(--spacing, .25rem) * 2);
+    font-size: var(--text-sm, .875rem);
+    font-weight: 400;
+    text-decoration: line-through;
+    color: var(--gray-500, #6b7280);
+}
+
+.dark .hl-price-was {
+    color: var(--gray-400, #9ca3af);
+}
+
+/* Caja suelta, para las páginas que no usan `x-filament::section`. */
+.hl-box {
+    padding: calc(var(--spacing, .25rem) * 6);
+    border-radius: var(--radius-xl, .75rem);
+    background-color: #fff;
+    box-shadow: 0 1px 2px rgba(3, 7, 18, .05), inset 0 0 0 1px rgba(3, 7, 18, .05);
+}
+
+.dark .hl-box {
+    background-color: var(--gray-900, #111827);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1);
+}
+
+.hl-box--success {
+    background-color: color-mix(in oklab, var(--success-500, #10b981) 10%, #fff);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--success-600, #059669) 25%, transparent);
+}
+
+.dark .hl-box--success {
+    background-color: color-mix(in oklab, var(--success-500, #10b981) 12%, transparent);
+}
+
+.hl-box--success .hl-h3 {
+    color: var(--success-700, #047857);
+}
+
+.dark .hl-box--success .hl-h3,
+.dark .hl-box--success li {
+    color: var(--success-400, #34d399);
+}
+
+.hl-box--success li {
+    color: var(--success-700, #047857);
+}
+
+.hl-box--warning {
+    background-color: color-mix(in oklab, var(--warning-500, #f59e0b) 12%, #fff);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--warning-600, #d97706) 25%, transparent);
+}
+
+.dark .hl-box--warning {
+    background-color: color-mix(in oklab, var(--warning-500, #f59e0b) 12%, transparent);
+}
+
+.hl-box--warning .hl-h3 {
+    color: var(--warning-700, #b45309);
+}
+
+.dark .hl-box--warning .hl-h3,
+.dark .hl-box--warning li {
+    color: var(--warning-400, #fbbf24);
+}
+
+.hl-box--warning li {
+    color: var(--warning-700, #b45309);
+}
+
+/* --------------------------------------------------------------- Tablas */
+
+.hl-table-wrap {
+    overflow-x: auto;
+    border-radius: var(--radius-xl, .75rem);
+    background-color: #fff;
+    box-shadow: inset 0 0 0 1px rgba(3, 7, 18, .05);
+}
+
+.dark .hl-table-wrap {
+    background-color: var(--gray-900, #111827);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1);
+}
+
+.hl-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-sm, .875rem);
+    color: var(--gray-700, #374151);
+}
+
+.dark .hl-table {
+    color: var(--gray-300, #d1d5db);
+}
+
+.hl-table th,
+.hl-table td {
+    padding: calc(var(--spacing, .25rem) * 3);
+    vertical-align: top;
+}
+
+.hl-table thead th {
+    text-align: center;
+    white-space: nowrap;
+    font-weight: var(--font-weight-semibold, 600);
+    color: var(--gray-950, #030712);
+}
+
+.dark .hl-table thead th {
+    color: #fff;
+}
+
+.hl-table thead tr {
+    border-bottom: 1px solid var(--gray-200, #e5e7eb);
+}
+
+.dark .hl-table thead tr {
+    border-bottom-color: rgba(255, 255, 255, .1);
+}
+
+.hl-table tbody tr + tr {
+    border-top: 1px solid var(--gray-100, #f3f4f6);
+}
+
+.dark .hl-table tbody tr + tr {
+    border-top-color: rgba(255, 255, 255, .06);
+}
+
+.hl-table tbody tr:hover {
+    background-color: var(--gray-50, #f9fafb);
+}
+
+.dark .hl-table tbody tr:hover {
+    background-color: rgba(255, 255, 255, .04);
+}
+
+/* La primera columna se queda quieta: con veinte adicionales a la derecha,
+   una fila sin su nombre a la vista no se puede marcar sin equivocarse. */
+.hl-table .hl-sticky {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    text-align: left;
+    padding-inline: calc(var(--spacing, .25rem) * 4);
+    background-color: #fff;
+}
+
+.dark .hl-table .hl-sticky {
+    background-color: var(--gray-900, #111827);
+}
+
+.hl-table tbody tr:hover .hl-sticky {
+    background-color: var(--gray-50, #f9fafb);
+}
+
+.dark .hl-table tbody tr:hover .hl-sticky {
+    background-color: var(--gray-800, #1f2937);
+}
+
+.hl-cell {
+    text-align: center;
+}
+
+.hl-inline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: calc(var(--spacing, .25rem) * 1);
+    font-size: var(--text-xs, .75rem);
+    color: var(--gray-500, #6b7280);
+    cursor: pointer;
+}
+
+.hl-inline-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: calc(var(--spacing, .25rem) * 2);
+    margin-top: calc(var(--spacing, .25rem) * 1);
+}
+
+.hl-number {
+    width: 6rem;
+    margin-top: calc(var(--spacing, .25rem) * 2);
+    padding: calc(var(--spacing, .25rem) * 1) calc(var(--spacing, .25rem) * 2);
+    border: 1px solid var(--gray-300, #d1d5db);
+    border-radius: var(--radius-lg, .5rem);
+    background-color: transparent;
+    text-align: center;
+    font-size: var(--text-sm, .875rem);
+    color: inherit;
+}
+
+.dark .hl-number {
+    border-color: rgba(255, 255, 255, .1);
+    background-color: rgba(255, 255, 255, .05);
+}
+
+.hl-cell-price {
+    display: block;
+    margin-top: calc(var(--spacing, .25rem) * 1);
+    font-size: var(--text-xs, .75rem);
+    font-weight: var(--font-weight-semibold, 600);
+    color: var(--primary-600, #2563eb);
+}
+
+.dark .hl-cell-price {
+    color: var(--primary-400, #60a5fa);
+}
+
+/* --------------------------------------------- La pantalla de la salida */
+
+.hl-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+    gap: calc(var(--spacing, .25rem) * 4);
+    margin: 0;
+}
+
+.hl-kpi-value {
+    margin: 0;
+    font-size: var(--text-2xl, 1.5rem);
+    font-weight: var(--font-weight-bold, 700);
+    letter-spacing: -.02em;
+    line-height: 1.2;
+    color: var(--gray-950, #030712);
+}
+
+.dark .hl-kpi-value {
+    color: #fff;
+}
+
+.hl-kpi-label {
+    margin-top: calc(var(--spacing, .25rem) * 1);
+    font-size: var(--text-xs, .75rem);
+    line-height: 1.4;
+    color: var(--gray-500, #6b7280);
+}
+
+.dark .hl-kpi-label {
+    color: var(--gray-400, #9ca3af);
+}
+
+/* Lo que se pierde en ámbar y lo que se conserva en verde: la lista de
+   pérdidas tiene que leerse distinto o no se lee. */
+.hl-ticks--loses > li {
+    color: var(--warning-700, #b45309);
+}
+
+.dark .hl-ticks--loses > li {
+    color: var(--warning-400, #fbbf24);
+}
+
+.hl-ticks--keeps > li {
+    color: var(--success-700, #047857);
+}
+
+.dark .hl-ticks--keeps > li {
+    color: var(--success-400, #34d399);
+}
+
+.hl-label {
+    display: block;
+    margin-bottom: calc(var(--spacing, .25rem) * 2);
+    font-size: var(--text-sm, .875rem);
+    font-weight: var(--font-weight-medium, 500);
+    color: var(--gray-950, #030712);
+}
+
+.dark .hl-label {
+    color: #fff;
+}
+
+.hl-select {
+    width: 100%;
+    max-width: 24rem;
+    padding: calc(var(--spacing, .25rem) * 2) calc(var(--spacing, .25rem) * 3);
+    border: 1px solid var(--gray-300, #d1d5db);
+    border-radius: var(--radius-lg, .5rem);
+    background-color: transparent;
+    font-size: var(--text-sm, .875rem);
+    color: inherit;
+}
+
+.dark .hl-select {
+    border-color: rgba(255, 255, 255, .1);
+    background-color: rgba(255, 255, 255, .05);
+}
+
+.hl-text--warn {
+    color: var(--warning-700, #b45309);
+}
+
+.dark .hl-text--warn {
+    color: var(--warning-400, #fbbf24);
+}
+
+/* El enlace de la salida: visible para quien lo busca, callado para quien
+   no. Por eso es enlace y no botón. */
+.hl-link {
+    color: var(--primary-600, #2563eb);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.dark .hl-link {
+    color: var(--primary-400, #60a5fa);
+}
+
+.hl-quiet {
+    margin-top: calc(var(--spacing, .25rem) * 2);
+    font-size: var(--text-xs, .75rem);
+    text-align: center;
+    color: var(--gray-500, #6b7280);
+}
+
+.dark .hl-quiet {
+    color: var(--gray-500, #6b7280);
+}

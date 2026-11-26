@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\LegalCases\Services;
 
+use App\Domain\Analytics\Enums\MetricKind;
+use App\Domain\Analytics\Services\MetricRecorder;
 use App\Domain\Lawyers\Models\Lawyer;
 use App\Domain\Lawyers\Services\LawyerDirectory;
 use App\Domain\LegalCases\Enums\CaseOfferStatus;
@@ -17,7 +19,10 @@ use Illuminate\Support\Facades\Mail;
 /** Ofrece un caso a varios abogados a la vez. Los interesados se postulan; elige el cliente. */
 final class CaseDispatchService
 {
-    public function __construct(private readonly LawyerDirectory $directory) {}
+    public function __construct(
+        private readonly LawyerDirectory $directory,
+        private readonly MetricRecorder $metrics,
+    ) {}
 
     public function dispatchToLawyers(LegalCase $case): int
     {
@@ -51,6 +56,7 @@ final class CaseDispatchService
             }
 
             $offer->update(['sent_at' => now()]);
+            $this->metrics->record($lawyer, MetricKind::CaseInvitation);
             $sent++;
         }
 

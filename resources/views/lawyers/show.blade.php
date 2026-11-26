@@ -64,15 +64,19 @@
                         @endif
                     </ul>
 
+                    {{-- El enlace pasa por el servidor para quedar contado: el
+                         abogado paga por aparecer aquí y tiene derecho a saber
+                         cuántos pulsaron. Lo que se guarda es un número del
+                         día, no quién pulsó. --}}
                     @if ($lawyer->whatsapp)
-                        <a href="https://wa.me/{{ preg_replace('/\D+/', '', $lawyer->whatsapp) }}"
+                        <a href="{{ route('lawyers.contact', [$lawyer->slug, 'via' => 'whatsapp']) }}"
                            class="btn btn--wa btn--block" target="_blank" rel="noopener">
                             Escribir por WhatsApp
                         </a>
                     @endif
 
                     @if ($lawyer->email)
-                        <a href="mailto:{{ $lawyer->email }}" class="btn btn--outline btn--block" style="margin-top: var(--s3);">
+                        <a href="{{ route('lawyers.contact', [$lawyer->slug, 'via' => 'correo']) }}" class="btn btn--outline btn--block" style="margin-top: var(--s3);">
                             Enviar correo
                         </a>
                     @endif

@@ -4,26 +4,31 @@ declare(strict_types=1);
 
 namespace App\Filament\Lawyer\Widgets;
 
+use App\Domain\Analytics\Enums\MetricKind;
+use App\Domain\Analytics\Services\MetricRecorder;
 use App\Domain\Lawyers\Services\CurrentLawyer;
-use App\Domain\LegalCases\Enums\CaseStatus;
-use App\Domain\LegalCases\Models\CaseOffer;
-use App\Domain\LegalCases\Models\LegalCase;
-use App\Domain\Shared\Models\LeadAccess;
-use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 /**
  * Lo que el abogado necesita ver para decidir si renueva.
  *
- * Son sus números, no los del negocio: cuánta gente llegó a su perfil, cuánta
- * quiso contactarlo, cuántos casos tomó. Si estas cifras no crecen, la
- * suscripción no vale lo que cuesta, y es mejor que lo vea él antes que
- * descubrirlo cuando se va.
+ * Son sus números, no los del negocio: cuánta gente lo vio, cuánta quiso
+ * escribirle, cuántos casos le ofrecimos y cuántos ganó. Si estas cifras no
+ * crecen, la suscripción no vale lo que cuesta, y es mejor que lo vea él
+ * antes que descubrirlo cuando se va.
+ *
+ * Se muestran los últimos 30 días y no el acumulado de siempre: un total que
+ * solo sube parece bueno aunque lleve meses plano, y la pregunta al renovar
+ * es si esto sigue funcionando, no si alguna vez funcionó.
  */
 class MyPerformanceWidget extends StatsOverviewWidget
 {
     protected static ?int $sort = 1;
+
+    protected ?string $heading = 'Tus últimos 30 días';
+
+    protected ?string $description = 'Comparado con los 30 anteriores.';
 
     protected function getColumns(): int
     {
@@ -38,45 +43,65 @@ class MyPerformanceWidget extends StatsOverviewWidget
             return [];
         }
 
-        $myCases = LegalCase::query()->where('assigned_lawyer_id', $lawyer->id);
+        $metrics = app(MetricRecorder::class);
+        $desde = now()->subDays(30);
 
-        $won = (clone $myCases)->count();
-        $active = (clone $myCases)->where('status', CaseStatus::Assigned)->count();
+        $totales = $metrics->totals($lawyer, [
+            MetricKind::DirectoryImpression,
+            MetricKind::ProfileView,
+            MetricKind::ContactClick,
+            MetricKind::ArticleView,
+            MetricKind::CaseInvitation,
+            MetricKind::CaseApplication,
+            MetricKind::CaseWon,
+        ], $desde);
 
-        // Cuántas invitaciones recibió y cuántas convirtió: la carrera por un
-        // caso la gana quien responde primero, y eso se puede mejorar.
-        $invited = CaseOffer::query()->where('lawyer_id', $lawyer->id)->count();
-        $winRate = $invited > 0 ? (int) round(($won / $invited) * 100) : null;
-
-        $contactsOpened = LeadAccess::query()
-            ->where('lawyer_id', $lawyer->id)
-            ->whereBetween('accessed_at', [now()->startOfMonth(), now()->endOfMonth()])
-            ->count();
+        $vistas = $totales[MetricKind::ProfileView->value];
+        $clics = $totales[MetricKind::ContactClick->value];
+        $ofrecidos = $totales[MetricKind::CaseInvitation->value];
+        $ganados = $totales[MetricKind::CaseWon->value];
+        $postulado = $totales[MetricKind::CaseApplication->value];
 
         return [
-            Stat::make('Visitas a tu perfil', (string) ($lawyer->profile_views ?? 0))
-                ->description($lawyer->is_published ? 'Perfil publicado' : 'Perfil sin publicar')
-                ->descriptionIcon($lawyer->is_published ? Heroicon::OutlinedCheckBadge : Heroicon::OutlinedEyeSlash)
-                ->descriptionColor($lawyer->is_published ? 'success' : 'warning')
-                ->color('info'),
+            $this->stat(MetricKind::DirectoryImpression, $totales[MetricKind::DirectoryImpression->value], $metrics, $lawyer)
+                ->description($lawyer->is_published
+                    ? 'Veces que saliste en un listado'
+                    : 'Tu perfil está sin publicar: no apareces'),
 
-            Stat::make('Clics para contactarte', (string) ($lawyer->contact_clicks ?? 0))
-                ->description('Gente que quiso escribirte desde el directorio')
-                ->descriptionIcon(Heroicon::OutlinedCursorArrowRays)
-                ->color('primary'),
+            $this->stat(MetricKind::ProfileView, $vistas, $metrics, $lawyer)
+                ->description($vistas > 0
+                    ? $this->porcentaje($clics, $vistas).' de quienes te vieron quisieron escribirte'
+                    : 'Todavía nadie abrió tu ficha'),
 
-            Stat::make('Casos que tomaste', (string) $won)
-                ->description($winRate === null
-                    ? 'Todavía sin invitaciones'
-                    : "{$winRate} % de las invitaciones que recibiste")
-                ->descriptionIcon(Heroicon::OutlinedBriefcase)
-                ->descriptionColor($winRate !== null && $winRate >= 30 ? 'success' : 'gray')
-                ->color($active > 0 ? 'success' : 'gray'),
+            $this->stat(MetricKind::ArticleView, $totales[MetricKind::ArticleView->value], $metrics, $lawyer)
+                ->description($totales[MetricKind::ArticleView->value] > 0
+                    ? 'Lecturas de las guías que firmas'
+                    : 'Escribir una guía es lo que más tráfico trae'),
 
-            Stat::make('Contactos abiertos este mes', (string) $contactsOpened)
-                ->description('Cada apertura queda registrada')
-                ->descriptionIcon(Heroicon::OutlinedShieldCheck)
-                ->color('warning'),
+            $this->stat(MetricKind::CaseWon, $ganados, $metrics, $lawyer)
+                ->description(match (true) {
+                    $ofrecidos === 0 => 'Aún no te hemos ofrecido casos',
+                    $postulado === 0 => "Te ofrecimos {$ofrecidos} y no te postulaste a ninguno",
+                    default => "De {$ofrecidos} ofrecidos, te postulaste a {$postulado}",
+                }),
         ];
+    }
+
+    private function stat(MetricKind $kind, int $valor, MetricRecorder $metrics, $lawyer): Stat
+    {
+        $tendencia = $metrics->trend($lawyer, $kind);
+
+        return Stat::make($kind->getLabel(), number_format($valor, 0, ',', '.'))
+            ->descriptionIcon($kind->getIcon())
+            ->descriptionColor($tendencia === null ? 'gray' : ($tendencia >= 0 ? 'success' : 'danger'))
+            ->color($valor > 0 ? $kind->getColor() : 'gray')
+            // Sin el periodo anterior no hay comparación honesta: un «+100 %»
+            // contra cero no significa nada.
+            ->chart($tendencia === null ? [] : array_values($metrics->series($lawyer, $kind, 14)));
+    }
+
+    private function porcentaje(int $parte, int $total): string
+    {
+        return $total > 0 ? round(($parte / $total) * 100).' %' : '0 %';
     }
 }

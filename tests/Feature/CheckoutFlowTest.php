@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Domain\Catalog\Models\LegalDocument;
+use App\Domain\Catalog\Services\AddonOfferService;
 use App\Domain\Orders\Enums\OrderStatus;
 use App\Domain\Orders\Enums\OrderTier;
 use App\Domain\Orders\Mail\OrderPaidMail;
@@ -13,6 +14,7 @@ use App\Domain\Orders\Models\Order;
 use App\Domain\Shared\Models\Lead;
 use Database\Seeders\LegalDocumentSeeder;
 use Database\Seeders\PricingSeeder;
+use Database\Seeders\ProductSeeder;
 use Database\Seeders\ServiceAddonSeeder;
 use Database\Seeders\SiteSettingSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -134,6 +136,21 @@ class CheckoutFlowTest extends TestCase
         $this->assertSame(19_900, (int) $order->addons->firstWhere('key', 'firma_digital')->price);
     }
 
+    public function test_el_resumen_de_movil_se_puede_desplegar(): void
+    {
+        $document = LegalDocument::query()->where('slug', 'acuerdo-de-confidencialidad-nda')->firstOrFail();
+
+        $html = (string) $this->get(route('checkout.configure', $document->slug))->assertOk()->getContent();
+
+        // En el teléfono los adicionales ocupan varias pantallas: al llegar
+        // abajo el total ha subido y, sin poder desplegar el detalle, no se
+        // ve por qué. Son dos resúmenes y los dos los llena el mismo guion.
+        $this->assertSame(2, substr_count($html, 'data-addon-lines>'), 'El resumen de la barra de móvil ya no está.');
+        $this->assertSame(2, substr_count($html, 'data-delivery>'));
+        $this->assertStringContainsString('data-bar-count', $html);
+        $this->assertStringContainsString('<details class="checkout-bar__detail">', $html);
+    }
+
     public function test_un_tramite_que_no_se_arma_solo_va_a_cotizacion(): void
     {
         // Ofrecerle «entrega inmediata» o «instructivo» a algo que todavía no
@@ -157,7 +174,7 @@ class CheckoutFlowTest extends TestCase
     {
         // Un producto nuevo que entre sin adicionales sale al aire con el
         // checkout vacío: pasó al crear los cinco últimos trámites.
-        $this->seed(\Database\Seeders\ProductSeeder::class);
+        $this->seed(ProductSeeder::class);
         $this->seed(PricingSeeder::class);
 
         $sinAdicionales = LegalDocument::query()
@@ -233,7 +250,7 @@ class CheckoutFlowTest extends TestCase
 
         // El acompañamiento obligaría a renunciar a la prisa que acaba de
         // pagar; la oferta siguiente tiene que ser otra.
-        $siguiente = app(\App\Domain\Catalog\Services\AddonOfferService::class)
+        $siguiente = app(AddonOfferService::class)
             ->nextBestOffer($order->document, $order->addons->pluck('key'));
 
         $this->assertNotNull($siguiente);

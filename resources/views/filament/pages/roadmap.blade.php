@@ -7,44 +7,42 @@
         };
     @endphp
 
-    <div class="fi-section rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
-        <div class="flex flex-wrap items-center gap-2">
+    <div class="hl-box">
+        <div class="hl-row hl-row--tight">
             <x-filament::badge color="info">Pendiente de construir</x-filament::badge>
             <x-filament::badge :color="$tone['bg']">{{ $tone['label'] }}</x-filament::badge>
             <x-filament::badge color="gray">{{ $effort }}</x-filament::badge>
         </div>
 
-        <p class="mt-4 text-base text-gray-700 dark:text-gray-300">{{ $summary }}</p>
+        <p class="hl-text hl-mt">{{ $summary }}</p>
     </div>
 
-    <div class="grid gap-6 lg:grid-cols-3">
-        <div class="fi-section rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5 lg:col-span-2 dark:bg-gray-900 dark:ring-white/10">
-            <h3 class="text-base font-semibold text-gray-950 dark:text-white">Qué debería hacer</h3>
+    <div class="hl-grid hl-grid--sidebar">
+        <div class="hl-box">
+            <h3 class="hl-h3">Qué debería hacer</h3>
 
-            <ul class="mt-4 space-y-3">
+            <ul class="hl-steps">
                 @foreach ($scope as $item)
-                    <li class="flex gap-3 text-sm text-gray-700 dark:text-gray-300">
-                        <span class="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary-50 text-xs font-bold text-primary-600 dark:bg-primary-500/10 dark:text-primary-400">
-                            {{ $loop->iteration }}
-                        </span>
+                    <li>
+                        <span class="hl-step-n">{{ $loop->iteration }}</span>
                         <span>{!! \Illuminate\Support\Str::inlineMarkdown($item) !!}</span>
                     </li>
                 @endforeach
             </ul>
         </div>
 
-        <div class="space-y-6">
-            <div class="fi-section rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
-                <h3 class="text-base font-semibold text-gray-950 dark:text-white">Por qué importa</h3>
-                <p class="mt-3 text-sm text-gray-700 dark:text-gray-300">{{ $why }}</p>
+        <div class="hl-stack">
+            <div class="hl-box">
+                <h3 class="hl-h3">Por qué importa</h3>
+                <p class="hl-text hl-mt">{{ $why }}</p>
             </div>
 
             @if ($alreadyInPlace !== [])
-                <div class="fi-section rounded-xl bg-success-50 p-6 ring-1 ring-success-600/20 dark:bg-success-500/10 dark:ring-success-400/20">
-                    <h3 class="text-base font-semibold text-success-700 dark:text-success-400">Ya construido</h3>
-                    <ul class="mt-3 space-y-2">
+                <div class="hl-box hl-box--success">
+                    <h3 class="hl-h3">Ya construido</h3>
+                    <ul class="hl-ticks">
                         @foreach ($alreadyInPlace as $item)
-                            <li class="flex gap-2 text-sm text-success-700 dark:text-success-300">
+                            <li>
                                 <span aria-hidden="true">✓</span>
                                 <span>{{ $item }}</span>
                             </li>
@@ -54,11 +52,11 @@
             @endif
 
             @if ($dependencies !== [])
-                <div class="fi-section rounded-xl bg-warning-50 p-6 ring-1 ring-warning-600/20 dark:bg-warning-500/10 dark:ring-warning-400/20">
-                    <h3 class="text-base font-semibold text-warning-700 dark:text-warning-400">Depende de</h3>
-                    <ul class="mt-3 space-y-2">
+                <div class="hl-box hl-box--warning">
+                    <h3 class="hl-h3">Depende de</h3>
+                    <ul class="hl-ticks">
                         @foreach ($dependencies as $item)
-                            <li class="flex gap-2 text-sm text-warning-700 dark:text-warning-300">
+                            <li>
                                 <span aria-hidden="true">→</span>
                                 <span>{{ $item }}</span>
                             </li>

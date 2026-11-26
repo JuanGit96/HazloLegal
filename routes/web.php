@@ -3,14 +3,22 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Web\BlogController;
+use App\Http\Controllers\Web\CalculatorController;
 use App\Http\Controllers\Web\CheckoutController;
 use App\Http\Controllers\Web\ContactController;
 use App\Http\Controllers\Web\CookieConsentController;
+use App\Http\Controllers\Web\CustomerAreaController;
 use App\Http\Controllers\Web\DocumentController;
+use App\Http\Controllers\Web\FreeToolsController;
 use App\Http\Controllers\Web\HomeController;
+use App\Http\Controllers\Web\LawyerDirectoryController;
+use App\Http\Controllers\Web\LawyerLandingController;
 use App\Http\Controllers\Web\LegalCaseController;
 use App\Http\Controllers\Web\PageController;
+use App\Http\Controllers\Web\SignatureController;
 use App\Http\Controllers\Web\SitemapController;
+use App\Http\Controllers\Web\SubscriptionCheckoutController;
+use App\Http\Controllers\Web\WompiController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -57,39 +65,39 @@ Route::get('/pedido/{order:reference}/descargar/{kind}', [CheckoutController::cl
 // -------------------------------------------------- Área del cliente
 // Sin contraseña: el cliente pide un enlace firmado a su correo, que es el
 // mismo al que le llegaron los documentos.
-Route::get('/mis-tramites', [App\Http\Controllers\Web\CustomerAreaController::class, 'create'])
+Route::get('/mis-tramites', [CustomerAreaController::class, 'create'])
     ->name('account.request');
-Route::post('/mis-tramites', [App\Http\Controllers\Web\CustomerAreaController::class, 'send'])
+Route::post('/mis-tramites', [CustomerAreaController::class, 'send'])
     ->middleware('throttle:6,1')->name('account.request.send');
-Route::get('/mis-tramites/{email}', [App\Http\Controllers\Web\CustomerAreaController::class, 'show'])
+Route::get('/mis-tramites/{email}', [CustomerAreaController::class, 'show'])
     ->middleware('throttle:30,1')->name('account.show');
 
 // -------------------------------------------------- Suscripción del abogado
 // Detrás del login del portal: paga quien ya fue verificado.
-Route::get('/portal/suscripcion/pagar', [App\Http\Controllers\Web\SubscriptionCheckoutController::class, 'show'])
+Route::get('/portal/suscripcion/pagar', [SubscriptionCheckoutController::class, 'show'])
     ->middleware(['web', 'auth'])
     ->name('subscription.checkout');
 // El número de la tarjeta no llega aquí: el navegador lo cambia por un token
 // contra Wompi y esto solo recibe el token.
-Route::post('/portal/suscripcion/tarjeta', [App\Http\Controllers\Web\SubscriptionCheckoutController::class, 'registerCard'])
+Route::post('/portal/suscripcion/tarjeta', [SubscriptionCheckoutController::class, 'registerCard'])
     ->middleware(['web', 'auth', 'throttle:10,1'])
     ->name('subscription.card');
 
 // -------------------------------------------------- Pasarela de pagos
 // El webhook queda fuera de la protección CSRF porque lo llama Wompi, no un
 // navegador: su autenticidad se comprueba con la firma del propio evento.
-Route::post('/wompi/eventos', [App\Http\Controllers\Web\WompiController::class, 'webhook'])
+Route::post('/wompi/eventos', [WompiController::class, 'webhook'])
     ->name('wompi.webhook');
-Route::get('/wompi/retorno/{reference}', [App\Http\Controllers\Web\WompiController::class, 'returned'])
+Route::get('/wompi/retorno/{reference}', [WompiController::class, 'returned'])
     ->name('wompi.return');
 
 // -------------------------------------------------- Firma electrónica
 // El token del enlace es la credencial: quien abre el QR es quien firma.
-Route::get('/firmar/{token}', [App\Http\Controllers\Web\SignatureController::class, 'show'])
+Route::get('/firmar/{token}', [SignatureController::class, 'show'])
     ->middleware('throttle:60,1')->name('signature.show');
-Route::post('/firmar/{token}', [App\Http\Controllers\Web\SignatureController::class, 'store'])
+Route::post('/firmar/{token}', [SignatureController::class, 'store'])
     ->middleware('throttle:20,1')->name('signature.store');
-Route::get('/firmar/{token}/listo', [App\Http\Controllers\Web\SignatureController::class, 'done'])
+Route::get('/firmar/{token}/listo', [SignatureController::class, 'done'])
     ->name('signature.done');
 
 // -------------------------------------------------- Casos complejos
@@ -164,9 +172,9 @@ Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('robots');
 | de alta intención; el dinero entra por los adicionales, por la suscripción
 | de abogados y por el lead que el usuario autoriza compartir.
 */
-Route::get('/gratis', [App\Http\Controllers\Web\FreeToolsController::class, 'index'])->name('tools.index');
-Route::get('/gratis/calculadoras/{calculator:slug}', [App\Http\Controllers\Web\CalculatorController::class, 'show'])->name('tools.calculator');
-Route::post('/gratis/calculadoras/{calculator:slug}', [App\Http\Controllers\Web\CalculatorController::class, 'calculate'])
+Route::get('/gratis', [FreeToolsController::class, 'index'])->name('tools.index');
+Route::get('/gratis/calculadoras/{calculator:slug}', [CalculatorController::class, 'show'])->name('tools.calculator');
+Route::post('/gratis/calculadoras/{calculator:slug}', [CalculatorController::class, 'calculate'])
     ->middleware('throttle:60,1')->name('tools.calculator.run');
 
 /*
@@ -174,12 +182,14 @@ Route::post('/gratis/calculadoras/{calculator:slug}', [App\Http\Controllers\Web\
 | Abogados: captación y directorio
 |--------------------------------------------------------------------------
 */
-Route::get('/abogados', [App\Http\Controllers\Web\LawyerDirectoryController::class, 'index'])->name('lawyers.index');
-Route::get('/abogados/registro', [App\Http\Controllers\Web\LawyerLandingController::class, 'index'])->name('lawyers.join');
+Route::get('/abogados', [LawyerDirectoryController::class, 'index'])->name('lawyers.index');
+Route::get('/abogados/registro', [LawyerLandingController::class, 'index'])->name('lawyers.join');
 // El enlace que se le pasa a un abogado invitado. Va antes de la ficha
 // pública para que «invitacion» no se confunda con el slug de un abogado.
-Route::get('/abogados/invitacion/{code}', [App\Http\Controllers\Web\LawyerLandingController::class, 'invitation'])
+Route::get('/abogados/invitacion/{code}', [LawyerLandingController::class, 'invitation'])
     ->middleware('throttle:30,1')->name('lawyers.invitation');
-Route::post('/abogados/registro', [App\Http\Controllers\Web\LawyerLandingController::class, 'store'])
+Route::post('/abogados/registro', [LawyerLandingController::class, 'store'])
     ->middleware('throttle:10,1')->name('lawyers.join.store');
-Route::get('/abogados/{lawyer:slug}', [App\Http\Controllers\Web\LawyerDirectoryController::class, 'show'])->name('lawyers.show');
+Route::get('/abogados/{lawyer:slug}/contacto', [LawyerDirectoryController::class, 'contact'])
+    ->middleware('throttle:60,1')->name('lawyers.contact');
+Route::get('/abogados/{lawyer:slug}', [LawyerDirectoryController::class, 'show'])->name('lawyers.show');

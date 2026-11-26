@@ -49,6 +49,19 @@ return [
 
     'currency' => 'COP',
 
+    // El cobro de verificación de tarjeta: lo mínimo que Wompi admite en una
+    // transacción ($1.500) y que se anula en el mismo segundo. Registrar la
+    // tarjeta no prueba nada —la pasarela acepta como «disponible» una que
+    // el banco luego rechaza—, así que la única forma de saber si sirve es
+    // intentar cobrarla de verdad.
+    'verification_amount' => (int) env('WOMPI_VERIFICATION_AMOUNT', 1500),
+
+    // Cuánto se espera al desenlace de un cobro antes de dejarlo en manos
+    // del webhook. Wompi resuelve tarjeta en décimas de segundo; pasado esto
+    // es mejor soltar la pantalla que tener a alguien mirando un spinner.
+    'settle_attempts' => (int) env('WOMPI_SETTLE_ATTEMPTS', 3),
+    'settle_wait_ms' => (int) env('WOMPI_SETTLE_WAIT_MS', 600),
+
     // Métodos que se le ofrecen al cliente en el checkout de Wompi.
     'payment_methods' => ['CARD', 'NEQUI', 'PSE', 'BANCOLOMBIA_TRANSFER'],
 ];

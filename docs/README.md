@@ -78,6 +78,12 @@ son exposición legal de la empresa, y hay tests que fallan si se rompen.
 | [02-pruebas.md](05-operacion/02-pruebas.md) | Qué cubren los tests y qué significa cada uno |
 | [03-pendientes.md](05-operacion/03-pendientes.md) | Qué falta, con honestidad |
 
+### 07 · Crecimiento
+| Archivo | Qué responde |
+|---|---|
+| [01-crecimiento-organico.md](07-crecimiento/01-crecimiento-organico.md) | Por qué orgánico y no pauta, los tres bucles y qué se mide |
+| [02-contenido-en-redes.md](07-crecimiento/02-contenido-en-redes.md) | Qué publicar en TikTok, Instagram, Facebook, LinkedIn y YouTube |
+
 ## Convención de estas páginas
 
 - Todo lo que el usuario final lee va en **español de Colombia**; los

@@ -113,12 +113,19 @@ final readonly class SubscriptionQuote
 
         if ($this->discountPercentage > 0) {
             // El descuento se cuenta en periodos de cobro: decir «meses» con
-            // un plan anual prometería once meses que no son.
-            $unidad = $this->period === BillingPeriod::Annual ? 'año' : 'mes';
+            // un plan anual prometería once meses que no son. El plural va
+            // escrito y no con el pluralizador de Laravel, que es inglés y
+            // deja «mes» en «mes».
+            $uno = $this->discountMonths === 1;
 
-            $cuando = $this->discountMonths === 1
+            $unidad = match (true) {
+                $this->period === BillingPeriod::Annual => $uno ? 'año' : 'años',
+                default => $uno ? 'mes' : 'meses',
+            };
+
+            $cuando = $uno
                 ? "el primer {$unidad}"
-                : "los primeros {$this->discountMonths} {$unidad}s";
+                : "los primeros {$this->discountMonths} {$unidad}";
 
             return "{$this->discountPercentage} % menos ".$cuando;
         }

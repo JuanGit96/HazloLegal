@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\LegalCases\Services;
 
+use App\Domain\Analytics\Enums\MetricKind;
+use App\Domain\Analytics\Services\MetricRecorder;
 use App\Domain\LegalCases\Data\AssignmentResult;
 use App\Domain\LegalCases\Enums\AssignmentOutcome;
 use App\Domain\LegalCases\Enums\CaseOfferStatus;
@@ -34,6 +36,8 @@ use Illuminate\Support\Facades\Mail;
  */
 final class CaseAssignmentService
 {
+    public function __construct(private readonly MetricRecorder $metrics) {}
+
     /**
      * El abogado se postula.
      *
@@ -80,6 +84,8 @@ final class CaseAssignmentService
                 'response_ip' => $ip,
                 'pitch' => $pitch,
             ]);
+
+            $this->metrics->record($offer->lawyer, MetricKind::CaseApplication);
 
             $primero = $case->shortlisted_at === null;
 
@@ -138,6 +144,8 @@ final class CaseAssignmentService
                 'assigned_at' => now(),
                 'status' => CaseStatus::Assigned,
             ]);
+
+            $this->metrics->record($chosen->lawyer, MetricKind::CaseWon);
 
             $descartadas = $locked->offers()
                 ->whereKeyNot($chosen->getKey())

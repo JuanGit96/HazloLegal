@@ -11,10 +11,14 @@ use App\Domain\Lawyers\Enums\LawyerStatus;
 use App\Domain\LegalCases\Enums\CaseStatus;
 use App\Domain\LegalCases\Models\CaseOffer;
 use App\Domain\LegalCases\Models\LegalCase;
+use App\Domain\Subscriptions\Models\LawyerSubscription;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -90,21 +94,35 @@ class Lawyer extends Model
     }
 
     /** El usuario del panel con el que este abogado entra a ver lo suyo. */
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\User::class);
+        return $this->belongsTo(User::class);
     }
 
     public function subscriptions(): HasMany
     {
-        return $this->hasMany(\App\Domain\Subscriptions\Models\LawyerSubscription::class);
+        return $this->hasMany(LawyerSubscription::class);
     }
 
-    public function subscription(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function subscription(): HasOne
     {
-        return $this->hasOne(\App\Domain\Subscriptions\Models\LawyerSubscription::class)
+        return $this->hasOne(LawyerSubscription::class)
             ->active()
             ->latestOfMany();
+    }
+
+    /**
+     * ¿Se le ofrece su ficha al final de las guías que firma?
+     *
+     * Es lo que el plan llama «presencia en los artículos». Depende de dos
+     * cosas y no de una: que el plan lo incluya y que la ficha exista. Si
+     * el abogado se fue, la guía se queda publicada con su firma —eso no se
+     * borra— pero el enlace a una ficha que ya no está sería un callejón.
+     */
+    public function offersBlogPlacement(): bool
+    {
+        return (bool) $this->is_published
+            && (bool) $this->subscription?->allows('includes_blog_placement');
     }
 
     // -------------------------------------------------- Scopes

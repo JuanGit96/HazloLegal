@@ -303,16 +303,45 @@
             </div>
 
             {{-- Barra fija en móvil: el resumen va arriba y sin esto el formulario
-                 termina sin botón. --}}
+                 termina sin botón.
+
+                 Se despliega porque en el teléfono los adicionales ocupan
+                 varias pantallas: al llegar abajo el total ha subido y ya no
+                 se ve por qué. Va cerrada por defecto y con `<details>`
+                 nativo, así que abrirla no recarga, no mueve el scroll y
+                 funciona sin JS. --}}
             <div class="checkout-spacer" aria-hidden="true"></div>
             <div class="checkout-bar">
-                <span class="checkout-bar__total">
-                    <span>Total</span>
-                    <strong data-bar-total>{{ $quote->formattedTotal() }}</strong>
-                </span>
-                <button type="submit" class="btn btn--primary">
-                    <span data-cta>{{ $quote->isFree() ? 'Generar gratis' : 'Continuar' }}</span>
-                </button>
+                <details class="checkout-bar__detail">
+                    <summary>
+                        <span data-bar-count>Ver qué incluye</span>
+                        <span class="checkout-bar__chevron" aria-hidden="true"></span>
+                    </summary>
+
+                    <div class="checkout-bar__panel">
+                        <dl class="summary__rows">
+                            <div class="summary__row">
+                                <dt>{{ $document->short_name ?: $document->name }}</dt>
+                                <dd>{{ $quote->formattedBase() }}</dd>
+                            </div>
+                            <div data-addon-lines></div>
+                            <div class="summary__row">
+                                <dt>Entrega</dt>
+                                <dd data-delivery>{{ $quote->deliveryLabel() }}</dd>
+                            </div>
+                        </dl>
+                    </div>
+                </details>
+
+                <div class="checkout-bar__row">
+                    <span class="checkout-bar__total">
+                        <span>Total</span>
+                        <strong data-bar-total>{{ $quote->formattedTotal() }}</strong>
+                    </span>
+                    <button type="submit" class="btn btn--primary">
+                        <span data-cta>{{ $quote->isFree() ? 'Generar gratis' : 'Continuar' }}</span>
+                    </button>
+                </div>
             </div>
         </form>
     </div>
@@ -331,8 +360,10 @@
     var boxes = form.querySelectorAll('input[name="addons[]"]');
     var totals = form.querySelectorAll('[data-total], [data-bar-total]');
     var ctas = form.querySelectorAll('[data-cta]');
-    var lines = form.querySelector('[data-addon-lines]');
-    var delivery = form.querySelector('[data-delivery]');
+    // Dos resúmenes: el de la columna y el de la barra de móvil.
+    var lines = form.querySelectorAll('[data-addon-lines]');
+    var deliveries = form.querySelectorAll('[data-delivery]');
+    var counts = form.querySelectorAll('[data-bar-count]');
 
     var standardDelivery = @json($document->deliveryLabel());
     var expressDelivery = 'Ahora mismo';
@@ -345,11 +376,13 @@
         var total = base;
         var html = '';
         var express = false;
+        var cuantos = 0;
 
         boxes.forEach(function (box) {
             if (!box.checked) return;
             var price = parseInt(box.dataset.price, 10) || 0;
             total += price;
+            cuantos++;
             if (box.value === 'express') express = true;
 
             var label = box.closest('.addon').querySelector('.addon__name').textContent.trim();
@@ -357,8 +390,17 @@
                     (price === 0 ? 'Incluido' : cop(price)) + '</dd></div>';
         });
 
-        if (lines) lines.innerHTML = html;
-        if (delivery) delivery.textContent = express ? expressDelivery : standardDelivery;
+        lines.forEach(function (el) { el.innerHTML = html; });
+        deliveries.forEach(function (el) {
+            el.textContent = express ? expressDelivery : standardDelivery;
+        });
+
+        // El número en la barra responde sin abrirla a «¿qué llevo?».
+        counts.forEach(function (el) {
+            el.textContent = cuantos === 0
+                ? 'Ver qué incluye'
+                : (cuantos === 1 ? '1 adicional · Ver detalle' : cuantos + ' adicionales · Ver detalle');
+        });
 
         totals.forEach(function (el) { el.textContent = cop(total); });
         ctas.forEach(function (el) {
@@ -410,6 +452,21 @@
             update();
         });
     });
+
+    /* Al continuar, el detalle se cierra.
+       Si faltan datos el navegador salta al primer campo vacío, y con el
+       panel abierto ese salto ocurre detrás de un panel que tapa un tercio
+       de la pantalla: parece que el botón no hizo nada. Va en el `click` y
+       no en el `submit` porque cuando la validación falla no hay submit. */
+    var detalle = form.querySelector('.checkout-bar__detail');
+
+    if (detalle) {
+        form.addEventListener('click', function (e) {
+            if (e.target.closest('.checkout-bar__row button')) detalle.open = false;
+        });
+
+        form.addEventListener('submit', function () { detalle.open = false; });
+    }
 
     update();
 })();

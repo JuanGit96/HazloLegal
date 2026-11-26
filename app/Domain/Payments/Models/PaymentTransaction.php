@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Payments\Models;
 
+use App\Domain\Payments\Enums\PaymentPurpose;
 use App\Domain\Payments\Enums\PaymentStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -19,8 +20,10 @@ class PaymentTransaction extends Model
     {
         return [
             'status' => PaymentStatus::class,
+            'purpose' => PaymentPurpose::class,
             'payload' => 'array',
             'paid_at' => 'datetime',
+            'voided_at' => 'datetime',
         ];
     }
 
@@ -32,6 +35,12 @@ class PaymentTransaction extends Model
     public function isApproved(): bool
     {
         return $this->status === PaymentStatus::Approved;
+    }
+
+    /** No es un cobro: son $1.500 que se anulan enseguida. */
+    public function isVerification(): bool
+    {
+        return $this->purpose === PaymentPurpose::Verification;
     }
 
     /** Lo que se cobró, en pesos. */

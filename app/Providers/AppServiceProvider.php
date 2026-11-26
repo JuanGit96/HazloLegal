@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use Carbon\CarbonImmutable;
+use Filament\Support\Facades\FilamentView;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -35,6 +37,23 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $this->registerAssetHelper();
+        $this->registerPanelStyles();
+    }
+
+    /**
+     * La hoja propia de los paneles, en los dos.
+     *
+     * Filament se sirve con su CSS ya compilado, que solo trae las clases
+     * de sus componentes: una utilidad suelta escrita en una vista nuestra
+     * no existe y el bloque sale sin formato. Compilar un tema con Vite lo
+     * arreglaría, pero le añadiría un build step al despliegue.
+     */
+    private function registerPanelStyles(): void
+    {
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::HEAD_END,
+            fn (): string => '<link rel="stylesheet" href="'.e(self::versionedAsset('css/panel.css')).'">',
+        );
     }
 
     /**

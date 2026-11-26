@@ -10,6 +10,7 @@ use App\Domain\Orders\Services\OrderService;
 use App\Domain\Payments\Enums\PaymentStatus;
 use App\Domain\Payments\Models\PaymentTransaction;
 use App\Domain\Subscriptions\Models\LawyerSubscription;
+use App\Domain\Subscriptions\Services\SubscriptionPromoService;
 use App\Domain\Subscriptions\Services\SubscriptionService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -27,6 +28,8 @@ final class PaymentProcessor
     public function __construct(
         private readonly OrderService $orders,
         private readonly SubscriptionService $subscriptions,
+        private readonly SubscriptionPromoService $promos,
+        private readonly WompiGateway $wompi,
     ) {}
 
     public function apply(PaymentTransaction $transaction, array $data): PaymentTransaction
@@ -34,7 +37,10 @@ final class PaymentProcessor
         $status = PaymentStatus::fromWompi((string) data_get($data, 'status', ''));
 
         // Ya estaba aprobada: un reenvío del webhook no vuelve a entregar.
-        if ($transaction->isApproved()) {
+        // Y una ya anulada tampoco se resucita: el cobro de verificación
+        // termina anulado a propósito, y un evento tardío de Wompi no puede
+        // volver a marcarlo como pagado.
+        if ($transaction->isApproved() || $transaction->voided_at !== null) {
             return $transaction;
         }
 
@@ -55,6 +61,10 @@ final class PaymentProcessor
 
         if ($status === PaymentStatus::Approved) {
             $this->fulfil($transaction->refresh());
+        }
+
+        if ($status === PaymentStatus::Declined) {
+            $this->handleDecline($transaction->refresh());
         }
 
         return $transaction->refresh();
@@ -100,6 +110,18 @@ final class PaymentProcessor
     {
         $payable = $transaction->payable;
 
+        // El cobro de verificación no es un pago: son $1.500 que se anulan.
+        // Tratarlo como pago activaría la suscripción con un dinero que
+        // vamos a devolver, y le pondría fecha de renovación a un plan que
+        // todavía no ha empezado.
+        if ($transaction->isVerification()) {
+            if ($payable instanceof LawyerSubscription) {
+                $this->completeVerification($payable, $transaction);
+            }
+
+            return;
+        }
+
         if ($payable instanceof Order) {
             $this->orders->confirmPayment(
                 $payable,
@@ -111,7 +133,48 @@ final class PaymentProcessor
         }
 
         if ($payable instanceof LawyerSubscription) {
+            // El banco aprobó un cobro real contra esa tarjeta: eso es lo
+            // que la da por buena, no haberla registrado.
+            $this->subscriptions->confirmCard($payable);
             $this->subscriptions->activate($payable, $transaction);
+        }
+    }
+
+    /**
+     * Cierra el alta cuando el banco tardó más que la pantalla.
+     *
+     * El abogado ya se fue; aquí se anula la verificación y se arranca el
+     * periodo de invitación que quedó en el aire.
+     */
+    private function completeVerification(LawyerSubscription $subscription, PaymentTransaction $transaction): void
+    {
+        // Se anula primero. Que la anulación falle no invalida lo aprendido
+        // —la tarjeta sirve—, pero deja $1.500 cobrados que hay que
+        // devolver; `voidTransaction` lo deja escrito en el registro.
+        $this->wompi->voidTransaction($transaction);
+
+        $this->subscriptions->confirmCard($subscription);
+
+        $quote = $this->promos->quoteFor($subscription);
+
+        if ($quote !== null && $subscription->trial_ends_at === null) {
+            $this->subscriptions->beginPromoPeriod($subscription, $quote);
+        }
+    }
+
+    /**
+     * Un rechazo con la tarjeta recién guardada: se olvida.
+     *
+     * Dejarla puesta haría que el cobro diario la intentara cada mañana y
+     * fuera acumulando rechazos, que es justo lo que lleva a un banco a
+     * bloquear a un comercio.
+     */
+    private function handleDecline(PaymentTransaction $transaction): void
+    {
+        $payable = $transaction->payable;
+
+        if ($payable instanceof LawyerSubscription && $payable->card_validated_at === null) {
+            $this->subscriptions->forgetCard($payable);
         }
     }
 

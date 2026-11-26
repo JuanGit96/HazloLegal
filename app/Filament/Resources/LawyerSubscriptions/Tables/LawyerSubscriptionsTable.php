@@ -51,6 +51,22 @@ class LawyerSubscriptionsTable
                     ->date('d M Y')
                     ->placeholder('—')
                     ->sortable(),
+
+                // Sin tarjeta comprobada no hay cobro automático: esta
+                // columna dice de quién habrá que acordarse a mano.
+                TextColumn::make('card_last_four')
+                    ->label('Tarjeta')
+                    ->state(fn (LawyerSubscription $record) => match (true) {
+                        $record->hasStoredCard() => $record->cardLabel(),
+                        filled($record->payment_source_id) => 'En confirmación',
+                        default => 'Sin tarjeta',
+                    })
+                    ->badge()
+                    ->color(fn (LawyerSubscription $record) => match (true) {
+                        $record->hasStoredCard() => 'success',
+                        filled($record->payment_source_id) => 'warning',
+                        default => 'danger',
+                    }),
             ])
             ->filters([
                 SelectFilter::make('status')

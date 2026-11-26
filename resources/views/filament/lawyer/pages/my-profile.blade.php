@@ -3,7 +3,7 @@
         <x-filament::section>
             <x-slot name="heading">Tu perfil todavía no es público</x-slot>
 
-            <p class="text-sm text-gray-600 dark:text-gray-400">
+            <p class="hl-text">
                 Puedes dejarlo listo desde ya. Se publica en el directorio cuando tu suscripción
                 incluye perfil público y el equipo lo revisa.
             </p>
@@ -13,7 +13,7 @@
     <form wire:submit="save">
         {{ $this->form }}
 
-        <div class="mt-6 flex justify-end">
+        <div class="hl-row hl-row--end hl-mt-lg">
             <x-filament::button type="submit" icon="heroicon-o-check">
                 Guardar cambios
             </x-filament::button>

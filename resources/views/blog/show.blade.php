@@ -159,6 +159,36 @@
             </div>
         @endif
 
+        {{-- «Presencia en los artículos»: lo que el plan del abogado dice
+             que incluye, aquí es donde ocurre.
+
+             La guía se queda publicada con su firma pase lo que pase —eso
+             no se borra cuando alguien se va—, pero el enlace a la ficha
+             solo sale mientras la ficha exista. No se afirma que revisara
+             nada más que lo que escribió. --}}
+        @if ($post->author?->offersBlogPlacement())
+            <div class="card card--pad-lg mt-10">
+                <span class="eyebrow">Quién escribió esta guía</span>
+
+                <div class="author-box" style="margin-top: var(--s4);">
+                    <div class="author-box__avatar" aria-hidden="true">{{ $post->author->initials() }}</div>
+                    <div>
+                        <h2 style="font-size: var(--t-base); margin-bottom: var(--s1);">{{ $post->author->name }}</h2>
+                        <p>{{ $post->author->headline }}</p>
+                        <p class="author-box__cred">
+                            {{ $post->author->years_experience }} años ejerciendo en Colombia{{ $post->author->city ? ' · '.$post->author->city : '' }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="btn-row" style="margin-top: var(--s5);">
+                    <a href="{{ route('lawyers.show', $post->author->slug) }}" class="btn btn--outline">
+                        Ver su perfil
+                    </a>
+                </div>
+            </div>
+        @endif
+
         <div class="alert alert--warn mt-10">
             <span class="alert__icon" aria-hidden="true">ℹ️</span>
             <div>
